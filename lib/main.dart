@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'Welcome.dart';
+import 'MainScreens/Home_Screen.dart';
+import 'MainScreens/Welcome.dart';
 
 
 void main() => runApp(MyApp());
@@ -12,8 +13,9 @@ class MyApp extends StatelessWidget {
       title: 'Material App',
       initialRoute: WelcomeScreen.routeName,
       routes: {
-        WelcomeScreen.routeName: (context) => WelcomeScreen(),
+        WelcomeScreen.routeName: (context) => MyHomePage(),
       },
     );
   }
 }
+

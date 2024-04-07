@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'LogScreen/login_form.dart';
+import '../LogScreen/login_form.dart';
 
 class WelcomeScreen extends StatelessWidget {
   static const String routeName = '/welcome';
