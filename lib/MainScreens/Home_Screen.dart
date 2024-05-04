@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
+import '../WidgetsCom/calendar_widget.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -122,6 +123,16 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 10), // Add some space between the white container and the calendar
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              width: MediaQuery.of(context).size.width - 10,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: CalendarWidget(),
             ),
           ],
         ),
