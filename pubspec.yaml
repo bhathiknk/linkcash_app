@@ -19,6 +19,7 @@ dependencies:
   sqflite: ^2.3.0
   flutter_launcher_icons: ^0.13.1
   simple_animations: ^5.0.2
+  fl_chart: ^0.35.0
 
 dev_dependencies:
   flutter_test:
