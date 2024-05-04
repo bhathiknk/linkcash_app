@@ -134,6 +134,53 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               child: CalendarWidget(),
             ),
+            const SizedBox(height: 10), // Add some space between the white container and the calendar
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Text(
+                    'Transaction',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 20,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Spacer(), // Add flexible space to push the text to the left
+                ],
+              ),
+            ),
+            Expanded(
+              child: Container(
+                width: double.infinity, // Make container full width
+                padding: const EdgeInsets.all(20), // Add padding to the container
+                decoration: BoxDecoration(
+                  color: Colors.black, // Set container color to black
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width - 10, // Adjust the width as needed
+                      height: 100, // Adjust the height as needed
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10), // Adjust the border radius as needed
+                        ),
+                        // Add child widgets here if needed
+                      ),
+                    ),
+                    // Add your transaction content here
+                  ],
+                ),
+              ),
+            ),
+
+
+
           ],
         ),
       ),
