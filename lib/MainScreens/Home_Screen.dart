@@ -23,23 +23,56 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text('Link Cash'),
-
       ),
       body: Container(
         color: Color(0xFF0054FF),
         child: Column(
           children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
+            Stack(
+              children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
+                  ),
+                  height: 200,
                 ),
-              ),
-              height: 200,
+                const Positioned(
+                  top: 10,
+                  left: 10,
+                  child: Row(
+                    children: [
+                      SizedBox(width: 10), // Add some space between the icon and text
+                      Text(
+                        'Welcome Back',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.waving_hand_rounded, size: 20),
+                    ],
+                  ),
+                ),
+                const Positioned(
+                  top: 30, // Adjust the position as needed
+                  left: 20,
+                  child: Text(
+                    'Bhathika Nilesh',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 20,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ],
             ),
-
           ],
         ),
       ),
