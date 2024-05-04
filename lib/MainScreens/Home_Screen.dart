@@ -71,6 +71,56 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                 ),
+                const Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Icon(Icons.notifications, size: 25, color: Colors.grey),
+                ),
+                Positioned(
+                  top: 80, // Adjust the position as needed
+                  left: 10,
+                  right: 10,
+                  child: Container(
+                    height: 110,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[350], // Grey color container
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.4),
+                          spreadRadius: 1,
+                          blurRadius: 3,
+                          offset: Offset(0, 1), // changes position of shadow
+                        ),
+                      ],
+                    ),
+                    child: const Padding(
+                      padding: EdgeInsets.all(10.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Balance',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 16,
+                              color: Colors.black,
+                            ),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            '\$800.00',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 30,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ],
