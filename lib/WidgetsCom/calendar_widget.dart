@@ -36,7 +36,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
             firstDay: DateTime.utc(2023, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _selectedDay,
-            calendarFormat: CalendarFormat.month, // Set the default calendar format to month
+            calendarFormat: CalendarFormat.month, // default calendar format to month
             availableCalendarFormats: const {
               CalendarFormat.month: '', // Only display the month format
             },

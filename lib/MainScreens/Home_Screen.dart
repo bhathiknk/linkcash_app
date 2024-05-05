@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/calendar_widget.dart';
 
@@ -184,7 +185,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Expanded(
               child: Container(
                 width: double.infinity, // Make container full width
-                padding: const EdgeInsets.all(10), // Add padding to the container
+                padding: const EdgeInsets.all(5), // Add padding to the container
                 decoration: BoxDecoration(
                   color: Color(0xFFE3F2FD),
                   borderRadius: BorderRadius.circular(10),
@@ -205,10 +206,10 @@ class _MyHomePageState extends State<MyHomePage> {
                               borderRadius: BorderRadius.circular(10), // Adjust the border radius
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.5), // Shadow color
+                                  color: Colors.black.withOpacity(0.3), // Shadow color
                                   spreadRadius: 1, // Spread radius
-                                  blurRadius: 3, // Blur radius
-                                  offset: Offset(0, 5), // Shadow offset
+                                  blurRadius: 1, // Blur radius
+                                  offset: Offset(0, 3), // Shadow offset
                                 ),
                               ],
                             ),
