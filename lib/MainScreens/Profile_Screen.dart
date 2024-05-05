@@ -19,7 +19,7 @@ class ProfilePage extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: BottomNavigationBarWithFab(
-        currentIndex: 3, // Set the current index to 2 to highlight the "Link" tab
+        currentIndex: 3,
         onTap: (index) {
           // Handle navigation if needed
         },

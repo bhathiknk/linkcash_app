@@ -19,7 +19,7 @@ class NotificationPage extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: BottomNavigationBarWithFab(
-        currentIndex: 1, // Set the current index to 2 to highlight the "Link" tab
+        currentIndex: 1,
         onTap: (index) {
           // Handle navigation if needed
         },
