@@ -21,16 +21,24 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      ///App bar ///
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Text('Link Cash'),
+        backgroundColor: Color(0xFF0054FF),
+        title: const Text(
+          'Link Cash',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
       ),
+
       body: Container(
-        color: Color(0xFF0054FF),
+        color: Color(0xFFE3F2FD),//background colour
         child: Column(
           children: [
             Stack(
               children: [
+                ///Top White Container///
                 Container(
                   decoration: const BoxDecoration(
                     color: Colors.white,
@@ -41,6 +49,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   height: 200,
                 ),
+
+
+                ///'Welcome Back' text///
                 const Positioned(
                   top: 10,
                   left: 10,
@@ -60,6 +71,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   ),
                 ),
+
+
+                ///'Bhathika Nilesh' text///
                 const Positioned(
                   top: 30, // Adjust the position as needed
                   left: 20,
@@ -72,11 +86,17 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                 ),
+
+
+                ///Notification icon///
                 const Positioned(
                   top: 10,
                   right: 10,
                   child: Icon(Icons.notifications, size: 25, color: Colors.grey),
                 ),
+
+
+                ///balance show container///
                 Positioned(
                   top: 80, // Adjust the position as needed
                   left: 10,
@@ -84,17 +104,19 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Container(
                     height: 110,
                     decoration: BoxDecoration(
-                      color: Colors.grey[350], // Grey color container
+                      color: Color(0xFFE3F2FD),
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.4),
+                          color: Colors.black.withOpacity(0.2),
                           spreadRadius: 1,
                           blurRadius: 3,
                           offset: Offset(0, 1), // changes position of shadow
                         ),
                       ],
                     ),
+
+                    ///Balance text and value///
                     child: const Padding(
                       padding: EdgeInsets.all(10.0),
                       child: Column(
@@ -124,7 +146,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ],
             ),
-            const SizedBox(height: 10), // Add some space between the white container and the calendar
+
+
+            ///calendar container///
+            const SizedBox(height: 10), // space between the white container and the calendar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               width: MediaQuery.of(context).size.width - 10,
@@ -134,53 +159,112 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               child: CalendarWidget(),
             ),
-            const SizedBox(height: 10), // Add some space between the white container and the calendar
+
+            /// 'Transactions' text///
+            const SizedBox(height: 20), // Add some space between the white calendar  container and the Transaction text
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
                   Text(
-                    'Transaction',
+                    'Transactions',
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 20,
-                      color: Colors.white,
+                      color: Colors.black,
                     ),
                   ),
                   Spacer(), // Add flexible space to push the text to the left
                 ],
               ),
             ),
+
+
+            /// Transactions show container///
             Expanded(
               child: Container(
                 width: double.infinity, // Make container full width
-                padding: const EdgeInsets.all(20), // Add padding to the container
+                padding: const EdgeInsets.all(10), // Add padding to the container
                 decoration: BoxDecoration(
-                  color: Colors.black, // Set container color to black
+                  color: Color(0xFFE3F2FD),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width - 10, // Adjust the width as needed
-                      height: 100, // Adjust the height as needed
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10), // Adjust the border radius as needed
-                        ),
-                        // Add child widgets here if needed
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: List.generate(
+                      5, // Number of SizedBox to duplicate
+                          (index) => Column(
+                        children: [
+                          const SizedBox(
+                            height: 20, // Add space between SizedBox widgets
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10), // Adjust the border radius
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.5), // Shadow color
+                                  spreadRadius: 1, // Spread radius
+                                  blurRadius: 3, // Blur radius
+                                  offset: Offset(0, 5), // Shadow offset
+                                ),
+                              ],
+                            ),
+                            child: SizedBox(
+                              width: MediaQuery.of(context).size.width - 10, // Adjust the width
+                              height: 100, // Adjust the height
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align content horizontally
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center, // Align content vertically
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsets.only(left: 8.0),
+                                        child: Text(
+                                          "Payment Link Title",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsets.only(left: 8.0,top: 8.0),
+                                        child: Text(
+                                          "Bhathika",
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: Text(
+                                      "\$300",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    // Add your transaction content here
-                  ],
+                  ),
                 ),
               ),
             ),
-
-
-
           ],
         ),
       ),
