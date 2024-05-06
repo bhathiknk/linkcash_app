@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../WidgetsCom/bottom_navigation_bar.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -145,8 +144,63 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ],
             ),
+            // Added list of containers
+            SizedBox(height: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: List.generate(
+                5, // Number of items in the list
+                    (index) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 5.0),
+                  child: Container(
+                    width: MediaQuery.of(context).size.width - 20,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 1,
+                          blurRadius: 3,
+                          offset: Offset(0, 3), // position of shadow
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 10), // Add spacing between button and text
+            const Padding(
+              padding: EdgeInsets.only(left: 15.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Delete Account',
+                  style: TextStyle(
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 10),
+            const Padding(
+              padding: EdgeInsets.only(left: 15.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Log Out',
+                  style: TextStyle(
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
+
       ),
       bottomNavigationBar: BottomNavigationBarWithFab(
         currentIndex: 3,
