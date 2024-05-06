@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'LogScreen/Register_form.dart';
 import 'MainScreens/Home_Screen.dart';
 import 'MainScreens/Welcome.dart';
 
@@ -13,7 +14,7 @@ class MyApp extends StatelessWidget {
       title: 'Material App',
       initialRoute: WelcomeScreen.routeName,
       routes: {
-        WelcomeScreen.routeName: (context) => MyHomePage(),
+        WelcomeScreen.routeName: (context) => RegisterPage(),
       },
     );
   }
