@@ -9,7 +9,14 @@ class LinkPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: const Color(0xFF0054FF),
+        title: const Text(
+          'Payment Link',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
       ),
       ///body start///
       body: Container(

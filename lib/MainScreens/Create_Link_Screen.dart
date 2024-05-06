@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
+import 'Link_View_Screen.dart';
 
 class CreateLinkPage extends StatefulWidget {
   const CreateLinkPage({Key? key}) : super(key: key);
@@ -242,7 +243,10 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                     style: TextStyle(color: Colors.white), // Text color
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF0054FF), // Background color
+                    backgroundColor: const Color(0xFF0054FF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
                   ),
                 ),
               ],
@@ -256,14 +260,20 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                   width: MediaQuery.of(context).size.width * 0.5, // Adjust width
                   child: ElevatedButton(
                     onPressed: () {
-                      // Add onPressed logic for the save button
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => LinkViewPage()), // Navigate to CreateLinkPage
+                      );
                     },
                     child: Text(
                       'Save',
                       style: TextStyle(color: Colors.white),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF0054FF),
+                      backgroundColor: const Color(0xFF0054FF),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
                     ),
                   ),
                 ),

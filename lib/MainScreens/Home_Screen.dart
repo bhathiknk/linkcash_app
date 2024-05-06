@@ -17,6 +17,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       ///App bar ///
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Color(0xFF0054FF),
         title: const Text(
           'Link Cash',
