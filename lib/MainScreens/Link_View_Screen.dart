@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share/share.dart';
 
 import '../WidgetsCom/bottom_navigation_bar.dart';
 
@@ -101,11 +102,13 @@ class LinkViewPage extends StatelessWidget {
             ),
             const SizedBox(height: 10), // Add spacing
             // Share Link Button
+            // Share Link Button
             Align(
               alignment: Alignment.center,
               child: ElevatedButton(
                 onPressed: () {
-                  // Share link functionality
+                  String link = textEditingController.text;
+                  Share.share(link);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0054FF),
@@ -119,6 +122,7 @@ class LinkViewPage extends StatelessWidget {
                 ),
               ),
             ),
+
 
             /// 'Transactions' text///
             const SizedBox(height: 20), // Add some space between the white calendar  container and the Transaction text

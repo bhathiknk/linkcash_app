@@ -19,14 +19,14 @@ class WelcomeScreen extends StatelessWidget {
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height / 1.6,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Color(0xFF0054FF),
               ),
             ),
             Container(
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height / 1.6,
               decoration: BoxDecoration(
-                color: Color(0xFF9EFFD4),
+                color: Color(0xFF0054FF),
                 borderRadius:
                 BorderRadius.only(bottomRight: Radius.circular(70)),
               ),
@@ -43,7 +43,7 @@ class WelcomeScreen extends StatelessWidget {
                 width: MediaQuery.of(context).size.width,
                 height: MediaQuery.of(context).size.height / 2.666,
                 decoration: BoxDecoration(
-                  color: Color(0xFF9EFFD4),
+                  color: Color(0xFF0054FF),
                 ),
               ),
             ),
@@ -54,7 +54,7 @@ class WelcomeScreen extends StatelessWidget {
                 height: MediaQuery.of(context).size.height / 2.666,
                 padding: EdgeInsets.only(top: 40, bottom: 30),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Color(0xFFE3F2FD),
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(70),
                   ),
@@ -62,7 +62,7 @@ class WelcomeScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
-                      'Your App Name',
+                      'LINK CASH',
                       style: TextStyle(
                         fontSize: 25,
                         fontWeight: FontWeight.w600,
@@ -74,7 +74,7 @@ class WelcomeScreen extends StatelessWidget {
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 40),
                       child: Text(
-                        "Welcome to Your App",
+                        "Welcome to Link Cash App",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 17,
@@ -84,7 +84,7 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 60),
                     Material(
-                        color:Color(0xff22e2ab),
+                        color:Color(0xFF0054FF),
                       borderRadius: BorderRadius.circular(40),
                       child: InkWell(
                         onTap: () {

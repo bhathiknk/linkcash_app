@@ -17,6 +17,7 @@ class LinkPage extends StatelessWidget {
             color: Colors.white,
           ),
         ),
+        centerTitle: true,
       ),
       ///body start///
       body: Container(
@@ -82,6 +83,7 @@ class LinkPage extends StatelessWidget {
                     color: Colors.white,
                   ),
                 ), // Adjust button text style
+
               ),
             ),
             ///Create Link Button End///

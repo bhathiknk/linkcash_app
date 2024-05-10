@@ -23,6 +23,7 @@ class _ProfilePageState extends State<ProfilePage> {
             color: Colors.white,
           ),
         ),
+        centerTitle: true,
       ),
       body: Container(
         color: Color(0xFFE3F2FD), // Background color

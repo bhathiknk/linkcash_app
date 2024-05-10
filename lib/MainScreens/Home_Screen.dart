@@ -20,11 +20,12 @@ class _MyHomePageState extends State<MyHomePage> {
         automaticallyImplyLeading: false,
         backgroundColor: Color(0xFF0054FF),
         title: const Text(
-          'Link Cash',
+          "Link Cash",
           style: TextStyle(
-            color: Colors.white,
+            color: Colors.white, // Set text color to white
           ),
         ),
+        centerTitle: true,
       ),
 
       body: Container(
