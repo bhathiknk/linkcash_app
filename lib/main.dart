@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       title: 'Material App',
       initialRoute: WelcomeScreen.routeName,
       routes: {
-        WelcomeScreen.routeName: (context) => RegisterPage(),
+        WelcomeScreen.routeName: (context) => MyHomePage(),
       },
     );
   }
