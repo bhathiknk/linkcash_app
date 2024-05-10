@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import 'Link_View_Screen.dart';
 
@@ -11,6 +14,7 @@ class CreateLinkPage extends StatefulWidget {
 
 class _CreateLinkPageState extends State<CreateLinkPage> {
   String? selectedOption;
+  String? imagePath;
 
   @override
   Widget build(BuildContext context) {
@@ -19,11 +23,11 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
         backgroundColor: const Color(0xFF0054FF),
         title: const Text(
           "Create Link",
-          style: TextStyle(fontSize: 20, color: Colors.white), // Title Text Style
+          style: TextStyle(fontSize: 20, color: Colors.white),
         ),
       ),
       body: Container(
-        color: const Color(0xFFE3F2FD), // Background color for the body
+        color: const Color(0xFFE3F2FD),
         padding: const EdgeInsets.all(10.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,7 +37,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
               padding: const EdgeInsets.symmetric(horizontal: 10.0),
               child: Text(
                 "Title",
-                style: TextStyle(fontSize: 16, color: Colors.black), // Text Style
+                style: TextStyle(fontSize: 16, color: Colors.black),
               ),
             ),
             // Title Input Field
@@ -70,7 +74,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
               padding: const EdgeInsets.symmetric(horizontal: 10.0),
               child: Text(
                 "Description",
-                style: TextStyle(fontSize: 16, color: Colors.black), // Text Style
+                style: TextStyle(fontSize: 16, color: Colors.black),
               ),
             ),
             // Description Large Input Field
@@ -108,7 +112,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
               padding: const EdgeInsets.symmetric(horizontal: 10.0),
               child: Text(
                 "Amount",
-                style: TextStyle(fontSize: 16, color: Colors.black), // Text Style
+                style: TextStyle(fontSize: 16, color: Colors.black),
               ),
             ),
             // Amount Input Field
@@ -146,7 +150,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
               padding: const EdgeInsets.symmetric(horizontal: 10.0),
               child: Text(
                 "Expire After",
-                style: TextStyle(fontSize: 16, color: Colors.black), // Text Style
+                style: TextStyle(fontSize: 16, color: Colors.black),
               ),
             ),
             SizedBox(height: 10),
@@ -197,7 +201,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                                 title: Text('Remember'),
                                 content: Text(
                                   'If one time selected, link will expire immediately after the payment',
-                                  style: TextStyle(color: Colors.red,fontSize: 18), // Set text color to red
+                                  style: TextStyle(color: Colors.red,fontSize: 18),
                                 ),
                                 actions: [
                                   TextButton(
@@ -218,67 +222,135 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
               ),
             ),
 
-            SizedBox(height: 60),
-
+            SizedBox(height: 20),
             // Image Input
-            Row(
-              mainAxisSize: MainAxisSize.min, // Lock the row size
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                  child: Image.asset(
-                    'lib/images/coverimage.jpg', // Default image path
-                    width: 200,
-                    height: 100,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    // Add onPressed logic for the button
-                  },
-                  child: Text(
-                    'Select Cover Image',
-                    style: TextStyle(color: Colors.white), // Text color
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0054FF),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            // Save Button
             Expanded(
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.5, // Adjust width
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => LinkViewPage()), // Navigate to CreateLinkPage
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      // Show a dialog with options to remove/change image
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('Image Options'),
+                            content: Text('Do you want to remove or change the image?'),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    imagePath = null; // Remove the image
+                                    Navigator.of(context).pop();
+                                  });
+                                },
+                                child: Text('Remove'),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  final picker = ImagePicker();
+                                  final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+                                  if (pickedFile != null) {
+                                    setState(() {
+                                      imagePath = pickedFile.path; // Change the image
+                                      Navigator.of(context).pop();
+                                    });
+                                  }
+                                },
+                                child: Text('Change'),
+                              ),
+                            ],
+                          );
+                        },
                       );
                     },
-                    child: Text(
-                      'Save',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0054FF),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
+                    child: Center(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.6),
+                              spreadRadius: 6,
+                              blurRadius: 9,
+                              offset: Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          alignment: Alignment.bottomCenter, // Align the children at the bottom
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              child: imagePath != null
+                                  ? Image.file(
+                                File(imagePath!),
+                                width: 250,
+                                height: 150, // Increase the height here
+                                fit: BoxFit.cover,
+                              )
+                                  : Image.asset(
+                                'lib/images/coverimage.jpg',
+                                width: 250,
+                                height: 160, // Increase the height here
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Container(
+                              width: 250,
+                              height: 40,
+                              alignment: Alignment.center,
+                              padding: EdgeInsets.all(8.0), // Adjust padding
+                              color: Colors.grey.withOpacity(0.7), // Grey color with opacity
+                              child: Text(
+                                'Select Cover Image',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
+
+                  // Save Button
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.5,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => LinkViewPage()),
+                            );
+                          },
+                          child: Text(
+                            'Save',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0054FF),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+
+
           ],
         ),
       ),
