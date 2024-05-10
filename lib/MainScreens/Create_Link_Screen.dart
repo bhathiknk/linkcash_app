@@ -200,7 +200,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                               return AlertDialog(
                                 title: Text('Remember'),
                                 content: Text(
-                                  'If one time selected, link will expire immediately after the payment',
+                                  'If one time selected, link will expire immediately after the payment.',
                                   style: TextStyle(color: Colors.red,fontSize: 18),
                                 ),
                                 actions: [
@@ -230,41 +230,83 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      // Show a dialog with options to remove/change image
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('Image Options'),
-                            content: Text('Do you want to remove or change the image?'),
-                            actions: <Widget>[
-                              TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    imagePath = null; // Remove the image
+                      if (imagePath == null) {
+                        // Show a dialog with option to add an image
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text('Image Options'),
+                              content: Text('Do you want to add an image?'),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed: () async {
+                                    final picker = ImagePicker();
+                                    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+                                    if (pickedFile != null) {
+                                      setState(() {
+                                        imagePath = pickedFile.path; // Handle adding an image
+                                        Navigator.of(context).pop();
+                                      });
+                                    }
+                                  },
+                                  child: Text('Add'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
                                     Navigator.of(context).pop();
-                                  });
-                                },
-                                child: Text('Remove'),
-                              ),
-                              TextButton(
-                                onPressed: () async {
-                                  final picker = ImagePicker();
-                                  final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-                                  if (pickedFile != null) {
+                                  },
+                                  child: Text('Cancel'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      } else {
+                        // Show a dialog with options to remove/change image
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text('Image Options'),
+                              content: Text('Do you want to remove or change the image?'),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed: () {
                                     setState(() {
-                                      imagePath = pickedFile.path; // Change the image
+                                      imagePath = null; // Remove the image
                                       Navigator.of(context).pop();
                                     });
-                                  }
-                                },
-                                child: Text('Change'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
+                                  },
+                                  child: Text('Remove'),
+                                ),
+                                TextButton(
+                                  onPressed: () async {
+                                    final picker = ImagePicker();
+                                    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+                                    if (pickedFile != null) {
+                                      setState(() {
+                                        imagePath = pickedFile.path; // Change the image
+                                        Navigator.of(context).pop();
+                                      });
+                                    }
+                                  },
+                                  child: Text('Change'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Text('Cancel'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }
                     },
+
+
                     child: Center(
                       child: Container(
                         decoration: BoxDecoration(
