@@ -24,12 +24,11 @@ class _BottomNavigationBarWithFabState
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: ThemeData(
-        splashColor: Colors.transparent, // Make splash color transparent
-        highlightColor: Colors.transparent, // Make highlight color transparent
+      data: Theme.of(context).copyWith(
+        canvasColor: Color(0xFFFFFFFF), // Set the background color of the BottomNavigationBar
       ),
       child: BottomNavigationBar(
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.transparent, // Set background color of the BottomNavigationBar to be transparent
         elevation: 0.0, // Remove the default shadow effect
         currentIndex: widget.currentIndex,
         onTap: (index) {
@@ -41,11 +40,10 @@ class _BottomNavigationBarWithFabState
               );
               break;
             case 1:
-
-            Navigator.push(
-             context,
-             MaterialPageRoute(builder: (context) => NotificationPage()),
-            );
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationPage()),
+              );
               break;
             case 2:
               Navigator.push(
@@ -54,16 +52,15 @@ class _BottomNavigationBarWithFabState
               );
               break;
             case 3:
-
-             Navigator.push(
-               context,
-               MaterialPageRoute(builder: (context) => ProfilePage()),
-             );
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProfilePage()),
+              );
               break;
           }
         },
         unselectedItemColor: Colors.black, // Set the unselected item color to black
-        selectedItemColor: Colors.blue, // Set the selected item color to blue
+        selectedItemColor: Color(0xFF0054FF), // Set the selected item color to blue
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_rounded),
