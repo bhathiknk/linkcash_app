@@ -4,6 +4,7 @@ import 'package:flutter_share/flutter_share.dart';
 
 
 import '../WidgetsCom/bottom_navigation_bar.dart';
+import '../WidgetsCom/dark_mode_handler.dart';
 
 class LinkViewPage extends StatefulWidget {
   const LinkViewPage({Key? key}) : super(key: key);
@@ -19,7 +20,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0054FF),
+        backgroundColor: DarkModeHandler.getAppBarColor(),
         title: const Text(
           'Link View Page',
           style: TextStyle(
@@ -28,7 +29,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
         ),
       ),
       body: Container(
-        color: const Color(0xFFE3F2FD),
+        color: DarkModeHandler.getBackgroundColor(),
         padding: const EdgeInsets.all(10.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,7 +54,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
               padding: const EdgeInsets.symmetric(horizontal: 10.0),
               child: Text(
                 "Payment Link",
-                style: TextStyle(fontSize: 16, color: Colors.black),
+                style: TextStyle(fontSize: 16, color:DarkModeHandler.getTextColor()),
               ),
             ),
             const SizedBox(height: 5),
@@ -63,10 +64,10 @@ class _LinkViewPageState extends State<LinkViewPage> {
                 borderRadius: BorderRadius.circular(10.0),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.5),
+                    color: const Color(0xff000000).withOpacity(0.3),
                     spreadRadius: 1,
-                    blurRadius: 3,
-                    offset: const Offset(0, 2),
+                    blurRadius: 1,
+                    offset: Offset(2, 2), // changes position of shadow
                   ),
                 ],
               ),
@@ -134,7 +135,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
               ),
             ),
             const SizedBox(height: 20),
-            const Padding(
+             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
@@ -143,97 +144,105 @@ class _LinkViewPageState extends State<LinkViewPage> {
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 20,
-                      color: Colors.black,
+                        color:DarkModeHandler.getTextColor(),
                     ),
                   ),
                   Spacer(),
                 ],
               ),
             ),
+
+
+            ///Transactions containers///
             Expanded(
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: Color(0xFFE3F2FD),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: List.generate(
-                      5,
-                          (index) => Column(
-                        children: [
-                          const SizedBox(
-                            height: 20,
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.3),
-                                  spreadRadius: 1,
-                                  blurRadius: 1,
-                                  offset: Offset(0, 3),
-                                ),
-                              ],
+              child: Align(
+                alignment: Alignment.center,
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: DarkModeHandler.getBackgroundColor(),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: List.generate(
+                        5,
+                            (index) => Column(
+                          children: [
+                            const SizedBox(
+                              height: 20,
                             ),
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width - 10,
-                              height: 100,
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Padding(
-                                        padding: EdgeInsets.only(left: 8.0),
-                                        child: Text(
-                                          "Payment Link Title",
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.only(left: 8.0,top: 8.0),
-                                        child: Text(
-                                          "Bhathika",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: Text(
-                                      "\$300",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green,
-                                      ),
-                                    ),
+                            Container(
+                              width: MediaQuery.of(context).size.width - 23, // Adjust width here
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xff000000).withOpacity(0.3),
+                                    spreadRadius: 1,
+                                    blurRadius: 1,
+                                    offset: Offset(2, 2), // changes position of shadow
                                   ),
                                 ],
                               ),
+                              child: SizedBox(
+                                width: double.infinity, // Make the SizedBox expand to fit the container width
+                                height: 100,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Padding(
+                                          padding: EdgeInsets.only(left: 8.0),
+                                          child: Text(
+                                            "Payment Link Title",
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.only(left: 8.0, top: 8.0),
+                                          child: Text(
+                                            "Bhathika",
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: Text(
+                                        "\$300",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.green,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
             ),
+
+
           ],
         ),
       ),

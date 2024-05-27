@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../MainScreens/Home_Screen.dart';
 import 'Register_form.dart';
 import 'login_form.dart';
 
@@ -13,6 +14,16 @@ class LoginPage extends StatelessWidget {
         color: const Color(0xFF0054FF), // Background color for the body
         child: Column(
           children: [
+
+            SizedBox(height: 50), // Add some top padding if needed
+            Center(
+              child: Image.asset(
+                'lib/images/signIn.png',
+                width: 150, // Set the width of the logo
+                height: 150, // Set the height of the logo
+              ),
+            ),
+
             Expanded(
               child: Container(), // Empty container to fill space
             ),
@@ -139,10 +150,14 @@ class LoginPage extends StatelessWidget {
       width: 200,
       child: ElevatedButton(
         onPressed: () {
-          // Action when sign up button is pressed
+          // Navigate to MyHomePage after sign up button is pressed
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => MyHomePage()),
+          );
         },
         child: Text(
-          'Sign Up',
+          'Sign In',
           style: TextStyle(color: Colors.white), // Text color
         ),
         style: ElevatedButton.styleFrom(

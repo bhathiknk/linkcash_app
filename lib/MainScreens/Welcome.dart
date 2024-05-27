@@ -32,8 +32,9 @@ class WelcomeScreen extends StatelessWidget {
               ),
               child: Center(
                 child: Image.asset(
-                  'lib/images/welcome2.png',
-                  scale: 0.8,
+                  'lib/images/logo.png',
+                  width: 350, // Set the width of the logo
+                  height: 350, // Set the height of the logo
                 ),
               ),
             ),
@@ -61,15 +62,6 @@ class WelcomeScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    Text(
-                      'LINK CASH',
-                      style: TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1,
-                        wordSpacing: 2,
-                      ),
-                    ),
                     SizedBox(height: 15),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 40),
@@ -77,12 +69,12 @@ class WelcomeScreen extends StatelessWidget {
                         "Welcome to Link Cash App",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 17,
+                          fontSize: 20,
                           color: Colors.black.withOpacity(0.6),
                         ),
                       ),
                     ),
-                    SizedBox(height: 60),
+                    SizedBox(height: 40),
                     Material(
                         color:Color(0xFF0054FF),
                       borderRadius: BorderRadius.circular(40),

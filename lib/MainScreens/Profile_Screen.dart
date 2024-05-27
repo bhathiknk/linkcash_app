@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
+import '../WidgetsCom/dark_mode_handler.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -9,14 +10,14 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  bool isDarkMode = false; // Initially set to false for light mode
+  bool isDarkMode = DarkModeHandler.isDarkMode;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Color(0xFF0054FF),
+        backgroundColor: DarkModeHandler.getAppBarColor(),
         title: const Text(
           'Profile',
           style: TextStyle(
@@ -26,15 +27,14 @@ class _ProfilePageState extends State<ProfilePage> {
         centerTitle: true,
       ),
       body: Container(
-        color: Color(0xFFE3F2FD), // Background color
+        color: DarkModeHandler.getBackgroundColor(),
         child: Column(
           children: [
             Stack(
               children: [
-                // Top White Container
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: DarkModeHandler.getTopContainerColor(),
                     borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(20),
                       bottomRight: Radius.circular(20),
@@ -42,75 +42,44 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   height: 200,
                 ),
-
-                // Notification icon
                 Positioned(
                   top: 10,
                   right: 10,
                   child: Icon(Icons.edit, size: 25, color: Colors.grey),
                 ),
-
-                // Profile Image Container
                 Positioned(
-                  top: 30, // Adjust the top position as needed
-                  left: MediaQuery.of(context).size.width / 2 - 50, // Center horizontally
+                  top: 40,
+                  left: MediaQuery.of(context).size.width / 2 - 70,
                   child: Container(
-                    width: 100,
-                    height: 100,
+                    width: 130,
+                    height: 130,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.black, width: 2),
                     ),
                     child: ClipOval(
                       child: Image.asset(
-                        'lib/images/coverimage.jpg', // Profile image path
+                        'lib/images/coverimage.jpg',
                         fit: BoxFit.cover,
                       ),
                     ),
                   ),
                 ),
-
-                // Text underneath profile image
-                Positioned(
-                  top: 140, // Adjust the top position as needed
-                  left: MediaQuery.of(context).size.width / 2 - 70, // Center horizontally
-                  child: Column(
-                    children: [
-                      Text(
-                        'Bhathika Niles',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'bhathika@gmail.com',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // On/Off Switch Button
                 Positioned(
                   top: 5,
                   left: 5,
                   child: GestureDetector(
-                    onTap: () {
+                    onTap: () async {
+                      await DarkModeHandler.toggleDarkMode();
                       setState(() {
-                        isDarkMode = !isDarkMode; // Toggle the mode
+                        isDarkMode = DarkModeHandler.isDarkMode;
                       });
                     },
                     child: AnimatedContainer(
                       duration: Duration(milliseconds: 600),
                       padding: EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: isDarkMode ? Colors.black : Colors.blue[300], // Toggle color based on mode
+                        color: isDarkMode ? Colors.black : Colors.blue[300],
                         borderRadius: BorderRadius.circular(15),
                         boxShadow: [
                           BoxShadow(
@@ -125,13 +94,13 @@ class _ProfilePageState extends State<ProfilePage> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            isDarkMode ? Icons.nightlight_round : Icons.wb_sunny_rounded, // Toggle icon based on mode
+                            isDarkMode ? Icons.nightlight_round : Icons.wb_sunny_rounded,
                             size: 25,
                             color: Colors.yellow,
                           ),
                           SizedBox(width: 4),
                           Text(
-                            isDarkMode ? 'Dark Mode' : 'Light Mode', // Toggle text based on mode
+                            isDarkMode ? 'Dark Mode' : 'Light Mode',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -145,36 +114,86 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ],
             ),
-            // Added list of containers
             SizedBox(height: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: List.generate(
-                5, // Number of items in the list
-                    (index) => Padding(
+              children: List.generate(5, (index) {
+                IconData icon;
+                String title;
+                switch (index) {
+                  case 0:
+                    icon = Icons.person;
+                    title = 'Bhathika Nilesh';
+                    break;
+                  case 1:
+                    icon = Icons.email;
+                    title = 'bhathika@gmail.com';
+                    break;
+                  case 2:
+                    icon = Icons.phone;
+                    title = '11111111111';
+                    break;
+                  case 3:
+                    icon = Icons.settings;
+                    title = 'Settings';
+                    break;
+                  case 4:
+                    icon = Icons.support;
+                    title = 'Support';
+                    break;
+                  default:
+                    icon = Icons.error;
+                    title = 'Error';
+                    break;
+                }
+                return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 5.0),
                   child: Container(
                     width: MediaQuery.of(context).size.width - 20,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: DarkModeHandler.getCalendarContainerColor(),
                       borderRadius: BorderRadius.circular(10.0),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
+                          color: const Color(0xff000000).withOpacity(0.3),
                           spreadRadius: 1,
-                          blurRadius: 3,
-                          offset: Offset(0, 3), // position of shadow
+                          blurRadius: 1,
+                          offset: Offset(2, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Icon(
+                            icon,
+                            size: 30,
+                            color: const Color(0xFF0012fb),
+                          ),
+                        ),
+                        Expanded(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                title,
+                                style: TextStyle(fontSize: 18, color: DarkModeHandler.getTextColor(),),
+                              ),
+                              if (index == 3 || index == 4)
+                                Icon(Icons.arrow_forward_ios),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ),
-              ),
+                );
+              }),
             ),
-
-            SizedBox(height: 10), // Add spacing between button and text
-            const Padding(
+            SizedBox(height: 5),
+            Padding(
               padding: EdgeInsets.only(left: 15.0),
               child: Align(
                 alignment: Alignment.centerLeft,
@@ -182,12 +201,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   'Delete Account',
                   style: TextStyle(
                     fontSize: 15,
+                    color: DarkModeHandler.getTextColor(),
                   ),
                 ),
               ),
             ),
-            SizedBox(height: 10),
-            const Padding(
+            SizedBox(height: 5),
+            Padding(
               padding: EdgeInsets.only(left: 15.0),
               child: Align(
                 alignment: Alignment.centerLeft,
@@ -195,13 +215,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   'Log Out',
                   style: TextStyle(
                     fontSize: 15,
+                    color: DarkModeHandler.getTextColor(),
                   ),
                 ),
               ),
             ),
           ],
         ),
-
       ),
       bottomNavigationBar: BottomNavigationBarWithFab(
         currentIndex: 3,

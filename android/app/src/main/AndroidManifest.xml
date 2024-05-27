@@ -4,7 +4,7 @@
 
 
     <application
-        android:label="linkcash_app"
+        android:label="LinkCash"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -1,0 +1,50 @@
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class DarkModeHandler {
+  static bool isDarkMode = false;
+
+  static Future<void> initialize() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    isDarkMode = prefs.getBool('isDarkMode') ?? false;
+  }
+
+  static Future<void> toggleDarkMode() async {
+    isDarkMode = !isDarkMode;
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkMode', isDarkMode);
+  }
+
+  static Color getBackgroundColor() {
+    return isDarkMode ? Color(0xFF303030) : const Color(0xFFE3F2FD);
+  }
+
+  static Color getTextColor() {
+    return isDarkMode ? Colors.white : Colors.black;
+  }
+
+  static Color getAppBarColor() {
+    return isDarkMode ? Colors.black : const Color(0xFF0012fb);
+  }
+
+  static Color getTopContainerColor() {
+    return isDarkMode ? Color(0xFF212121) : Colors.white;
+  }
+
+  static Color getCalendarContainerColor() {
+    return isDarkMode ? Color(0xFF424242) : Colors.white;
+  }
+  static Color getCalendarTextColor() {
+    return isDarkMode ? Colors.white : Colors.black;
+  }
+
+  static Color getContainersShadowColor() {
+    return isDarkMode ? Color(0xFF000000) : Color(0xff000000).withOpacity(0.3);
+  }
+
+  static Color getInputTextColor() {
+    return isDarkMode ? Color(0xFFFFFFFF) : Color(0xff6b6b6b).withOpacity(0.3);
+  }
+}

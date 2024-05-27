@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
-import 'login_form.dart';
+import '../MainScreens/Home_Screen.dart';
+import 'login_form.dart'; // Ensure this import matches your actual file structure
 
 class RegisterPage extends StatelessWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -12,6 +12,14 @@ class RegisterPage extends StatelessWidget {
         color: const Color(0xFF0054FF), // Background color for the body
         child: Column(
           children: [
+            SizedBox(height: 50), // Add some top padding if needed
+            Center(
+              child: Image.asset(
+                'lib/images/signup.png',
+                width: 150, // Set the width of the logo
+                height: 150, // Set the height of the logo
+              ),
+            ),
             Expanded(
               child: Container(), // Empty container to fill space
             ),
@@ -136,13 +144,16 @@ class RegisterPage extends StatelessWidget {
     );
   }
 
-
   Widget _buildSignUpButton(BuildContext context) {
     return SizedBox(
       width: 200,
       child: ElevatedButton(
         onPressed: () {
-          // Action when sign up button is pressed
+          // Navigate to MyHomePage after sign up button is pressed
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => MyHomePage()),
+          );
         },
         child: Text(
           'Sign Up',

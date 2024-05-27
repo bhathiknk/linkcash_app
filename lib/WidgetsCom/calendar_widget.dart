@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import 'dark_mode_handler.dart';
+
 class CalendarWidget extends StatefulWidget {
   const CalendarWidget({Key? key}) : super(key: key);
 
@@ -40,19 +42,32 @@ class _CalendarWidgetState extends State<CalendarWidget> {
             availableCalendarFormats: const {
               CalendarFormat.month: '', // Only display the month format
             },
-            headerStyle: const HeaderStyle(
+            headerStyle: HeaderStyle(
               titleCentered: true,
+              titleTextStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set title text color
+              leftChevronIcon: Icon(
+                Icons.chevron_left,
+                color: DarkModeHandler.getCalendarTextColor(), // Set left arrow color
+              ),
+              rightChevronIcon: Icon(
+                Icons.chevron_right,
+                color: DarkModeHandler.getCalendarTextColor(), // Set right arrow color
+              ),
             ),
-            calendarStyle: const CalendarStyle(
+            calendarStyle: CalendarStyle(
               outsideDaysVisible: false, // Hide days outside the month
-              todayDecoration: BoxDecoration(
+              todayDecoration: const BoxDecoration(
                 color: Color(0xFF0054FF), // Highlight color for the current date
                 shape: BoxShape.circle,
               ),
+              defaultTextStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set default text color
+              weekendTextStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set weekend text color
+              selectedTextStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set selected text color
+              todayTextStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set today text color
             ),
-            daysOfWeekStyle: const DaysOfWeekStyle(
-              weekdayStyle: TextStyle(color: Colors.black),
-              weekendStyle: TextStyle(color: Colors.black),
+            daysOfWeekStyle: DaysOfWeekStyle(
+              weekdayStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set weekday text color
+              weekendStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set weekend text color
             ),
             onDaySelected: _onDaySelected,
             rowHeight: 36, // Adjust the row height to reduce the gap between days

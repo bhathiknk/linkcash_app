@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/calendar_widget.dart';
+import '../WidgetsCom/dark_mode_handler.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -11,6 +12,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  bool isDarkMode = DarkModeHandler.isDarkMode;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +20,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ///App bar ///
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Color(0xFF0054FF),
+        backgroundColor: DarkModeHandler.getAppBarColor(),
         title: const Text(
           "Link Cash",
           style: TextStyle(
@@ -29,15 +31,15 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
 
       body: Container(
-        color: Color(0xFFE3F2FD),//background colour
+        color: DarkModeHandler.getBackgroundColor(),
         child: Column(
           children: [
             Stack(
               children: [
                 ///Top White Container///
                 Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: DarkModeHandler.getTopContainerColor(),
                     borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(20),
                       bottomRight: Radius.circular(20),
@@ -63,14 +65,14 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                       ),
                       SizedBox(width: 8),
-                      Icon(Icons.waving_hand_rounded, size: 20),
+                      Icon(Icons.waving_hand_rounded, size: 20,color: Colors.grey),
                     ],
                   ),
                 ),
 
 
                 ///'Bhathika Nilesh' text///
-                const Positioned(
+                 Positioned(
                   top: 30, // Adjust the position as needed
                   left: 20,
                   child: Text(
@@ -78,7 +80,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 20,
-                      color: Colors.black,
+                        color: DarkModeHandler.getCalendarTextColor(),
                     ),
                   ),
                 ),
@@ -100,20 +102,21 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Container(
                     height: 110,
                     decoration: BoxDecoration(
-                      color: Color(0xFFE3F2FD),
+                      //background color called//
+                      color: DarkModeHandler.getBackgroundColor(),
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: const Color(0xff000000).withOpacity(0.3),
                           spreadRadius: 1,
-                          blurRadius: 3,
-                          offset: Offset(0, 1), // changes position of shadow
+                          blurRadius: 1,
+                          offset: Offset(3, 3), // changes position of shadow
                         ),
                       ],
                     ),
 
                     ///Balance text and value///
-                    child: const Padding(
+                    child:  Padding(
                       padding: EdgeInsets.all(10.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,7 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 16,
-                              color: Colors.black,
+                              color: DarkModeHandler.getTextColor(),
                             ),
                           ),
                           SizedBox(height: 5),
@@ -132,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 30,
-                              color: Colors.black,
+                              color: DarkModeHandler.getTextColor(),
                             ),
                           ),
                         ],
@@ -148,17 +151,25 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(height: 10), // space between the white container and the calendar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              width: MediaQuery.of(context).size.width - 10,
+              width: MediaQuery.of(context).size.width - 20,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color:DarkModeHandler.getCalendarContainerColor(),
                 borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xff000000).withOpacity(0.3),
+                    spreadRadius: 1,
+                    blurRadius: 1,
+                    offset: Offset(2, 2), // changes position of shadow
+                  ),
+                ],
               ),
               child: CalendarWidget(),
             ),
 
             /// 'Transactions' text///
             const SizedBox(height: 20), // Add some space between the white calendar  container and the Transaction text
-            const Padding(
+             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
@@ -167,7 +178,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 20,
-                      color: Colors.black,
+                      color: DarkModeHandler.getTextColor(),
                     ),
                   ),
                   Spacer(), // Add flexible space to push the text to the left
@@ -178,89 +189,96 @@ class _MyHomePageState extends State<MyHomePage> {
 
             /// Transactions show container///
             Expanded(
-              child: Container(
-                width: double.infinity, // Make container full width
-                padding: const EdgeInsets.all(5), // Add padding to the container
-                decoration: BoxDecoration(
-                  color: Color(0xFFE3F2FD),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: List.generate(
-                      5, // Number of SizedBox to duplicate
-                          (index) => Column(
-                        children: [
-                          const SizedBox(
-                            height: 20, // Add space between SizedBox widgets
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10), // Adjust the border radius
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.3), // Shadow color
-                                  spreadRadius: 1, // Spread radius
-                                  blurRadius: 1, // Blur radius
-                                  offset: Offset(0, 3), // Shadow offset
-                                ),
-                              ],
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal, // Allow scrolling horizontally
+                child: Row(
+                  children: List.generate(
+                    5, // Number of containers to generate
+                        (index) => Padding(
+                      padding: const EdgeInsets.all(9.0), // Add padding between containers
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 0.8, // Adjust the width of the container
+                        decoration: BoxDecoration(
+                          color: DarkModeHandler.getBackgroundColor(),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(
+                              height: 20, // Add space between SizedBox widgets
                             ),
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width - 10, // Adjust the width
-                              height: 100, // Adjust the height
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align content horizontally
-                                children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center, // Align content vertically
-                                    children: [
-                                      Padding(
-                                        padding: EdgeInsets.only(left: 8.0),
-                                        child: Text(
-                                          "Payment Link Title",
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.only(left: 8.0,top: 8.0),
-                                        child: Text(
-                                          "Bhathika",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: Text(
-                                      "\$300",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green,
-                                      ),
-                                    ),
+                            Container(
+                              width: MediaQuery.of(context).size.width * 0.75, // Adjust the width of the inner container
+                              decoration: BoxDecoration(
+                                color: DarkModeHandler.getCalendarContainerColor(),
+                                borderRadius: BorderRadius.circular(10), // Adjust the border radius
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xff000000).withOpacity(0.3),
+                                    spreadRadius: 1,
+                                    blurRadius: 1,
+                                    offset: Offset(2, 2), // changes position of shadow
                                   ),
                                 ],
                               ),
+                              child: SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.75, // Adjust the width
+                                height: 100, // Adjust the height
+                                child:  Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align content horizontally
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.center, // Align content vertically
+                                      children: [
+                                        Padding(
+                                          padding: EdgeInsets.only(left: 8.0),
+                                          child: Text(
+                                            "Payment Link Title",
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: DarkModeHandler.getTextColor(),
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.only(left: 8.0,top: 8.0),
+                                          child: Text(
+                                            "Bhathika",
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: DarkModeHandler.getTextColor(),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: Text(
+                                        "+ \$300",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: DarkModeHandler.getTextColor(),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
             ),
+
           ],
         ),
       ),
