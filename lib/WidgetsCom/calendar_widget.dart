@@ -63,7 +63,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
               defaultTextStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set default text color
               weekendTextStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set weekend text color
               selectedTextStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set selected text color
-              todayTextStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set today text color
+              todayTextStyle: TextStyle(color: Colors.white), // Set today text color
             ),
             daysOfWeekStyle: DaysOfWeekStyle(
               weekdayStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set weekday text color

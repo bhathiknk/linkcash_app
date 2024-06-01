@@ -5,10 +5,10 @@ packages:
     dependency: transitive
     description:
       name: archive
-      sha256: ecf4273855368121b1caed0d10d4513c7241dfc813f7d3c8933b36622ae9b265
+      sha256: "6bd38d335f0954f5fad9c79e614604fbf03a0e5b975923dd001b6ea965ef5b4b"
       url: "https://pub.dev"
     source: hosted
-    version: "3.5.1"
+    version: "3.6.0"
   args:
     dependency: transitive
     description:
@@ -81,6 +81,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.18.0"
+  connectivity_plus:
+    dependency: "direct main"
+    description:
+      name: connectivity_plus
+      sha256: b74247fad72c171381dbe700ca17da24deac637ab6d43c343b42867acb95c991
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.6"
+  connectivity_plus_platform_interface:
+    dependency: transitive
+    description:
+      name: connectivity_plus_platform_interface
+      sha256: cf1d1c28f4416f8c654d7dc3cd638ec586076255d407cef3ddbdaf178272a71a
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.4"
   cross_file:
     dependency: transitive
     description:
@@ -105,6 +121,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.8"
+  dbus:
+    dependency: transitive
+    description:
+      name: dbus
+      sha256: "365c771ac3b0e58845f39ec6deebc76e3276aa9922b0cc60840712094d9047ac"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.10"
   fake_async:
     dependency: transitive
     description:
@@ -194,10 +218,10 @@ packages:
     dependency: transitive
     description:
       name: flutter_plugin_android_lifecycle
-      sha256: "8cf40eebf5dec866a6d1956ad7b4f7016e6c0cc69847ab946833b7d43743809f"
+      sha256: c6b0b4c05c458e1c01ad9bcc14041dd7b1f6783d487be4386f793f47a8a4d03e
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.19"
+    version: "2.0.20"
   flutter_share:
     dependency: "direct main"
     description:
@@ -260,10 +284,10 @@ packages:
     dependency: transitive
     description:
       name: image_picker_android
-      sha256: "0f57fee1e8bfadf8cc41818bbcd7f72e53bb768a54d9496355d5e8a5681a19f1"
+      sha256: c01a23e2dc3a71330e96705e08115f9e1d63780fc54f09b8a31d5e8a6881ca33
       url: "https://pub.dev"
     source: hosted
-    version: "0.8.12+1"
+    version: "0.8.12+2"
   image_picker_for_web:
     dependency: transitive
     description:
@@ -320,6 +344,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.19.0"
+  js:
+    dependency: transitive
+    description:
+      name: js
+      sha256: f2c445dce49627136094980615a031419f7f3eb393237e4ecd97ac15dea343f3
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.7"
   leak_tracker:
     dependency: transitive
     description:
@@ -400,6 +432,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+  nm:
+    dependency: transitive
+    description:
+      name: nm
+      sha256: "2c9aae4127bdc8993206464fcc063611e0e36e72018696cd9631023a31b24254"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.0"
   octo_image:
     dependency: transitive
     description:
@@ -436,10 +476,10 @@ packages:
     dependency: transitive
     description:
       name: path_provider_android
-      sha256: a248d8146ee5983446bf03ed5ea8f6533129a12b11f12057ad1b4a67a2b3b41d
+      sha256: "9c96da072b421e98183f9ea7464898428e764bc0ce5567f27ec8693442e72514"
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.4"
+    version: "2.2.5"
   path_provider_foundation:
     dependency: transitive
     description:
@@ -524,10 +564,10 @@ packages:
     dependency: transitive
     description:
       name: shared_preferences_android
-      sha256: "1ee8bf911094a1b592de7ab29add6f826a7331fb854273d55918693d5364a1f2"
+      sha256: "93d0ec9dd902d85f326068e6a899487d1f65ffcd5798721a95330b26c8131577"
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.2"
+    version: "2.2.3"
   shared_preferences_foundation:
     dependency: transitive
     description:
@@ -745,10 +785,10 @@ packages:
     dependency: transitive
     description:
       name: win32
-      sha256: "0eaf06e3446824099858367950a813472af675116bf63f008a4c2a75ae13e9cb"
+      sha256: a79dbe579cb51ecd6d30b17e0cae4e0ea15e2c0e66f69ad4198f22a6789e94f4
       url: "https://pub.dev"
     source: hosted
-    version: "5.5.0"
+    version: "5.5.1"
   xdg_directories:
     dependency: transitive
     description:
@@ -766,5 +806,5 @@ packages:
     source: hosted
     version: "6.5.0"
 sdks:
-  dart: ">=3.3.0 <4.0.0"
-  flutter: ">=3.19.2"
+  dart: ">=3.4.0 <4.0.0"
+  flutter: ">=3.22.0"

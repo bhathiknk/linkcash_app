@@ -42,7 +42,7 @@ class LinkPage extends StatelessWidget {
               height: 50.0,
               child: Container(
                 decoration: BoxDecoration(
-                  color: DarkModeHandler.getCalendarContainerColor(),
+                  color: DarkModeHandler.getMainContainersColor(),
                   borderRadius: BorderRadius.circular(10.0),
                 ),
                 child: Padding(
@@ -94,7 +94,7 @@ class LinkPage extends StatelessWidget {
                   'Saved Link History',
                   style: TextStyle(
                     fontSize: 18,
-                    color: DarkModeHandler.getTextColor(),
+                    color: DarkModeHandler.getMainContainersTextColor(),
                   ),
                 ),
               ),
@@ -113,7 +113,7 @@ class LinkPage extends StatelessWidget {
                           width: MediaQuery.of(context).size.width * 0.9,
                           height: 100,
                           decoration: BoxDecoration(
-                            color: DarkModeHandler.getCalendarContainerColor(),
+                            color: DarkModeHandler.getMainContainersColor(),
                             borderRadius: BorderRadius.circular(10.0),
                             boxShadow: [
                               BoxShadow(
@@ -160,7 +160,7 @@ class LinkPage extends StatelessWidget {
                                     children: [
                                       Text(
                                         "Link Title",
-                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color: DarkModeHandler.getTextColor(),),
+                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color: DarkModeHandler.getMainContainersTextColor(),),
                                         textAlign: TextAlign.center,
                                       ),
                                       SizedBox(height: 8),

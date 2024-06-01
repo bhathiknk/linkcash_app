@@ -152,7 +152,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     width: MediaQuery.of(context).size.width - 20,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: DarkModeHandler.getCalendarContainerColor(),
+                      color: DarkModeHandler.getMainContainersColor(),
                       borderRadius: BorderRadius.circular(10.0),
                       boxShadow: [
                         BoxShadow(
@@ -166,11 +166,11 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: Row(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding:  EdgeInsets.all(8.0),
                           child: Icon(
                             icon,
                             size: 30,
-                            color: const Color(0xFF0012fb),
+                            color: DarkModeHandler.getProfilePageIconColor(),
                           ),
                         ),
                         Expanded(
@@ -179,7 +179,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             children: [
                               Text(
                                 title,
-                                style: TextStyle(fontSize: 18, color: DarkModeHandler.getTextColor(),),
+                                style: TextStyle(fontSize: 18, color: DarkModeHandler.getMainContainersTextColor(),),
                               ),
                               if (index == 3 || index == 4)
                                 Icon(Icons.arrow_forward_ios),
@@ -201,7 +201,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   'Delete Account',
                   style: TextStyle(
                     fontSize: 15,
-                    color: DarkModeHandler.getTextColor(),
+                    color: DarkModeHandler.getMainContainersTextColor(),
                   ),
                 ),
               ),
@@ -215,7 +215,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   'Log Out',
                   style: TextStyle(
                     fontSize: 15,
-                    color: DarkModeHandler.getTextColor(),
+                    color: DarkModeHandler.getMainContainersTextColor(),
                   ),
                 ),
               ),

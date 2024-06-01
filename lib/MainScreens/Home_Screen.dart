@@ -6,6 +6,7 @@ import '../WidgetsCom/dark_mode_handler.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
+  static const routeName = '/home';
 
   @override
   State<StatefulWidget> createState() => _MyHomePageState();
@@ -126,7 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 16,
-                              color: DarkModeHandler.getTextColor(),
+                              color: DarkModeHandler.getMainContainersTextColor(),
                             ),
                           ),
                           SizedBox(height: 5),
@@ -135,7 +136,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 30,
-                              color: DarkModeHandler.getTextColor(),
+                              color: DarkModeHandler.getMainContainersTextColor(),
                             ),
                           ),
                         ],
@@ -153,7 +154,7 @@ class _MyHomePageState extends State<MyHomePage> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               width: MediaQuery.of(context).size.width - 20,
               decoration: BoxDecoration(
-                color:DarkModeHandler.getCalendarContainerColor(),
+                color:DarkModeHandler.getMainContainersColor(),
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
@@ -178,7 +179,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 20,
-                      color: DarkModeHandler.getTextColor(),
+                      color: DarkModeHandler.getMainContainersTextColor(),
                     ),
                   ),
                   Spacer(), // Add flexible space to push the text to the left
@@ -211,7 +212,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             Container(
                               width: MediaQuery.of(context).size.width * 0.75, // Adjust the width of the inner container
                               decoration: BoxDecoration(
-                                color: DarkModeHandler.getCalendarContainerColor(),
+                                color: DarkModeHandler.getMainContainersColor(),
                                 borderRadius: BorderRadius.circular(10), // Adjust the border radius
                                 boxShadow: [
                                   BoxShadow(
@@ -239,7 +240,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
-                                              color: DarkModeHandler.getTextColor(),
+                                              color: DarkModeHandler.getMainContainersTextColor(),
                                             ),
                                           ),
                                         ),
@@ -249,7 +250,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                             "Bhathika",
                                             style: TextStyle(
                                               fontSize: 14,
-                                              color: DarkModeHandler.getTextColor(),
+                                              color: DarkModeHandler.getMainContainersTextColor(),
                                             ),
                                           ),
                                         ),
@@ -262,7 +263,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
-                                          color: DarkModeHandler.getTextColor(),
+                                          color: DarkModeHandler.getMainContainersTextColor(),
                                         ),
                                       ),
                                     ),

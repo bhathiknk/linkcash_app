@@ -21,7 +21,7 @@ class DarkModeHandler {
     return isDarkMode ? Color(0xFF303030) : const Color(0xFFE3F2FD);
   }
 
-  static Color getTextColor() {
+  static Color getMainContainersTextColor() {
     return isDarkMode ? Colors.white : Colors.black;
   }
 
@@ -33,7 +33,7 @@ class DarkModeHandler {
     return isDarkMode ? Color(0xFF212121) : Colors.white;
   }
 
-  static Color getCalendarContainerColor() {
+  static Color getMainContainersColor() {
     return isDarkMode ? Color(0xFF424242) : Colors.white;
   }
   static Color getCalendarTextColor() {
@@ -41,10 +41,20 @@ class DarkModeHandler {
   }
 
   static Color getContainersShadowColor() {
-    return isDarkMode ? Color(0xFF000000) : Color(0xff000000).withOpacity(0.3);
+    return isDarkMode ? Color(0xFF000000) : Color(0xff000000);
   }
 
   static Color getInputTextColor() {
-    return isDarkMode ? Color(0xFFFFFFFF) : Color(0xff6b6b6b).withOpacity(0.3);
+    return isDarkMode ? Color(0xFFFFFFFF) : Color(0xff6b6b6b);
+  }
+
+  static Color getInputTypeTextColor() {
+    return isDarkMode ? Color(0xFFFFFFFF) : Color(0xff6b6b6b);
+  }
+  static Color getProfilePageIconColor() {
+    return isDarkMode ? Color(0xFFFFFFFF) : Color(0xff0009c2);
+  }
+  static Color getCalendarTodayTextColor() {
+    return isDarkMode ? Color(0xFFFFFFFF) : Color(0xffffffff);
   }
 }

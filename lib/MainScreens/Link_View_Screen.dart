@@ -54,13 +54,13 @@ class _LinkViewPageState extends State<LinkViewPage> {
               padding: const EdgeInsets.symmetric(horizontal: 10.0),
               child: Text(
                 "Payment Link",
-                style: TextStyle(fontSize: 16, color:DarkModeHandler.getTextColor()),
+                style: TextStyle(fontSize: 16, color:DarkModeHandler.getMainContainersTextColor()),
               ),
             ),
             const SizedBox(height: 5),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color:DarkModeHandler.getMainContainersColor() ,
                 borderRadius: BorderRadius.circular(10.0),
                 boxShadow: [
                   BoxShadow(
@@ -76,15 +76,16 @@ class _LinkViewPageState extends State<LinkViewPage> {
                   Expanded(
                     child: TextFormField(
                       controller: textEditingController,
-                      decoration: const InputDecoration(
+                      decoration:  InputDecoration(
                         hintText: 'https://example.com/checkout?product=example_product&price=19.99&currency=USD',
+                        hintStyle: TextStyle(color: DarkModeHandler.getInputTextColor()),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
                       ),
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.copy),
+                    icon: Icon(Icons.copy,color: DarkModeHandler.getInputTextColor()),
                     onPressed: () {
                       String text = textEditingController.text;
                       if (text.isNotEmpty) {
@@ -144,7 +145,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 20,
-                        color:DarkModeHandler.getTextColor(),
+                        color:DarkModeHandler.getMainContainersTextColor(),
                     ),
                   ),
                   Spacer(),
@@ -176,7 +177,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
                             Container(
                               width: MediaQuery.of(context).size.width - 23, // Adjust width here
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: DarkModeHandler.getMainContainersColor(),
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: [
                                   BoxShadow(
@@ -204,6 +205,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
+                                              color: DarkModeHandler.getMainContainersTextColor(),
                                             ),
                                           ),
                                         ),
@@ -213,6 +215,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
                                             "Bhathika",
                                             style: TextStyle(
                                               fontSize: 14,
+                                              color: DarkModeHandler.getMainContainersTextColor(),
                                             ),
                                           ),
                                         ),
@@ -221,11 +224,11 @@ class _LinkViewPageState extends State<LinkViewPage> {
                                     Padding(
                                       padding: EdgeInsets.all(8.0),
                                       child: Text(
-                                        "\$300",
+                                        "+ \$300",
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.green,
+                                          color: DarkModeHandler.getMainContainersTextColor(),
                                         ),
                                       ),
                                     ),

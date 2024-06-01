@@ -17,6 +17,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
   String? selectedOption;
   String? imagePath;
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,13 +42,13 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 10.0),
                   child: Text(
                     "Title",
-                    style: TextStyle(fontSize: 16, color: DarkModeHandler.getTextColor()),
+                    style: TextStyle(fontSize: 16, color: DarkModeHandler.getMainContainersTextColor()),
                   ),
                 ),
                 // Title Input Field
                 Container(
                   decoration: BoxDecoration(
-                    color: DarkModeHandler.getCalendarContainerColor(),
+                    color: DarkModeHandler.getMainContainersColor(),
                     borderRadius: BorderRadius.circular(10.0),
                     boxShadow: [
                       BoxShadow(
@@ -62,6 +63,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       TextFormField(
+                        style: TextStyle(color: DarkModeHandler.getInputTypeTextColor()),
                         decoration:  InputDecoration(
                           hintText: 'Enter title...',
                           hintStyle: TextStyle(color: DarkModeHandler.getInputTextColor()),
@@ -79,13 +81,13 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 10.0),
                   child: Text(
                     "Description",
-                    style: TextStyle(fontSize: 16, color: DarkModeHandler.getTextColor()),
+                    style: TextStyle(fontSize: 16, color: DarkModeHandler.getMainContainersTextColor()),
                   ),
                 ),
                 // Description Large Input Field
                 Container(
                   decoration: BoxDecoration(
-                    color: DarkModeHandler.getCalendarContainerColor(),
+                    color: DarkModeHandler.getMainContainersColor(),
                     borderRadius: BorderRadius.circular(10.0),
                     boxShadow: [
                       BoxShadow(
@@ -100,6 +102,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       TextFormField(
+                        style: TextStyle(color: DarkModeHandler.getInputTypeTextColor()),
                         maxLines: 5,
                         decoration:  InputDecoration(
                           hintText: 'Enter description...',
@@ -118,13 +121,13 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 10.0),
                   child: Text(
                     "Amount",
-                    style: TextStyle(fontSize: 16, color: DarkModeHandler.getTextColor()),
+                    style: TextStyle(fontSize: 16, color: DarkModeHandler.getMainContainersTextColor()),
                   ),
                 ),
                 // Amount Input Field
                 Container(
                   decoration: BoxDecoration(
-                    color: DarkModeHandler.getCalendarContainerColor(),
+                    color: DarkModeHandler.getMainContainersColor(),
                     borderRadius: BorderRadius.circular(10.0),
                     boxShadow: [
                       BoxShadow(
@@ -139,6 +142,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       TextFormField(
+                        style: TextStyle(color: DarkModeHandler.getInputTypeTextColor()),
                         keyboardType: TextInputType.number,
                         decoration:  InputDecoration(
                           hintText: 'Enter amount...',
@@ -157,19 +161,19 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 10.0),
                   child: Text(
                     "Expire After",
-                    style: TextStyle(fontSize: 16, color: DarkModeHandler.getTextColor()),
+                    style: TextStyle(fontSize: 16, color: DarkModeHandler.getMainContainersTextColor()),
                   ),
                 ),
 
                 // Dropdown Button
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                  padding: EdgeInsets.symmetric(horizontal: 10.0),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: DarkModeHandler.getMainContainersColor(),
                     borderRadius: BorderRadius.circular(10.0),
                     boxShadow: [
                       BoxShadow(
-                        color: DarkModeHandler.getContainersShadowColor(),
+                        color: const Color(0xff000000).withOpacity(0.3),
                         spreadRadius: 1,
                         blurRadius: 1,
                         offset: Offset(2, 2), // changes position of shadow
@@ -181,7 +185,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                     children: [
                       DropdownButtonFormField<String>(
                         value: selectedOption,
-                        dropdownColor: Colors.white, // Set the dropdownColor property
+                        dropdownColor: DarkModeHandler.getMainContainersColor(), // Set the dropdownColor property
                         borderRadius: BorderRadius.circular(10.0),
                         decoration: const InputDecoration(
                           border: InputBorder.none,
@@ -196,7 +200,10 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                         ].map((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
-                            child: Text(value),
+                            child: Text(
+                              value,
+                              style: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set the dropdown text color
+                            ),
                           );
                         }).toList(),
                         onChanged: (newValue) {

@@ -94,7 +94,7 @@ class _NotificationPageState extends State<NotificationPage> {
               child: Container(
                 padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: DarkModeHandler.getCalendarContainerColor(),
+                  color: DarkModeHandler.getMainContainersColor(),
                   borderRadius: BorderRadius.circular(10.0),
                   boxShadow: [
                     BoxShadow(
@@ -113,6 +113,7 @@ class _NotificationPageState extends State<NotificationPage> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: DarkModeHandler.getMainContainersTextColor(),
                       ),
                     ),
                     SizedBox(height: 10),
@@ -120,6 +121,7 @@ class _NotificationPageState extends State<NotificationPage> {
                       "Notification Details",
                       style: TextStyle(
                         fontSize: 16,
+                        color: DarkModeHandler.getMainContainersTextColor(),
                       ),
                     ),
                   ],
