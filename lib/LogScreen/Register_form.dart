@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../MainScreens/Home_Screen.dart';
-import 'connectivity_service.dart';
+import '../ConnectionCheck/connectivity_service.dart';
 import 'login_form.dart'; // Ensure this import matches your actual file structure
 
 class RegisterPage extends StatefulWidget {
@@ -41,7 +42,7 @@ class _RegisterPageState extends State<RegisterPage> {
           } else {
             ConnectivityResult? result = snapshot.data ?? _initialConnectivityResult;
             if (result == ConnectivityResult.none) {
-              return _buildNoInternetUI();
+              return NoInternetUI();
             } else {
               return _buildRegisterForm();
             }
@@ -51,27 +52,6 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _buildNoInternetUI() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.wifi_off, size: 100, color: Colors.grey),
-          SizedBox(height: 20),
-          Text(
-            'No Internet Connection',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey),
-          ),
-          SizedBox(height: 10),
-          Text(
-            'Please check your internet connection and try again.',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildRegisterForm() {
     return Container(
