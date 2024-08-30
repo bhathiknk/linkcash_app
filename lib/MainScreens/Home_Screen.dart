@@ -15,6 +15,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  // Instance of ConnectivityService to check internet connectivity
   final ConnectivityService _connectivityService = ConnectivityService();
   ConnectivityResult? _initialConnectivityResult;
   bool _isInitialCheckComplete = false;
@@ -22,9 +23,10 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _checkInitialConnectivity();
+    _checkInitialConnectivity(); // Check initial internet connectivity when the widget is initialized
   }
 
+  // Function to check initial connectivity and set state accordingly
   Future<void> _checkInitialConnectivity() async {
     var initialConnectivityResult = await _connectivityService.checkInitialConnectivity();
     setState(() {
@@ -42,276 +44,323 @@ class _MyHomePageState extends State<MyHomePage> {
         title: const Text(
           "Link Cash",
           style: TextStyle(
-            color: Colors.white, // Set text color to white
+            color: Colors.white,
           ),
         ),
-        centerTitle: true,
+        centerTitle: true, // Center the title in the AppBar
       ),
+      // Using StreamBuilder to monitor connectivity changes
       body: StreamBuilder<ConnectivityResult>(
         stream: _connectivityService.connectivityStream,
         builder: (context, snapshot) {
           if (!_isInitialCheckComplete) {
-            return Center(child: CircularProgressIndicator());
+            // Show loading indicator while checking initial connectivity
+            return const Center(child: CircularProgressIndicator());
           } else {
-            ConnectivityResult? result = snapshot.data ?? _initialConnectivityResult;
+            final result = snapshot.data ?? _initialConnectivityResult;
             if (result == ConnectivityResult.none) {
+              // Show No Internet UI if there's no connectivity
               return NoInternetUI();
             } else {
+              // If connected, show the main content of the homepage
               return _buildHomePageContent(context);
             }
           }
         },
       ),
+      // Custom Bottom Navigation Bar with a Floating Action Button
       bottomNavigationBar: BottomNavigationBarWithFab(
         currentIndex: 0,
         onTap: (index) {
-          // Handle navigation if needed
+          // Handle bottom navigation tap events if needed
         },
       ),
     );
   }
 
+  // Function to build the main content of the homepage
   Widget _buildHomePageContent(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width; // Get screen width for responsive design
+
     return Container(
-      color: DarkModeHandler.getBackgroundColor(),
+      color: DarkModeHandler.getBackgroundColor(), // Set background color based on theme
       child: Column(
         children: [
-          Stack(
-            children: [
-              ///Top White Container///
-              Container(
-                decoration: BoxDecoration(
-                  color: DarkModeHandler.getTopContainerColor(),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  ),
-                ),
-                height: 200,
-              ),
+          _buildTopSection(screenWidth), // Top section with greeting and balance information
+          const SizedBox(height: 10),
+          _buildCalendarContainer(screenWidth), // Calendar widget showing current date and events
+          const SizedBox(height: 20),
+          _buildTransactionsHeader(), // Header for the Transactions section
+          _buildTransactionsList(screenWidth), // Horizontal list of recent transactions
+        ],
+      ),
+    );
+  }
 
-              ///'Welcome Back' text///
-              const Positioned(
-                top: 10,
-                left: 10,
-                child: Row(
-                  children: [
-                    SizedBox(width: 10), // Add some space between the icon and text
-                    Text(
-                      'Welcome Back',
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Icon(Icons.waving_hand_rounded, size: 20, color: Colors.grey),
-                  ],
-                ),
-              ),
-
-              ///'Bhathika Nilesh' text///
-              Positioned(
-                top: 30, // Adjust the position as needed
-                left: 20,
-                child: Text(
-                  'Bhathika Nilesh',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 20,
-                    color: DarkModeHandler.getCalendarTextColor(),
-                  ),
-                ),
-              ),
-
-              ///Notification icon///
-              const Positioned(
-                top: 10,
-                right: 10,
-                child: Icon(Icons.notifications, size: 25, color: Colors.grey),
-              ),
-
-              ///balance show container///
-              Positioned(
-                top: 80, // Adjust the position as needed
-                left: 10,
-                right: 10,
-                child: Container(
-                  height: 110,
-                  decoration: BoxDecoration(
-                    //background color called//
-                    color: DarkModeHandler.getBackgroundColor(),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xff000000).withOpacity(0.3),
-                        spreadRadius: 1,
-                        blurRadius: 1,
-                        offset: Offset(3, 3), // changes position of shadow
-                      ),
-                    ],
-                  ),
-
-                  ///Balance text and value///
-                  child: Padding(
-                    padding: EdgeInsets.all(10.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Balance',
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 16,
-                            color: DarkModeHandler.getMainContainersTextColor(),
-                          ),
-                        ),
-                        SizedBox(height: 5),
-                        Text(
-                          '\$800.00',
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 30,
-                            color: DarkModeHandler.getMainContainersTextColor(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          ///calendar container///
-          const SizedBox(height: 10), // space between the white container and the calendar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            width: MediaQuery.of(context).size.width - 20,
-            decoration: BoxDecoration(
-              color: DarkModeHandler.getMainContainersColor(),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xff000000).withOpacity(0.3),
-                  spreadRadius: 1,
-                  blurRadius: 1,
-                  offset: Offset(2, 2), // changes position of shadow
-                ),
-              ],
+  // Function to build the top section containing welcome message and balance
+  Widget _buildTopSection(double screenWidth) {
+    return Stack(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: DarkModeHandler.getTopContainerColor(),
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(20),
+              bottomRight: Radius.circular(20),
             ),
-            child: CalendarWidget(),
           ),
+          height: 200, // Height of the background container
+        ),
+        TopBarFb4(
+          title: 'Welcome Back', // Title message
+          upperTitle: 'Bhathika Nilesh', // Subheading with the user’s name
+          onTapMenu: () {
+            // Handle menu button tap here
+          },
+        ),
+        Positioned(
+          top: 80,
+          left: 10,
+          right: 10,
+          child: _buildBalanceContainer(), // Positioned widget showing the balance
+        ),
+      ],
+    );
+  }
 
-          /// 'Transactions' text///
-          const SizedBox(height: 20), // Add some space between the white calendar container and the Transaction text
+  // Function to build the balance container showing current balance amount
+  Widget _buildBalanceContainer() {
+    return Container(
+      height: 110,
+      decoration: BoxDecoration(
+        color: DarkModeHandler.getMainBalanceContainer(),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xff000000).withOpacity(0.3),
+            spreadRadius: 1,
+            blurRadius: 1,
+            offset: const Offset(3, 3), // Shadow effect for depth
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Balance',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 16,
+                color: DarkModeHandler.getMainBalanceContainerTextColor(),
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              '\$800.00', // Display the current balance
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 30,
+                color: DarkModeHandler.getMainBalanceContainerTextColor(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Function to build the container that holds the Calendar widget
+  Widget _buildCalendarContainer(double screenWidth) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      width: screenWidth - 20,
+      decoration: BoxDecoration(
+        color: DarkModeHandler.getMainContainersColor(),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xff000000).withOpacity(0.3),
+            spreadRadius: 1,
+            blurRadius: 1,
+            offset: const Offset(2, 2), // Shadow for the container
+          ),
+        ],
+      ),
+      child: const CalendarWidget(), // Custom calendar widget
+    );
+  }
+
+  // Function to build the header for the Transactions section
+  Widget _buildTransactionsHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: [
+          Text(
+            'Transactions',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 20,
+              color: DarkModeHandler.getMainContainersTextColor(),
+            ),
+          ),
+          const Spacer(), // Space between the header and any potential action buttons
+        ],
+      ),
+    );
+  }
+
+  // Function to build the list of recent transactions
+  Widget _buildTransactionsList(double screenWidth) {
+    return Expanded(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal, // Horizontal scrolling
+        child: Row(
+          children: List.generate(
+            5, // Number of transactions to display
+                (index) => _buildTransactionItem(screenWidth),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Function to build each transaction item in the list
+  Widget _buildTransactionItem(double screenWidth) {
+    return Padding(
+      padding: const EdgeInsets.all(9.0),
+      child: Container(
+        width: screenWidth * 0.8,
+        decoration: BoxDecoration(
+          color: DarkModeHandler.getBackgroundColor(),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20),
+            _buildTransactionDetails(screenWidth), // Transaction details like title and amount
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Function to build the details of each transaction, including title and amount
+  Widget _buildTransactionDetails(double screenWidth) {
+    return Container(
+      width: screenWidth * 0.75,
+      decoration: BoxDecoration(
+        color: DarkModeHandler.getMainContainersColor(),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xff000000).withOpacity(0.3),
+            spreadRadius: 1,
+            blurRadius: 1,
+            offset: const Offset(2, 2), // Shadow for the transaction item
+          ),
+        ],
+      ),
+      child: SizedBox(
+        width: screenWidth * 0.75,
+        height: 100, // Set the height for the transaction detail container
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Payment Link Title", // Title of the transaction
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: DarkModeHandler.getMainContainersTextColor(),
+                    ),
+                  ),
+                  const SizedBox(height: 8.0),
+                  Text(
+                    "Bhathika", // Payee or transaction participant name
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: DarkModeHandler.getMainContainersTextColor(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "+ \$300", // Transaction amount
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: DarkModeHandler.getMainContainersTextColor(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Define the TopBarFb4 widget used in the top section
+class TopBarFb4 extends StatelessWidget {
+  final String title;
+  final String upperTitle;
+  final Function() onTapMenu;
+
+  const TopBarFb4({
+    required this.title,
+    required this.upperTitle,
+    required this.onTapMenu,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: MediaQuery.of(context).size.width,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: onTapMenu, // Trigger action when menu button is pressed
+          ),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
+            padding: const EdgeInsets.only(right: 16.0, top: 8.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  'Transactions',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 20,
-                    color: DarkModeHandler.getMainContainersTextColor(),
+                  title,
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 14,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
-                Spacer(), // Add flexible space to push the text to the left
+                Text(
+                  upperTitle,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
-            ),
-          ),
-
-          /// Transactions show container///
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal, // Allow scrolling horizontally
-              child: Row(
-                children: List.generate(
-                  5, // Number of containers to generate
-                      (index) => Padding(
-                    padding: const EdgeInsets.all(9.0), // Add padding between containers
-                    child: Container(
-                      width: MediaQuery.of(context).size.width * 0.8, // Adjust the width of the container
-                      decoration: BoxDecoration(
-                        color: DarkModeHandler.getBackgroundColor(),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(
-                            height: 20, // Add space between SizedBox widgets
-                          ),
-                          Container(
-                            width: MediaQuery.of(context).size.width * 0.75, // Adjust the width of the inner container
-                            decoration: BoxDecoration(
-                              color: DarkModeHandler.getMainContainersColor(),
-                              borderRadius: BorderRadius.circular(10), // Adjust the border radius
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xff000000).withOpacity(0.3),
-                                  spreadRadius: 1,
-                                  blurRadius: 1,
-                                  offset: Offset(2, 2), // changes position of shadow
-                                ),
-                              ],
-                            ),
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.75, // Adjust the width
-                              height: 100, // Adjust the height
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align content horizontally
-                                children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center, // Align content vertically
-                                    children: [
-                                      Padding(
-                                        padding: EdgeInsets.only(left: 8.0),
-                                        child: Text(
-                                          "Payment Link Title",
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: DarkModeHandler.getMainContainersTextColor(),
-                                          ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.only(left: 8.0, top: 8.0),
-                                        child: Text(
-                                          "Bhathika",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: DarkModeHandler.getMainContainersTextColor(),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: Text(
-                                      "+ \$300",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: DarkModeHandler.getMainContainersTextColor(),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
             ),
           ),
         ],

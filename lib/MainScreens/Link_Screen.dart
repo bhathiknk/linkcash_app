@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
 import 'Create_Link_Screen.dart';
+import '../WidgetsCom/gradient_button_fb4.dart'; // Import the new button file
 
 class LinkPage extends StatelessWidget {
-  const LinkPage({Key? key});
+  const LinkPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -60,33 +61,19 @@ class LinkPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 50.0,
-              child: ElevatedButton(
+            Center(
+              child: GradientButtonFb4(
+                text: 'Create Link',
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => CreateLinkPage()),
                   );
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0054FF),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                ),
-                child: const Text(
-                  'Create Link',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
-                  ),
-                ),
               ),
             ),
             SizedBox(height: 20),
-             Padding(
+            Padding(
               padding: EdgeInsets.only(left: 8.0),
               child: Align(
                 alignment: Alignment.centerLeft,
@@ -153,14 +140,18 @@ class LinkPage extends StatelessWidget {
                                   ),
                                 ),
                                 SizedBox(width: 20),
-                                 Expanded(
+                                Expanded(
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         "Link Title",
-                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color: DarkModeHandler.getMainContainersTextColor(),),
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: DarkModeHandler.getMainContainersTextColor(),
+                                        ),
                                         textAlign: TextAlign.center,
                                       ),
                                       SizedBox(height: 8),

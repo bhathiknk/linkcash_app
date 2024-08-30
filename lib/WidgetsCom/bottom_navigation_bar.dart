@@ -15,70 +15,177 @@ class BottomNavigationBarWithFab extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _BottomNavigationBarWithFabState createState() =>
-      _BottomNavigationBarWithFabState();
+  _BottomNavBarFb1State createState() => _BottomNavBarFb1State();
 }
 
-class _BottomNavigationBarWithFabState
-    extends State<BottomNavigationBarWithFab> {
+class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
+  final primaryColor = const Color(0xff4338CA);
+  final backgroundColor = const Color(0xffffffff);
+
+  // Handle navigation on icon tap
+  void _navigateToPage(int index) {
+    switch (index) {
+      case 0:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MyHomePage()),
+        );
+        break;
+      case 1:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => NotificationPage()),
+        );
+        break;
+      case 2:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => LinkPage()),
+        );
+        break;
+      case 3:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ProfilePage()),
+        );
+        break;
+      default:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(
-        canvasColor: Color(0xFFFFFFFF), // Set the background color of the BottomNavigationBar
+    return SafeArea(
+      child: SizedBox(
+        height: 75, // Set the desired height for the BottomAppBar
+        child: BottomAppBar(
+          color: backgroundColor,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0), // Adjust horizontal padding if needed
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconBottomBar(
+                  icon: Icons.home_rounded,
+                  selected: widget.currentIndex == 0,
+                  onPressed: () {
+                    widget.onTap(0);
+                    _navigateToPage(0);
+                  },
+                ),
+                IconBottomBar(
+                  icon: Icons.search_outlined,
+                  selected: false,
+                  onPressed: () {
+                    // Placeholder action for search, update logic as needed
+                  },
+                ),
+                IconBottomBar2(
+                  icon: Icons.link_rounded,
+                  selected: widget.currentIndex == 2,
+                  onPressed: () {
+                    widget.onTap(2);
+                    _navigateToPage(2);
+                  },
+                ),
+                IconBottomBar(
+                  icon: Icons.notifications_rounded,
+                  selected: widget.currentIndex == 1,
+                  onPressed: () {
+                    widget.onTap(1);
+                    _navigateToPage(1);
+                  },
+                ),
+                IconBottomBar(
+                  icon: Icons.account_circle_rounded,
+                  selected: widget.currentIndex == 3,
+                  onPressed: () {
+                    widget.onTap(3);
+                    _navigateToPage(3);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
-      child: BottomNavigationBar(
-        backgroundColor: Colors.transparent, // Set background color of the BottomNavigationBar to be transparent
-        elevation: 0.0, // Remove the default shadow effect
-        currentIndex: widget.currentIndex,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MyHomePage()),
-              );
-              break;
-            case 1:
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => NotificationPage()),
-              );
-              break;
-            case 2:
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => LinkPage()),
-              );
-              break;
-            case 3:
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ProfilePage()),
-              );
-              break;
-          }
-        },
-        unselectedItemColor: Colors.black, // Set the unselected item color to black
-        selectedItemColor: Color(0xFF0054FF), // Set the selected item color to blue
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_rounded),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_rounded),
-            label: 'Notification',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.link_rounded),
-            label: 'Link',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle_rounded),
-            label: 'Account',
-          ),
-        ],
+    );
+  }
+}
+
+class IconBottomBar extends StatelessWidget {
+  const IconBottomBar({
+    Key? key,
+    required this.icon,
+    required this.selected,
+    required this.onPressed,
+  }) : super(key: key);
+
+  final IconData icon;
+  final bool selected;
+  final Function() onPressed;
+
+  final primaryColor = const Color(0xFF0054FF);
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              onPressed: onPressed,
+              icon: Icon(
+                icon,
+                size: 23,
+                color: selected ? primaryColor : Colors.black54,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class IconBottomBar2 extends StatelessWidget {
+  const IconBottomBar2({
+    Key? key,
+    required this.icon,
+    required this.selected,
+    required this.onPressed,
+  }) : super(key: key);
+
+  final IconData icon;
+  final bool selected;
+  final Function() onPressed;
+
+  final primaryColor = const Color(0xFF0054FF);
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              backgroundColor: primaryColor,
+              child: IconButton(
+                onPressed: onPressed,
+                icon: Icon(
+                  icon,
+                  size: 23,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

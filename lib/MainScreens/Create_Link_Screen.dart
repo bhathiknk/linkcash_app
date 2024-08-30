@@ -2,6 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import '../ConnectionCheck/No_Internet_Ui.dart';
+import '../ConnectionCheck/connectivity_service.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
 import 'Link_View_Screen.dart';
@@ -16,7 +19,29 @@ class CreateLinkPage extends StatefulWidget {
 class _CreateLinkPageState extends State<CreateLinkPage> {
   String? selectedOption;
   String? imagePath;
+  bool isConnected = true; // Track the internet connection status
 
+  final ConnectivityService _connectivityService = ConnectivityService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkConnectivity();
+    _connectivityService.connectivityStream.listen((ConnectivityResult result) {
+      _updateConnectionStatus(result);
+    });
+  }
+
+  Future<void> _checkConnectivity() async {
+    var connectivityResult = await _connectivityService.checkInitialConnectivity();
+    _updateConnectionStatus(connectivityResult);
+  }
+
+  void _updateConnectionStatus(ConnectivityResult result) {
+    setState(() {
+      isConnected = result != ConnectivityResult.none;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +54,8 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
         ),
       ),
       backgroundColor: DarkModeHandler.getBackgroundColor(), // Set the background color here
-      body: Container(
+      body: isConnected
+          ? Container(
         color: DarkModeHandler.getBackgroundColor(), // Ensure the container has the same background color
         child: SingleChildScrollView(
           child: Padding(
@@ -64,7 +90,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                     children: [
                       TextFormField(
                         style: TextStyle(color: DarkModeHandler.getInputTypeTextColor()),
-                        decoration:  InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'Enter title...',
                           hintStyle: TextStyle(color: DarkModeHandler.getInputTextColor()),
                           border: InputBorder.none,
@@ -104,7 +130,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                       TextFormField(
                         style: TextStyle(color: DarkModeHandler.getInputTypeTextColor()),
                         maxLines: 5,
-                        decoration:  InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'Enter description...',
                           hintStyle: TextStyle(color: DarkModeHandler.getInputTextColor()),
                           border: InputBorder.none,
@@ -144,7 +170,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                       TextFormField(
                         style: TextStyle(color: DarkModeHandler.getInputTypeTextColor()),
                         keyboardType: TextInputType.number,
-                        decoration:  InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'Enter amount...',
                           hintStyle: TextStyle(color: DarkModeHandler.getInputTextColor()),
                           border: InputBorder.none,
@@ -399,12 +425,12 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
                     ),
                   ),
                 ),
-
               ],
             ),
           ),
         ),
-      ),
+      )
+          : NoInternetUI(), // Show NoInternetUI if not connected
       bottomNavigationBar: BottomNavigationBarWithFab(
         currentIndex: 2,
         onTap: (index) {

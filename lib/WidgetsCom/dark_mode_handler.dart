@@ -17,29 +17,43 @@ class DarkModeHandler {
     await prefs.setBool('isDarkMode', isDarkMode);
   }
 
-  static Color getBackgroundColor() {
-    return isDarkMode ? Color(0xFF303030) : const Color(0xFFE3F2FD);
-  }
-
-  static Color getMainContainersTextColor() {
-    return isDarkMode ? Colors.white : Colors.black;
-  }
-
+  //app bar color
   static Color getAppBarColor() {
     return isDarkMode ? Colors.black : const Color(0xFF0012fb);
   }
 
+  //background color
+  static Color getBackgroundColor() {
+    return isDarkMode ? Color(0xFF303030) :  Color(0xFFE3F2FD);
+  }
+
+  //home page balance container included container
   static Color getTopContainerColor() {
     return isDarkMode ? Color(0xFF212121) : Colors.white;
   }
 
+  //home page balace container color
+  static Color getMainBalanceContainer() {
+    return isDarkMode ? Color(0xFF303030) :  Color(0xFF007BFF);
+  }
+  static Color getMainBalanceContainerTextColor() {
+    return isDarkMode ? Colors.white : Colors.white;
+  }
+
+  //home page transaction details container color
   static Color getMainContainersColor() {
     return isDarkMode ? Color(0xFF424242) : Colors.white;
   }
+  static Color getMainContainersTextColor() {
+    return isDarkMode ? Colors.white : Colors.black;
+  }
+
+  //calendar text color
   static Color getCalendarTextColor() {
     return isDarkMode ? Colors.white : Colors.black;
   }
 
+  //container shadow color
   static Color getContainersShadowColor() {
     return isDarkMode ? Color(0xFF000000) : Color(0xff000000);
   }
