@@ -33,22 +33,44 @@ class DarkModeHandler {
   }
 
   //home page balace container color
-  static Color getMainBalanceContainer() {
-    return isDarkMode ? Color(0xFF303030) :  Color(0xFF007BFF);
+  // Define the BoxDecoration for the home page balance container
+  static BoxDecoration getMainBalanceContainer() {
+    if (isDarkMode) {
+      return const BoxDecoration(
+        color: Color(0xFF303030),
+      );
+    } else {
+      return const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF0012fb), Color(0xFF0054FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      );
+    }
   }
+
   static Color getMainBalanceContainerTextColor() {
     return isDarkMode ? Colors.white : Colors.white;
   }
 
   //home page transaction details container color
   static Color getMainContainersColor() {
-    return isDarkMode ? Color(0xFF424242) : Colors.white;
+    return isDarkMode ? Color(0xFF424242) : Color(0xFF007BFF);
   }
   static Color getMainContainersTextColor() {
+    return isDarkMode ? Colors.white : Colors.white;
+  }
+  //home page Transaction Text color
+  static Color getMainBackgroundTextColor() {
     return isDarkMode ? Colors.white : Colors.black;
   }
 
-  //calendar text color
+  //calendar container color
+  static Color getCalendarContainersColor() {
+    return isDarkMode ? Color(0xFF424242) : Colors.white;
+  }
+
   static Color getCalendarTextColor() {
     return isDarkMode ? Colors.white : Colors.black;
   }
@@ -56,6 +78,11 @@ class DarkModeHandler {
   //container shadow color
   static Color getContainersShadowColor() {
     return isDarkMode ? Color(0xFF000000) : Color(0xff000000);
+  }
+
+  //Searchbar color
+  static Color getSearchBarColor() {
+    return isDarkMode ? Color(0xff6b6b6b) : Color(0xffffffff);
   }
 
   static Color getInputTextColor() {

@@ -128,12 +128,11 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  // Function to build the balance container showing current balance amount
+  // Function to build the balance container showing the current balance amount
   Widget _buildBalanceContainer() {
     return Container(
       height: 110,
-      decoration: BoxDecoration(
-        color: DarkModeHandler.getMainBalanceContainer(),
+      decoration: DarkModeHandler.getMainBalanceContainer().copyWith(
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
@@ -172,13 +171,15 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+
+
   // Function to build the container that holds the Calendar widget
   Widget _buildCalendarContainer(double screenWidth) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       width: screenWidth - 20,
       decoration: BoxDecoration(
-        color: DarkModeHandler.getMainContainersColor(),
+        color: DarkModeHandler.getCalendarContainersColor(),
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
@@ -204,7 +205,7 @@ class _MyHomePageState extends State<MyHomePage> {
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 20,
-              color: DarkModeHandler.getMainContainersTextColor(),
+              color: DarkModeHandler.getMainBackgroundTextColor(),
             ),
           ),
           const Spacer(), // Space between the header and any potential action buttons
@@ -217,8 +218,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildTransactionsList(double screenWidth) {
     return Expanded(
       child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal, // Horizontal scrolling
-        child: Row(
+        child: Column(
           children: List.generate(
             5, // Number of transactions to display
                 (index) => _buildTransactionItem(screenWidth),
@@ -228,23 +228,24 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  // Function to build each transaction item in the list
+// Function to build each transaction item in the list
   Widget _buildTransactionItem(double screenWidth) {
     return Padding(
-      padding: const EdgeInsets.all(9.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Adjusted padding for spacing between items
       child: Container(
-        width: screenWidth * 0.8,
         decoration: BoxDecoration(
           color: DarkModeHandler.getBackgroundColor(),
           borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            _buildTransactionDetails(screenWidth), // Transaction details like title and amount
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xff000000).withOpacity(0.3),
+              spreadRadius: 1,
+              blurRadius: 1,
+              offset: const Offset(2, 2), // Shadow for the container
+            ),
           ],
         ),
+        child: _buildTransactionDetails(screenWidth), // Updated for vertical scrolling
       ),
     );
   }
@@ -252,7 +253,7 @@ class _MyHomePageState extends State<MyHomePage> {
   // Function to build the details of each transaction, including title and amount
   Widget _buildTransactionDetails(double screenWidth) {
     return Container(
-      width: screenWidth * 0.75,
+      width: screenWidth * 0.95,
       decoration: BoxDecoration(
         color: DarkModeHandler.getMainContainersColor(),
         borderRadius: BorderRadius.circular(10),
