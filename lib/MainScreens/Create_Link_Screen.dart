@@ -7,6 +7,7 @@ import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../ConnectionCheck/connectivity_service.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
+import '../WidgetsCom/gradient_button_fb4.dart';
 import 'Link_View_Screen.dart';
 
 class CreateLinkPage extends StatefulWidget {
@@ -92,7 +93,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
               SizedBox(height: 15),
               _buildImagePicker(),
               SizedBox(height: 20),
-              _buildSaveButton(),
+              _buildSaveLinkButton(context),
             ],
           ),
         ),
@@ -139,14 +140,6 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
     return BoxDecoration(
       color: DarkModeHandler.getMainContainersColor(),
       borderRadius: BorderRadius.circular(10.0),
-      boxShadow: [
-        BoxShadow(
-          color: const Color(0xff000000).withOpacity(0.3),
-          spreadRadius: 1,
-          blurRadius: 1,
-          offset: Offset(2, 2),
-        ),
-      ],
     );
   }
 
@@ -222,14 +215,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10.0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.6),
-                spreadRadius: 1,
-                blurRadius: 5,
-                offset: Offset(0, 3),
-              ),
-            ],
+
           ),
           child: Stack(
             alignment: Alignment.bottomCenter,
@@ -353,33 +339,20 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
     }
   }
 
-  // Builds the save button
-  Widget _buildSaveButton() {
+  // Builds the "Create Link" button
+  Widget _buildSaveLinkButton(BuildContext context) {
     return Center(
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF2855AE),
-          padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-        ),
-        onPressed: _handleSaveButtonPressed,
-        child: Text(
-          'Save Link',
-          style: TextStyle(color: Colors.white, fontSize: 20),
-        ),
+      child: GradientButtonFb4(
+        text: 'Create Link',
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => LinkViewPage()), // Navigates to Create Link Screen
+          );
+        },
       ),
     );
   }
-
-  // Handles the save button press action
-  void _handleSaveButtonPressed() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => LinkViewPage(),
-      ),
-    );
-  }
-
   // Builds the bottom navigation bar
   Widget _buildBottomNavigationBar() {
     return BottomNavigationBarWithFab(

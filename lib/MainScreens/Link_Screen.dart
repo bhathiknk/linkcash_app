@@ -17,13 +17,14 @@ class LinkPage extends StatefulWidget {
 
 class _LinkPageState extends State<LinkPage> {
   final List<Color> circleColors = [
-    Color(0xFF0012fb),
-    Color(0xffff0000),
-    Color(0xff28b600),
-    Color(0xffff8a00),
-    Color(0xff8b00a9),
-    Color(0x9b1e1d06),
+    Color(0xFFBCC2FF), // Bright Blue
+    Color(0xFFFA9090), // Bright Red
+    Color(0xFFBBF8AB), // Bright Green
+    Color(0xFFEFCDA9), // Bright Orange
+    Color(0xFFE4B6F1), // Bright Purple
+    Color(0xFFEEE2A8), // Bright Gold
   ];
+
 
   bool isConnected = true;
 
@@ -178,14 +179,6 @@ class _LinkPageState extends State<LinkPage> {
           decoration: BoxDecoration(
             color: DarkModeHandler.getMainContainersColor(), // Background color of the list item
             borderRadius: BorderRadius.circular(10.0), // Rounded corners
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xff000000).withOpacity(0.3), // Shadow color with opacity
-                spreadRadius: 1,
-                blurRadius: 1,
-                offset: const Offset(2, 2), // Shadow position
-              ),
-            ],
           ),
           child: Padding(
             padding: const EdgeInsets.all(8.0), // Padding inside the list item container
@@ -209,26 +202,12 @@ class _LinkPageState extends State<LinkPage> {
       height: 50,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10.0), // Rounded corners for the icon container
-        color: circleColors[index % circleColors.length], // Dynamic color from the predefined list
+        color: circleColors[index % circleColors.length], // Dynamic color from the updated list
         shape: BoxShape.rectangle, // Shape of the icon container
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xff000000).withOpacity(0.3), // Shadow with opacity
-            spreadRadius: 1,
-            blurRadius: 1,
-            offset: const Offset(2, 2), // Shadow position
-          ),
-        ],
-      ),
-      child: const Center(
-        child: Icon(
-          Icons.attach_money,
-          color: Colors.white,
-          size: 30, // Icon size
-        ),
       ),
     );
   }
+
 
   // Builds the text section inside each list item
   Widget _buildLinkText() {

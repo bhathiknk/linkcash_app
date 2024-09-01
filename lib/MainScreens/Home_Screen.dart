@@ -132,16 +132,10 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildBalanceContainer() {
     return Container(
       height: 110,
-      decoration: DarkModeHandler.getMainBalanceContainer().copyWith(
+      decoration: BoxDecoration(
+        color: DarkModeHandler.getMainBalanceContainer(),
         borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xff000000).withOpacity(0.3),
-            spreadRadius: 1,
-            blurRadius: 1,
-            offset: const Offset(3, 3), // Shadow effect for depth
-          ),
-        ],
+
       ),
       child: Padding(
         padding: const EdgeInsets.all(10.0),
@@ -181,14 +175,6 @@ class _MyHomePageState extends State<MyHomePage> {
       decoration: BoxDecoration(
         color: DarkModeHandler.getCalendarContainersColor(),
         borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xff000000).withOpacity(0.3),
-            spreadRadius: 1,
-            blurRadius: 1,
-            offset: const Offset(2, 2), // Shadow for the container
-          ),
-        ],
       ),
       child: const CalendarWidget(), // Custom calendar widget
     );
@@ -236,14 +222,7 @@ class _MyHomePageState extends State<MyHomePage> {
         decoration: BoxDecoration(
           color: DarkModeHandler.getBackgroundColor(),
           borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xff000000).withOpacity(0.3),
-              spreadRadius: 1,
-              blurRadius: 1,
-              offset: const Offset(2, 2), // Shadow for the container
-            ),
-          ],
+
         ),
         child: _buildTransactionDetails(screenWidth), // Updated for vertical scrolling
       ),
@@ -257,14 +236,7 @@ class _MyHomePageState extends State<MyHomePage> {
       decoration: BoxDecoration(
         color: DarkModeHandler.getMainContainersColor(),
         borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xff000000).withOpacity(0.3),
-            spreadRadius: 1,
-            blurRadius: 1,
-            offset: const Offset(2, 2), // Shadow for the transaction item
-          ),
-        ],
+
       ),
       child: SizedBox(
         width: screenWidth * 0.75,

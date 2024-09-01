@@ -32,22 +32,8 @@ class DarkModeHandler {
     return isDarkMode ? Color(0xFF212121) : Colors.white;
   }
 
-  //home page balace container color
-  // Define the BoxDecoration for the home page balance container
-  static BoxDecoration getMainBalanceContainer() {
-    if (isDarkMode) {
-      return const BoxDecoration(
-        color: Color(0xFF303030),
-      );
-    } else {
-      return const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF0012fb), Color(0xFF0054FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      );
-    }
+  static Color getMainBalanceContainer() {
+    return isDarkMode ? Color(0xFF212121) : Color(0xFF0012fb);
   }
 
   static Color getMainBalanceContainerTextColor() {
@@ -56,10 +42,10 @@ class DarkModeHandler {
 
   //home page transaction details container color
   static Color getMainContainersColor() {
-    return isDarkMode ? Color(0xFF424242) : Color(0xFF007BFF);
+    return isDarkMode ? Color(0xFF424242) : Color(0xFFFFFFFF);
   }
   static Color getMainContainersTextColor() {
-    return isDarkMode ? Colors.white : Colors.white;
+    return isDarkMode ? Colors.white : Colors.black;
   }
   //home page Transaction Text color
   static Color getMainBackgroundTextColor() {
