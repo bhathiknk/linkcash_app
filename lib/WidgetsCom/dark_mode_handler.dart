@@ -79,7 +79,7 @@ class DarkModeHandler {
     return isDarkMode ? Color(0xFFFFFFFF) : Color(0xff6b6b6b);
   }
   static Color getProfilePageIconColor() {
-    return isDarkMode ? Color(0xFFFFFFFF) : Color(0xff0009c2);
+    return isDarkMode ? Color(0xFFFFFFFF) : Color(0xFF0012fb);
   }
   static Color getCalendarTodayTextColor() {
     return isDarkMode ? Color(0xFFFFFFFF) : Color(0xffffffff);

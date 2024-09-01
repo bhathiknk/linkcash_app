@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../MainScreens/Link_Screen.dart';
 import '../MainScreens/Home_Screen.dart';
 import '../MainScreens/Notification_Screen.dart';
-import '../MainScreens/Profile_Screen.dart'; // Import other page files
+import '../MainScreens/Profile_Screen.dart';
+import '../MainScreens/Search_Screen.dart'; // Import the new search page
 
 class BottomNavigationBarWithFab extends StatefulWidget {
   final int currentIndex;
@@ -49,6 +50,12 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
           MaterialPageRoute(builder: (context) => ProfilePage()),
         );
         break;
+      case 4:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => SearchPage()), // Navigate to SearchPage
+        );
+        break;
       default:
         break;
     }
@@ -76,9 +83,10 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
                 ),
                 IconBottomBar(
                   icon: Icons.search_outlined,
-                  selected: false,
+                  selected: widget.currentIndex == 4, // Update to handle the search icon
                   onPressed: () {
-                    // Placeholder action for search, update logic as needed
+                    widget.onTap(4);
+                    _navigateToPage(4); // Navigate to the new search page
                   },
                 ),
                 IconBottomBar2(

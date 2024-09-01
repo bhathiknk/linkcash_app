@@ -24,6 +24,7 @@ class _ProfilePageState extends State<ProfilePage> {
     _checkInitialConnectivity();
   }
 
+  /// Checks initial network connectivity status
   Future<void> _checkInitialConnectivity() async {
     var initialConnectivityResult = await _connectivityService.checkInitialConnectivity();
     setState(() {
@@ -40,27 +41,30 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: DarkModeHandler.getAppBarColor(),
         title: const Text(
           'Profile',
-          style: TextStyle(
-            color: Colors.white,
-          ),
+          style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
       ),
       body: StreamBuilder<ConnectivityResult>(
         stream: _connectivityService.connectivityStream,
         builder: (context, snapshot) {
+          // Display loading spinner until the initial check is complete
           if (!_isInitialCheckComplete) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           } else {
+            // Check network connectivity and display relevant content
             ConnectivityResult? result = snapshot.data ?? _initialConnectivityResult;
             if (result == ConnectivityResult.none) {
-              return NoInternetUI();
+              // Display no internet connection UI
+              return  NoInternetUI();
             } else {
+              // Display profile page content if connected
               return _buildProfilePageContent(context);
             }
           }
         },
       ),
+      // Custom bottom navigation bar
       bottomNavigationBar: BottomNavigationBarWithFab(
         currentIndex: 3,
         onTap: (index) {
@@ -70,177 +74,166 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// Builds the main content of the profile page
   Widget _buildProfilePageContent(BuildContext context) {
     return Container(
       color: DarkModeHandler.getBackgroundColor(),
       child: Column(
         children: [
-          Stack(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: DarkModeHandler.getTopContainerColor(),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  ),
-                ),
-                height: 200,
-              ),
-              const Positioned(
-                top: 10,
-                right: 10,
-                child: Icon(Icons.edit, size: 25, color: Colors.grey),
-              ),
-              Positioned(
-                top: 40,
-                left: MediaQuery.of(context).size.width / 2 - 70,
-                child: Container(
-                  width: 130,
-                  height: 130,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.black, width: 2),
-                  ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'lib/images/coverimage.jpg',
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 5,
-                left: 5,
-                child: GestureDetector(
-                  onTap: () async {
-                    await DarkModeHandler.toggleDarkMode();
-                    setState(() {
-                      isDarkMode = DarkModeHandler.isDarkMode;
-                    });
-                  },
-                  child: AnimatedContainer(
-                    duration: Duration(milliseconds: 600),
-                    padding: EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: isDarkMode ? Colors.black : Colors.blue[300],
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDarkMode ? Colors.grey : Colors.transparent,
-                          blurRadius: 5,
-                          spreadRadius: 2,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isDarkMode ? Icons.nightlight_round : Icons.wb_sunny_rounded,
-                          size: 25,
-                          color: Colors.yellow,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          isDarkMode ? 'Dark Mode' : 'Light Mode',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: List.generate(5, (index) {
-              IconData icon;
-              String title;
-              switch (index) {
-                case 0:
-                  icon = Icons.person;
-                  title = 'Bhathika Nilesh';
-                  break;
-                case 1:
-                  icon = Icons.email;
-                  title = 'bhathika@gmail.com';
-                  break;
-                case 2:
-                  icon = Icons.phone;
-                  title = '11111111111';
-                  break;
-                case 3:
-                  icon = Icons.settings;
-                  title = 'Settings';
-                  break;
-                case 4:
-                  icon = Icons.support;
-                  title = 'Support';
-                  break;
-                default:
-                  icon = Icons.error;
-                  title = 'Error';
-                  break;
-              }
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 5.0),
-                child: Container(
-                  width: MediaQuery.of(context).size.width - 20,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: DarkModeHandler.getMainContainersColor(),
-                    borderRadius: BorderRadius.circular(10.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xff000000).withOpacity(0.3),
-                        spreadRadius: 1,
-                        blurRadius: 1,
-                        offset: Offset(2, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Icon(
-                          icon,
-                          size: 30,
-                          color: DarkModeHandler.getProfilePageIconColor(),
-                        ),
-                      ),
-                      Expanded(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              title,
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: DarkModeHandler.getMainContainersTextColor(),
-                              ),
-                            ),
-                            if (index == 3 || index == 4)
-                              Icon(Icons.arrow_forward_ios),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-          ),
+          _buildProfileHeader(context),
+          const SizedBox(height: 10),
+          _buildProfileDetails(),
         ],
+      ),
+    );
+  }
+
+  /// Builds the profile header with user image and edit options
+  Widget _buildProfileHeader(BuildContext context) {
+    return Stack(
+      children: [
+        // Background container with rounded corners
+        Container(
+          decoration: BoxDecoration(
+            color: DarkModeHandler.getTopContainerColor(),
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(20),
+              bottomRight: Radius.circular(20),
+            ),
+          ),
+          height: 200,
+        ),
+        // Edit icon positioned at the top right
+        const Positioned(
+          top: 10,
+          right: 10,
+          child: Icon(Icons.edit, size: 25, color: Colors.grey),
+        ),
+        // Profile image container in the center
+        Positioned(
+          top: 40,
+          left: MediaQuery.of(context).size.width / 2 - 70,
+          child: Container(
+            width: 130,
+            height: 130,
+
+            child: ClipOval(
+              child: Image.asset(
+                'lib/images/coverimage.jpg',
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+        ),
+        // Dark mode toggle button
+        Positioned(
+          top: 5,
+          left: 5,
+          child: GestureDetector(
+            onTap: () async {
+              await DarkModeHandler.toggleDarkMode();
+              setState(() {
+                isDarkMode = DarkModeHandler.isDarkMode;
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 600),
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.black : Colors.blue[300],
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isDarkMode ? Icons.nightlight_round : Icons.wb_sunny_rounded,
+                    size: 25,
+                    color: Colors.yellow,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    isDarkMode ? 'Dark Mode' : 'Light Mode',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Builds the list of profile details like name, email, and settings
+  Widget _buildProfileDetails() {
+    // Details to be displayed in the profile
+    final List<Map<String, dynamic>> profileItems = [
+      {'icon': Icons.person, 'title': 'Bhathika Nilesh'},
+      {'icon': Icons.email, 'title': 'bhathika@gmail.com'},
+      {'icon': Icons.phone, 'title': '11111111111'},
+      {'icon': Icons.settings, 'title': 'Settings'},
+      {'icon': Icons.support, 'title': 'Support'},
+    ];
+
+    // Builds a column of profile items
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: profileItems.map((item) {
+        return _buildProfileItem(
+          icon: item['icon'],
+          title: item['title'],
+          showArrow: item['title'] == 'Settings' || item['title'] == 'Support',
+        );
+      }).toList(),
+    );
+  }
+
+  /// Builds a single profile item row with icon, title, and optional arrow
+  Widget _buildProfileItem({required IconData icon, required String title, bool showArrow = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5.0),
+      child: Container(
+        width: MediaQuery.of(context).size.width - 20,
+        height: 80,
+        decoration: BoxDecoration(
+          color: DarkModeHandler.getMainContainersColor(),
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: Row(
+          children: [
+            // Icon for each profile item
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Icon(
+                icon,
+                size: 30,
+                color: DarkModeHandler.getProfilePageIconColor(),
+              ),
+            ),
+            // Title and optional arrow for navigable items
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: DarkModeHandler.getMainContainersTextColor(),
+                    ),
+                  ),
+                  // Optional arrow for settings and support items
+                  if (showArrow) const Icon(Icons.arrow_forward_ios),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

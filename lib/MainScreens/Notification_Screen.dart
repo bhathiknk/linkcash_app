@@ -96,14 +96,6 @@ class _NotificationPageState extends State<NotificationPage> {
                 decoration: BoxDecoration(
                   color: DarkModeHandler.getMainContainersColor(),
                   borderRadius: BorderRadius.circular(10.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xff000000).withOpacity(0.3),
-                      spreadRadius: 1,
-                      blurRadius: 1,
-                      offset: Offset(2, 2), // changes position of shadow
-                    ),
-                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
