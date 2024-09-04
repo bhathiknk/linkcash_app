@@ -26,7 +26,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   /// Checks initial network connectivity status
   Future<void> _checkInitialConnectivity() async {
-    var initialConnectivityResult = await _connectivityService.checkInitialConnectivity();
+    var initialConnectivityResult =
+    await _connectivityService.checkInitialConnectivity();
     setState(() {
       _initialConnectivityResult = initialConnectivityResult;
       _isInitialCheckComplete = true;
@@ -53,10 +54,11 @@ class _ProfilePageState extends State<ProfilePage> {
             return const Center(child: CircularProgressIndicator());
           } else {
             // Check network connectivity and display relevant content
-            ConnectivityResult? result = snapshot.data ?? _initialConnectivityResult;
+            ConnectivityResult? result =
+                snapshot.data ?? _initialConnectivityResult;
             if (result == ConnectivityResult.none) {
               // Display no internet connection UI
-              return  NoInternetUI();
+              return NoInternetUI();
             } else {
               // Display profile page content if connected
               return _buildProfilePageContent(context);
@@ -79,16 +81,47 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       color: DarkModeHandler.getBackgroundColor(),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildProfileHeader(context),
-          const SizedBox(height: 10),
-          _buildProfileDetails(),
+          const SizedBox(height: 20),
+          Padding(
+            padding:
+            const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildProfileDetail(
+                  icon: Icons.email,
+                  text: 'bhathika@gmail.com',
+                  iconColor: Colors.grey,
+                ),
+                _buildProfileDetail(
+                  icon: Icons.phone,
+                  text: '11111111111',
+                  iconColor: Colors.grey,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Display the settings and support containers
+          _buildProfileItem(
+            icon: Icons.settings,
+            title: 'Settings',
+            showArrow: true,
+          ),
+          _buildProfileItem(
+            icon: Icons.support,
+            title: 'Support',
+            showArrow: true,
+          ),
         ],
       ),
     );
   }
 
-  /// Builds the profile header with user image and edit options
+  /// Builds the profile header with user image, name, and edit options
   Widget _buildProfileHeader(BuildContext context) {
     return Stack(
       children: [
@@ -101,7 +134,7 @@ class _ProfilePageState extends State<ProfilePage> {
               bottomRight: Radius.circular(20),
             ),
           ),
-          height: 200,
+          height: 230,
         ),
         // Edit icon positioned at the top right
         const Positioned(
@@ -111,18 +144,30 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         // Profile image container in the center
         Positioned(
-          top: 40,
+          top: 30,
           left: MediaQuery.of(context).size.width / 2 - 70,
-          child: Container(
-            width: 130,
-            height: 130,
-
-            child: ClipOval(
-              child: Image.asset(
-                'lib/images/coverimage.jpg',
-                fit: BoxFit.cover,
+          child: Column(
+            children: [
+              Container(
+                width: 130,
+                height: 130,
+                child: ClipOval(
+                  child: Image.asset(
+                    'lib/images/coverimage.jpg',
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 10),
+              const Text(
+                'Bhathika Nilesh',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
           ),
         ),
         // Dark mode toggle button
@@ -147,7 +192,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    isDarkMode ? Icons.nightlight_round : Icons.wb_sunny_rounded,
+                    isDarkMode
+                        ? Icons.nightlight_round
+                        : Icons.wb_sunny_rounded,
                     size: 25,
                     color: Colors.yellow,
                   ),
@@ -169,32 +216,31 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// Builds the list of profile details like name, email, and settings
-  Widget _buildProfileDetails() {
-    // Details to be displayed in the profile
-    final List<Map<String, dynamic>> profileItems = [
-      {'icon': Icons.person, 'title': 'Bhathika Nilesh'},
-      {'icon': Icons.email, 'title': 'bhathika@gmail.com'},
-      {'icon': Icons.phone, 'title': '11111111111'},
-      {'icon': Icons.settings, 'title': 'Settings'},
-      {'icon': Icons.support, 'title': 'Support'},
-    ];
-
-    // Builds a column of profile items
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: profileItems.map((item) {
-        return _buildProfileItem(
-          icon: item['icon'],
-          title: item['title'],
-          showArrow: item['title'] == 'Settings' || item['title'] == 'Support',
-        );
-      }).toList(),
+  /// Builds a profile detail with an icon and text
+  Widget _buildProfileDetail({
+    required IconData icon,
+    required String text,
+    required Color iconColor,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 30, color: iconColor),
+        const SizedBox(width: 10),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+            color: Colors.black54,
+          ),
+        ),
+      ],
     );
   }
 
   /// Builds a single profile item row with icon, title, and optional arrow
-  Widget _buildProfileItem({required IconData icon, required String title, bool showArrow = false}) {
+  Widget _buildProfileItem(
+      {required IconData icon, required String title, bool showArrow = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5.0),
       child: Container(

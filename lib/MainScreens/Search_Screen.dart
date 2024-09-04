@@ -54,8 +54,13 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search'),
+        automaticallyImplyLeading: false,
         backgroundColor: DarkModeHandler.getAppBarColor(),
+        title: const Text(
+          'Profile',
+          style: TextStyle(color: Colors.white),
+        ),
+        centerTitle: true,
       ),
       backgroundColor: DarkModeHandler.getBackgroundColor(),
       body: SingleChildScrollView(
