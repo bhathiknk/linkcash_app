@@ -19,14 +19,14 @@ class WelcomeScreen extends StatelessWidget {
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height / 1.6,
               decoration: BoxDecoration(
-                color: Color(0xFF0054FF),
+                color: Color(0xFFE3F2FD),
               ),
             ),
             Container(
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height / 1.6,
               decoration: BoxDecoration(
-                color: Color(0xFF0054FF),
+                color: Color(0xFF0012fb),
                 borderRadius:
                 BorderRadius.only(bottomRight: Radius.circular(70)),
               ),
@@ -44,7 +44,7 @@ class WelcomeScreen extends StatelessWidget {
                 width: MediaQuery.of(context).size.width,
                 height: MediaQuery.of(context).size.height / 2.666,
                 decoration: BoxDecoration(
-                  color: Color(0xFF0054FF),
+                  color: Color(0xFF0012fb),
                 ),
               ),
             ),
@@ -76,7 +76,7 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 40),
                     Material(
-                        color:Color(0xFF0054FF),
+                        color:Color(0xFF0056D2),
                       borderRadius: BorderRadius.circular(40),
                       child: InkWell(
                         onTap: () {

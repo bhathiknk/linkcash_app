@@ -57,6 +57,11 @@ class DarkModeHandler {
     return isDarkMode ? Color(0xFF424242) : Colors.white;
   }
 
+  //default main buttons colors
+  static Color getMainButtonsColor() {
+    return isDarkMode ? Color(0xFF1976D2) : Color(0xFF0056D2);
+  }
+
   static Color getCalendarTextColor() {
     return isDarkMode ? Colors.white : Colors.black;
   }

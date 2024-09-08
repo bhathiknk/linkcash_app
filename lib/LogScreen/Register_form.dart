@@ -1,215 +1,195 @@
 import 'package:flutter/material.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../MainScreens/Home_Screen.dart';
-import '../ConnectionCheck/connectivity_service.dart';
-import 'login_form.dart'; // Ensure this import matches your actual file structure
+import '../WidgetsCom/dark_mode_handler.dart';
 
-class RegisterPage extends StatefulWidget {
+class RegisterPage extends StatelessWidget {
   const RegisterPage({Key? key}) : super(key: key);
-
-  @override
-  _RegisterPageState createState() => _RegisterPageState();
-}
-
-class _RegisterPageState extends State<RegisterPage> {
-  final ConnectivityService _connectivityService = ConnectivityService();
-  ConnectivityResult? _initialConnectivityResult;
-  bool _isInitialCheckComplete = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkInitialConnectivity();
-  }
-
-  Future<void> _checkInitialConnectivity() async {
-    var initialConnectivityResult = await _connectivityService.checkInitialConnectivity();
-    setState(() {
-      _initialConnectivityResult = initialConnectivityResult;
-      _isInitialCheckComplete = true;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: StreamBuilder<ConnectivityResult>(
-        stream: _connectivityService.connectivityStream,
-        builder: (context, snapshot) {
-          if (!_isInitialCheckComplete) {
-            return Center(child: CircularProgressIndicator());
-          } else {
-            ConnectivityResult? result = snapshot.data ?? _initialConnectivityResult;
-            if (result == ConnectivityResult.none) {
-              return NoInternetUI();
-            } else {
-              return _buildRegisterForm();
-            }
-          }
-        },
+      resizeToAvoidBottomInset: true, // Allow scrolling when the keyboard is visible
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: DarkModeHandler.getAppBarColor(),
+        title: const Text(
+          "Register",
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true, // Center the title in the AppBar
       ),
-    );
-  }
-
-
-  Widget _buildRegisterForm() {
-    return Container(
-      color: const Color(0xFF0054FF), // Background color for the body
-      child: Column(
-        children: [
-          SizedBox(height: 50), // Add some top padding if needed
-          Center(
-            child: Image.asset(
-              'lib/images/signup.png',
-              width: 150, // Set the width of the logo
-              height: 150, // Set the height of the logo
+      body: Container(
+        color: const Color(0xffffffff), // Background color for the body
+        child: Column(
+          children: [
+            Expanded(
+              child: Container(), // Empty container to fill space
             ),
-          ),
-          Expanded(
-            child: Container(), // Empty container to fill space
-          ),
-          Stack(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(10),
-                    topRight: Radius.circular(10),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 2,
-                      blurRadius: 5,
-                      offset: Offset(0, 3), // changes position of shadow
+            Stack(
+              children: [
+                Align(
+                  alignment: Alignment.bottomCenter, // Aligns the container at the bottom
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE3F2FD),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(10),
+                        topRight: Radius.circular(10),
+                      ),
                     ),
-                  ],
-                ),
-                height: 550, // Adjust height as needed
-                width: double.infinity,
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start, // Align to the top
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(height: 1),
-                      Text(
-                        'Sign Up',
-                        style: TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                    height: 550, // Explicitly set the height to 750
+                    width: double.infinity,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: SingleChildScrollView(
+                        physics: const ClampingScrollPhysics(),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start, // Align to the top
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 1),
+                            const Text(
+                              'Sign Up',
+                              style: TextStyle(
+                                fontSize: 25,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            _buildLabelWithTextField(
+                              label: 'Username',
+                              hint: 'Enter your username',
+                            ),
+                            const SizedBox(height: 10),
+                            _buildLabelWithTextField(
+                              label: 'Email',
+                              hint: 'Enter your email',
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+                            const SizedBox(height: 10),
+                            _buildLabelWithTextField(
+                              label: 'Password',
+                              hint: 'Enter your password',
+                              obscureText: true,
+                            ),
+                            const SizedBox(height: 10),
+                            _buildLabelWithTextField(
+                              label: 'Confirm Password',
+                              hint: 'Re-enter your password',
+                              obscureText: true,
+                            ),
+                            const SizedBox(height: 20), // Adjust vertical spacing
+                            _buildRegisterButton(context),
+                          ],
                         ),
                       ),
-                      SizedBox(height: 10),
-                      _buildInputField(context, 'Username'),
-                      SizedBox(height: 10),
-                      _buildInputField(context, 'Email'),
-                      SizedBox(height: 10),
-                      _buildInputField(context, 'Password', obscureText: true),
-                      SizedBox(height: 10),
-                      _buildInputField(context, 'Confirm Password', obscureText: true),
-                      SizedBox(height: 20), // Adjust vertical spacing
-                      _buildSignUpButton(context),
-                      SizedBox(height: 10), // Add space between sign up button and text
-
-                      SizedBox(height: 1),
-                      Text(
-                        'Have an account?',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => LoginPage()),
-                          );
-                        },
-                        child: Text(
-                          'Log In',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.blue, // Change text color to blue for link
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildInputField(BuildContext context, String label, {bool obscureText = false}) {
+  // Builds a combined label and input field aligned properly
+  Widget _buildLabelWithTextField({
+    required String label,
+    required String hint,
+    bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        SizedBox(height: 5),
-        TextFormField(
+        _buildLabel(label),
+        const SizedBox(height: 5),
+        _buildTextField(
+          hint: hint,
           obscureText: obscureText,
-          style: TextStyle(color: Colors.black), // Text color
-          cursorColor: Colors.blue, // Cursor color
-          decoration: InputDecoration(
-            contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10), // Padding
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey), // Border color
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey), // Border color
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.blue, width: 2), // Focused border color and width
-            ),
-            filled: true,
-            fillColor: Colors.white,
-          ),
+          keyboardType: keyboardType,
         ),
       ],
     );
   }
 
-  Widget _buildSignUpButton(BuildContext context) {
+  // Builds a label for input fields
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 16,
+          color: DarkModeHandler.getMainContainersTextColor(),
+        ),
+      ),
+    );
+  }
+
+  // Builds a text input field
+  Widget _buildTextField({
+    required String hint,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+    bool obscureText = false,
+  }) {
+    return Container(
+      decoration: _inputBoxDecoration(),
+      child: TextFormField(
+        obscureText: obscureText,
+        style: TextStyle(color: DarkModeHandler.getInputTypeTextColor()),
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: DarkModeHandler.getInputTextColor(),
+            fontWeight: FontWeight.normal, // Set font weight to normal
+          ),
+          border: InputBorder.none,
+          contentPadding:
+          const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+        ),
+      ),
+    );
+  }
+
+  // Decoration for input fields
+  BoxDecoration _inputBoxDecoration() {
+    return BoxDecoration(
+      color: DarkModeHandler.getMainContainersColor(),
+      borderRadius: BorderRadius.circular(10.0),
+    );
+  }
+
+  // Builds the register button
+  Widget _buildRegisterButton(BuildContext context) {
     return SizedBox(
       width: 200,
       child: ElevatedButton(
         onPressed: () {
-          // Navigate to MyHomePage after sign up button is pressed
+          // Navigate to MyHomePage after register button is pressed
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => MyHomePage()),
+            MaterialPageRoute(builder: (context) => const MyHomePage()),
           );
         },
-        child: Text(
-          'Sign Up',
-          style: TextStyle(color: Colors.white), // Text color
-        ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
-          padding: EdgeInsets.symmetric(vertical: 15),
+          backgroundColor: const Color(0xFF0056D2),
+          padding: const EdgeInsets.symmetric(vertical: 15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
+        ),
+        child: const Text(
+          'Register',
+          style: TextStyle(color: Colors.white), // Text color
         ),
       ),
     );

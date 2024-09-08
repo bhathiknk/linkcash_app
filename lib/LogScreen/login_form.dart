@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../MainScreens/Home_Screen.dart';
+import '../WidgetsCom/dark_mode_handler.dart';
 import 'Register_form.dart';
 import 'login_form.dart';
 
@@ -10,20 +11,22 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // Prevents input fields from moving when the keyboard appears
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: DarkModeHandler.getAppBarColor(),
+        title: const Text(
+          "Login",
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true, // Center the title in the AppBar
+      ),
       body: Container(
-        color: const Color(0xFF0054FF), // Background color for the body
+        color: const Color(0xffffffff), // Background color for the body
         child: Column(
           children: [
-
-            SizedBox(height: 50), // Add some top padding if needed
-            Center(
-              child: Image.asset(
-                'lib/images/signIn.png',
-                width: 150, // Set the width of the logo
-                height: 150, // Set the height of the logo
-              ),
-            ),
-
             Expanded(
               child: Container(), // Empty container to fill space
             ),
@@ -31,19 +34,11 @@ class LoginPage extends StatelessWidget {
               children: [
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
+                    color: const Color(0xFFE3F2FD),
+                    borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(10),
                       topRight: Radius.circular(10),
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: Offset(0, 3), // changes position of shadow
-                      ),
-                    ],
                   ),
                   height: 550, // Adjust height as needed
                   width: double.infinity,
@@ -53,8 +48,8 @@ class LoginPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.start, // Align to the top
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        SizedBox(height: 1),
-                        Text(
+                        const SizedBox(height: 1),
+                        const Text(
                           'Sign In',
                           style: TextStyle(
                             fontSize: 25,
@@ -62,16 +57,21 @@ class LoginPage extends StatelessWidget {
                             color: Colors.black,
                           ),
                         ),
-                        SizedBox(height: 10),
-                        _buildInputField(context, 'Username'),
-                        SizedBox(height: 10),
-                        _buildInputField(context, 'Password', obscureText: true),
-                        SizedBox(height: 20), // Adjust vertical spacing
+                        const SizedBox(height: 10),
+                        _buildLabelWithTextField(
+                          label: 'Username',
+                          hint: 'Enter your username',
+                        ),
+                        const SizedBox(height: 10),
+                        _buildLabelWithTextField(
+                          label: 'Password',
+                          hint: 'Enter your password',
+                          obscureText: true,
+                        ),
+                        const SizedBox(height: 20), // Adjust vertical spacing
                         _buildSignUpButton(context),
-                        SizedBox(height: 10), // Add space between sign up button and text
-
-                        SizedBox(height: 1),
-                        Text(
+                        const SizedBox(height: 10), // Add space between sign-up button and text
+                        const Text(
                           'Create an account?',
                           style: TextStyle(
                             fontSize: 14,
@@ -82,10 +82,11 @@ class LoginPage extends StatelessWidget {
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => RegisterPage()),
+                              MaterialPageRoute(
+                                  builder: (context) => const RegisterPage()),
                             );
                           },
-                          child: Text(
+                          child: const Text(
                             'Sign Up',
                             style: TextStyle(
                               fontSize: 14,
@@ -105,45 +106,70 @@ class LoginPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInputField(BuildContext context, String label, {bool obscureText = false}) {
+  // Builds a combined label and input field aligned properly
+  Widget _buildLabelWithTextField({
+    required String label,
+    required String hint,
+    bool obscureText = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        SizedBox(height: 5),
-        TextFormField(
-          obscureText: obscureText,
-          style: TextStyle(color: Colors.black), // Text color
-          cursorColor: Colors.blue, // Cursor color
-          decoration: InputDecoration(
-            contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10), // Padding
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey), // Border color
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey), // Border color
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.blue, width: 2), // Focused border color and width
-            ),
-            filled: true,
-            fillColor: Colors.white,
-          ),
-        ),
+        _buildLabel(label),
+        const SizedBox(height: 5),
+        _buildTextField(hint: hint, obscureText: obscureText),
       ],
     );
   }
 
+  // Builds a label for input fields
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 16,
+          color: DarkModeHandler.getMainContainersTextColor(),
+        ),
+      ),
+    );
+  }
+
+  // Builds a text input field
+  Widget _buildTextField({
+    required String hint,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+    bool obscureText = false,
+  }) {
+    return Container(
+      decoration: _inputBoxDecoration(),
+      child: TextFormField(
+        obscureText: obscureText,
+        style: TextStyle(color: DarkModeHandler.getInputTypeTextColor()),
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: DarkModeHandler.getInputTextColor(),
+            fontWeight: FontWeight.normal, // Set font weight to normal
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+        ),
+      ),
+    );
+  }
+
+  // Decoration for input fields
+  BoxDecoration _inputBoxDecoration() {
+    return BoxDecoration(
+      color: DarkModeHandler.getMainContainersColor(),
+      borderRadius: BorderRadius.circular(10.0),
+    );
+  }
 
   Widget _buildSignUpButton(BuildContext context) {
     return SizedBox(
@@ -153,19 +179,19 @@ class LoginPage extends StatelessWidget {
           // Navigate to MyHomePage after sign up button is pressed
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => MyHomePage()),
+            MaterialPageRoute(builder: (context) => const MyHomePage()),
           );
         },
-        child: Text(
-          'Sign In',
-          style: TextStyle(color: Colors.white), // Text color
-        ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
-          padding: EdgeInsets.symmetric(vertical: 15),
+          backgroundColor: const Color(0xFF0056D2),
+          padding: const EdgeInsets.symmetric(vertical: 15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
+        ),
+        child: const Text(
+          'Sign In',
+          style: TextStyle(color: Colors.white), // Text color
         ),
       ),
     );

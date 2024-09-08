@@ -1,5 +1,6 @@
-// gradient_button_fb4.dart
 import 'package:flutter/material.dart';
+
+import 'dark_mode_handler.dart';
 
 class GradientButtonFb4 extends StatelessWidget {
   final String text;
@@ -18,9 +19,7 @@ class GradientButtonFb4 extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0012fb), Color(0xFF0054FF)],
-        ),
+        color: DarkModeHandler.getMainButtonsColor(),  // Changed to solid color
       ),
       child: ElevatedButton(
         style: ButtonStyle(
