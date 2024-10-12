@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../ConnectionCheck/connectivity_service.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/calendar_widget.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
+
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -15,89 +17,105 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // Instance of ConnectivityService to check internet connectivity
   final ConnectivityService _connectivityService = ConnectivityService();
   ConnectivityResult? _initialConnectivityResult;
   bool _isInitialCheckComplete = false;
+  bool _isBalanceVisible = true;
 
   @override
   void initState() {
     super.initState();
-    _checkInitialConnectivity(); // Check initial internet connectivity when the widget is initialized
+    _checkInitialConnectivity();
+    _loadBalanceVisibility(); // Load the saved visibility state
   }
 
-  // Function to check initial connectivity and set state accordingly
   Future<void> _checkInitialConnectivity() async {
-    var initialConnectivityResult = await _connectivityService.checkInitialConnectivity();
+    var initialConnectivityResult =
+    await _connectivityService.checkInitialConnectivity();
     setState(() {
       _initialConnectivityResult = initialConnectivityResult;
       _isInitialCheckComplete = true;
     });
   }
 
+  Future<void> _loadBalanceVisibility() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isBalanceVisible = prefs.getBool('isBalanceVisible') ?? true;
+    });
+  }
+
+  Future<void> _saveBalanceVisibility(bool isVisible) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isBalanceVisible', isVisible);
+  }
+
+  // Toggle balance visibility
+  void _toggleBalanceVisibility() {
+    setState(() {
+      _isBalanceVisible = !_isBalanceVisible;
+    });
+    _saveBalanceVisibility(_isBalanceVisible);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: DarkModeHandler.getAppBarColor(),
-        title: const Text(
-          "Link Cash",
-          style: TextStyle(
-            color: Colors.white,
-          ),
-        ),
-        centerTitle: true, // Center the title in the AppBar
-      ),
-      // Using StreamBuilder to monitor connectivity changes
+
       body: StreamBuilder<ConnectivityResult>(
         stream: _connectivityService.connectivityStream,
         builder: (context, snapshot) {
           if (!_isInitialCheckComplete) {
-            // Show loading indicator while checking initial connectivity
             return const Center(child: CircularProgressIndicator());
           } else {
             final result = snapshot.data ?? _initialConnectivityResult;
             if (result == ConnectivityResult.none) {
-              // Show No Internet UI if there's no connectivity
               return NoInternetUI();
             } else {
-              // If connected, show the main content of the homepage
               return _buildHomePageContent(context);
             }
           }
         },
       ),
-      // Custom Bottom Navigation Bar with a Floating Action Button
       bottomNavigationBar: BottomNavigationBarWithFab(
         currentIndex: 0,
-        onTap: (index) {
-          // Handle bottom navigation tap events if needed
-        },
+        onTap: (index) {},
       ),
     );
   }
-
-  // Function to build the main content of the homepage
   Widget _buildHomePageContent(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width; // Get screen width for responsive design
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Container(
-      color: DarkModeHandler.getBackgroundColor(), // Set background color based on theme
+      color: DarkModeHandler.getBackgroundColor(), // Main background color of the app
       child: Column(
         children: [
-          _buildTopSection(screenWidth), // Top section with greeting and balance information
-          const SizedBox(height: 10),
-          _buildCalendarContainer(screenWidth), // Calendar widget showing current date and events
+          // Container for white background above the top section
+          Container(
+            color: Colors.white, // Set this container to white
+            child: Column(
+              children: [
+                const SizedBox(height: 30), // Space above the top section
+                _buildTopSection(screenWidth),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10), // Space between top section and calendar
+          _buildCalendarContainer(screenWidth),
           const SizedBox(height: 20),
-          _buildTransactionsHeader(), // Header for the Transactions section
-          _buildTransactionsList(screenWidth), // Horizontal list of recent transactions
+          _buildActionButtons(),
+          const SizedBox(height: 20),
+          _buildRecentTransactionHeader(),
+          const SizedBox(height: 5),
+          _buildRecentTransactionsContainer(screenWidth),
         ],
       ),
     );
   }
 
-  // Function to build the top section containing welcome message and balance
+
+
+
   Widget _buildTopSection(double screenWidth) {
     return Stack(
       children: [
@@ -109,55 +127,77 @@ class _MyHomePageState extends State<MyHomePage> {
               bottomRight: Radius.circular(20),
             ),
           ),
-          height: 200, // Height of the background container
+          height: 250,
         ),
         TopBarFb4(
-          title: 'Welcome Back', // Title message
-          upperTitle: 'Bhathika Nilesh', // Subheading with the user’s name
-          onTapMenu: () {
-            // Handle menu button tap here
-          },
+          title: 'Welcome Back',
+          upperTitle: 'Bhathika Nilesh',
+          onTapMenu: () {},
         ),
         Positioned(
-          top: 80,
+          top: 60,
           left: 10,
           right: 10,
-          child: _buildBalanceContainer(), // Positioned widget showing the balance
+          child: _buildMonzoCard(),
         ),
       ],
     );
   }
 
-  // Function to build the balance container showing the current balance amount
-  Widget _buildBalanceContainer() {
-    return Container(
-      height: 110,
-      decoration: BoxDecoration(
-        color: DarkModeHandler.getMainBalanceContainer(),
-        borderRadius: BorderRadius.circular(10),
+  Widget _buildMonzoCard() {
+    final titleColor = DarkModeHandler.getMainBalanceContainerTextColor();
 
-      ),
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+      color: DarkModeHandler.getMainBalanceContainer(),
       child: Padding(
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Balance',
+              'LinkCash',
               style: TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 16,
-                color: DarkModeHandler.getMainBalanceContainerTextColor(),
+                color: titleColor,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 5),
-            Text(
-              '\$800.00', // Display the current balance
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 30,
-                color: DarkModeHandler.getMainBalanceContainerTextColor(),
-              ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Icon(Icons.account_balance_outlined, color: Colors.white),
+                const SizedBox(width: 5),
+                Text(
+                  '04-00-03 • 60526416',
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Balance',
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  '£32.56',
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -165,9 +205,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-
-
-  // Function to build the container that holds the Calendar widget
   Widget _buildCalendarContainer(double screenWidth) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -176,118 +213,104 @@ class _MyHomePageState extends State<MyHomePage> {
         color: DarkModeHandler.getCalendarContainersColor(),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: const CalendarWidget(), // Custom calendar widget
+      child: const CalendarWidget(),
     );
   }
 
-  // Function to build the header for the Transactions section
-  Widget _buildTransactionsHeader() {
+  Widget _buildActionButtons() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Text(
-            'Transactions',
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 20,
-              color: DarkModeHandler.getMainBackgroundTextColor(),
-            ),
-          ),
-          const Spacer(), // Space between the header and any potential action buttons
+          _buildActionButton('Pay Quick', Icons.flash_on),
+          _buildActionButton('Group Pay', Icons.group),
+          _buildActionButton('Link Search', Icons.search),
         ],
       ),
     );
   }
 
-  // Function to build the list of recent transactions
-  Widget _buildTransactionsList(double screenWidth) {
-    return Expanded(
-      child: SingleChildScrollView(
-        child: Column(
-          children: List.generate(
-            5, // Number of transactions to display
-                (index) => _buildTransactionItem(screenWidth),
+  Widget _buildActionButton(String title, IconData icon) {
+    return Column(
+      children: [
+        Container(
+          width: 60,
+          height: 60,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              backgroundColor: const Color(0xFF83B6B9), // Set button color
+              padding: EdgeInsets.zero, // Remove internal padding
+            ),
+            onPressed: () {},
+            child: Icon(
+              icon,
+              size: 30,
+              color: Colors.white, // Icon color
+            ),
+          ),
+        ),
+        const SizedBox(height: 5), // Space between button and text
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            color: DarkModeHandler.getMainContainersTextColor(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Update the _buildRecentTransactionHeader method to center the text
+  Widget _buildRecentTransactionHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Align(
+        alignment: Alignment.center, // Center the text
+        child: Text(
+          'Recent Transaction',
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 20,
+            color: DarkModeHandler.getMainBackgroundTextColor(),
           ),
         ),
       ),
     );
   }
 
-// Function to build each transaction item in the list
-  Widget _buildTransactionItem(double screenWidth) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Adjusted padding for spacing between items
-      child: Container(
-        decoration: BoxDecoration(
-          color: DarkModeHandler.getBackgroundColor(),
-          borderRadius: BorderRadius.circular(10),
-
-        ),
-        child: _buildTransactionDetails(screenWidth), // Updated for vertical scrolling
-      ),
-    );
-  }
-
-  // Function to build the details of each transaction, including title and amount
-  Widget _buildTransactionDetails(double screenWidth) {
+// Add a method to build the recent transactions container
+  Widget _buildRecentTransactionsContainer(double screenWidth) {
     return Container(
-      width: screenWidth * 0.95,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      width: screenWidth - 20,
+      height: 140,
       decoration: BoxDecoration(
-        color: DarkModeHandler.getMainContainersColor(),
+        color: DarkModeHandler.getCalendarContainersColor(),
         borderRadius: BorderRadius.circular(10),
-
       ),
-      child: SizedBox(
-        width: screenWidth * 0.75,
-        height: 100, // Set the height for the transaction detail container
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Payment Link Title", // Title of the transaction
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: DarkModeHandler.getMainContainersTextColor(),
-                    ),
-                  ),
-                  const SizedBox(height: 8.0),
-                  Text(
-                    "Bhathika", // Payee or transaction participant name
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: DarkModeHandler.getMainContainersTextColor(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "+ \$300", // Transaction amount
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: DarkModeHandler.getMainContainersTextColor(),
-                ),
-              ),
-            ),
-          ],
+      child: Center(
+        child: Text(
+          "No recent transactions", // Placeholder text
+          style: TextStyle(
+            color: Colors.grey,
+            fontSize: 16,
+          ),
         ),
       ),
     );
+
   }
+
+
+
 }
 
-// Define the TopBarFb4 widget used in the top section
+
 class TopBarFb4 extends StatelessWidget {
   final String title;
   final String upperTitle;
@@ -309,7 +332,7 @@ class TopBarFb4 extends StatelessWidget {
         children: [
           IconButton(
             icon: const Icon(Icons.notifications),
-            onPressed: onTapMenu, // Trigger action when menu button is pressed
+            onPressed: onTapMenu,
           ),
           Padding(
             padding: const EdgeInsets.only(right: 16.0, top: 8.0),

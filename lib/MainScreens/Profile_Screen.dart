@@ -42,7 +42,7 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: DarkModeHandler.getAppBarColor(),
         title: const Text(
           'Profile',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.black),
         ),
         centerTitle: true,
       ),
@@ -185,7 +185,7 @@ class _ProfilePageState extends State<ProfilePage> {
               duration: const Duration(milliseconds: 600),
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: isDarkMode ? Colors.black : Colors.blue[300],
+                color: isDarkMode ? Colors.black : Color(0xFF83B6B9),
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Row(
@@ -239,28 +239,33 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   /// Builds a single profile item row with icon, title, and optional arrow
-  Widget _buildProfileItem(
-      {required IconData icon, required String title, bool showArrow = false}) {
+  Widget _buildProfileItem({
+    required IconData icon,
+    required String title,
+    bool showArrow = false,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5.0),
-      child: Container(
-        width: MediaQuery.of(context).size.width - 20,
-        height: 80,
-        decoration: BoxDecoration(
-          color: DarkModeHandler.getMainContainersColor(),
-          borderRadius: BorderRadius.circular(10.0),
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 5.0), // Padding around each list item
+    child: Center(
+    child: Container(
+    width: MediaQuery.of(context).size.width * 0.9, // Sets width relative to screen size
+    height: 80, // Fixed height for each item
+    decoration: BoxDecoration(
+    color: DarkModeHandler.getMainContainersColor(), // Background color of the list item
+    borderRadius: BorderRadius.circular(10.0), // Rounded corners
+    ),
+        // Adjust padding to ensure proper left and right padding of the container
+        padding: const EdgeInsets.symmetric(horizontal: 20.0), // Even padding on both sides
         child: Row(
           children: [
             // Icon for each profile item
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Icon(
-                icon,
-                size: 30,
-                color: DarkModeHandler.getProfilePageIconColor(),
-              ),
+            Icon(
+              icon,
+              size: 30,
+              color: DarkModeHandler.getProfilePageIconColor(),
             ),
+            // Space between the icon and the text
+            const SizedBox(width: 16.0), // Add spacing after the icon
             // Title and optional arrow for navigable items
             Expanded(
               child: Row(
@@ -281,6 +286,10 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         ),
       ),
+    ),
     );
   }
+
+
+
 }

@@ -15,7 +15,7 @@ class RegisterPage extends StatelessWidget {
         title: const Text(
           "Register",
           style: TextStyle(
-            color: Colors.white,
+            color: Colors.black,
           ),
         ),
         centerTitle: true, // Center the title in the AppBar
@@ -25,15 +25,24 @@ class RegisterPage extends StatelessWidget {
         child: Column(
           children: [
             Expanded(
-              child: Container(), // Empty container to fill space
+              child: Container(
+                alignment: Alignment.center, // Center the image
+                child: Image.asset(
+                  'lib/images/logo-no-background.png', // Path to your image
+                  width: 300, // Adjust the width as needed
+                  height: 300, // Adjust the height as needed
+                  fit: BoxFit.contain, // Adjust the fit property as needed
+                ),
+              ),
             ),
+
             Stack(
               children: [
                 Align(
                   alignment: Alignment.bottomCenter, // Aligns the container at the bottom
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE3F2FD),
+                      color: const Color(0xFF0054FF),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(10),
                         topRight: Radius.circular(10),
@@ -55,7 +64,7 @@ class RegisterPage extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 25,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black,
+                                color: Colors.white,
                               ),
                             ),
                             const SizedBox(height: 10),
@@ -126,7 +135,7 @@ class RegisterPage extends StatelessWidget {
         text,
         style: TextStyle(
           fontSize: 16,
-          color: DarkModeHandler.getMainContainersTextColor(),
+          color: Colors.white,
         ),
       ),
     );
@@ -181,7 +190,7 @@ class RegisterPage extends StatelessWidget {
           );
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF0056D2),
+          backgroundColor: const Color(0xFF83B6B9),
           padding: const EdgeInsets.symmetric(vertical: 15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),

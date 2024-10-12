@@ -19,7 +19,7 @@ class DarkModeHandler {
 
   //app bar color
   static Color getAppBarColor() {
-    return isDarkMode ? Colors.black : const Color(0xFF0012fb);
+    return isDarkMode ? Colors.black : const Color(0xFFE3F2FD);
   }
 
   //background color
@@ -33,7 +33,7 @@ class DarkModeHandler {
   }
 
   static Color getMainBalanceContainer() {
-    return isDarkMode ? Color(0xFF212121) : Color(0xFF0012fb);
+    return isDarkMode ? Color(0xFF212121) : Color(0xFF0054FF);
   }
 
   static Color getMainBalanceContainerTextColor() {
@@ -59,7 +59,7 @@ class DarkModeHandler {
 
   //default main buttons colors
   static Color getMainButtonsColor() {
-    return isDarkMode ? Color(0xFF1976D2) : Color(0xFF0056D2);
+    return isDarkMode ? Color(0xFF1976D2) : Color(0xFF83B6B9);
   }
 
   static Color getCalendarTextColor() {
@@ -84,7 +84,7 @@ class DarkModeHandler {
     return isDarkMode ? Color(0xFFFFFFFF) : Color(0xff6b6b6b);
   }
   static Color getProfilePageIconColor() {
-    return isDarkMode ? Color(0xFFFFFFFF) : Color(0xFF0012fb);
+    return isDarkMode ? Color(0xFFFFFFFF) : Color(0xFF0054FF);
   }
   static Color getCalendarTodayTextColor() {
     return isDarkMode ? Color(0xFFFFFFFF) : Color(0xffffffff);

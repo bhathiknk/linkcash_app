@@ -21,10 +21,10 @@ class _NotificationPageState extends State<NotificationPage> {
         title: const Text(
           "Notifications",
           style: TextStyle(
-            color: Colors.white, // Set text color to white
+            color: Colors.black,
           ),
         ),
-        centerTitle: true, // Center the title
+        centerTitle: true,
       ),
       body: Container(
         color: DarkModeHandler.getBackgroundColor(),
@@ -32,53 +32,75 @@ class _NotificationPageState extends State<NotificationPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: EdgeInsets.only(top: 10.0), // Added padding to create space
+              padding: const EdgeInsets.only(top: 5.0),
               child: Container(
                 color: DarkModeHandler.getTopContainerColor(),
-                padding: EdgeInsets.symmetric(vertical: 15.0),
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0), // Added horizontal padding
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
+                    Flexible(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              selectedIndex = 0; // Update the selected index
-                            });
-                            // Handle "All" button press
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: selectedIndex == 0 ? Color(0xFF0054FF) : null,
-                          ),
-                          child: Text(
-                            'All',
-                            style: TextStyle(
-                              color: selectedIndex == 0 ? Colors.white : null,
+                        padding: const EdgeInsets.symmetric(horizontal: 5.0), // Adjust horizontal padding
+                        child: SizedBox(
+                          height: 45, // Set a consistent height if needed
+                          width: 150, // Set a consistent width if needed
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                              backgroundColor: selectedIndex == 0
+                                  ? const Color(0xFF83B6B9) // Color for selected button
+                                  : const Color(0xFFB0BEC5), // Lighter color for unselected button
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 10.0),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                selectedIndex = 0;
+                              });
+                              // Handle "All" button press
+                            },
+                            child: const Text(
+                              'All',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(width: 3),
-                    Expanded(
+                    const SizedBox(width: 8), // Adjust space between buttons if needed
+                    Flexible(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              selectedIndex = 1; // Update the selected index
-                            });
-                            // Handle "Unread" button press
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: selectedIndex == 1 ? Color(0xFF0054FF) : null,
-                          ),
-                          child: Text(
-                            'Unread',
-                            style: TextStyle(
-                              color: selectedIndex == 1 ? Colors.white : null,
+                        padding: const EdgeInsets.symmetric(horizontal: 5.0), // Adjust horizontal padding
+                        child: SizedBox(
+                          height: 45, // Set a consistent height if needed
+                          width: 150, // Set a consistent width if needed
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                              backgroundColor: selectedIndex == 1
+                                  ? const Color(0xFF83B6B9) // Color for selected button
+                                  : const Color(0xFFB0BEC5), // Lighter color for unselected button
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 10.0),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                selectedIndex = 1;
+                              });
+                              // Handle "Unread" button press
+                            },
+                            child: const Text(
+                              'Unread',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -88,11 +110,11 @@ class _NotificationPageState extends State<NotificationPage> {
                 ),
               ),
             ),
-            SizedBox(height: 20), // Added space between containers
+            const SizedBox(height: 20), // Added space between containers
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0), // Added margin
+              padding: const EdgeInsets.symmetric(horizontal: 10.0),
               child: Container(
-                padding: EdgeInsets.all(10),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: DarkModeHandler.getMainContainersColor(),
                   borderRadius: BorderRadius.circular(10.0),
@@ -108,7 +130,7 @@ class _NotificationPageState extends State<NotificationPage> {
                         color: DarkModeHandler.getMainContainersTextColor(),
                       ),
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     Text(
                       "Notification Details",
                       style: TextStyle(

@@ -60,7 +60,7 @@ class _LinkPageState extends State<LinkPage> {
         backgroundColor: DarkModeHandler.getAppBarColor(),
         title: const Text(
           'Payment Link',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.black),
         ),
         centerTitle: true,
       ),

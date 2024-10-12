@@ -27,7 +27,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
         title: const Text(
           'Link View Page',
           style: TextStyle(
-            color: Colors.white,
+            color: Colors.black,
           ),
         ),
       ),
