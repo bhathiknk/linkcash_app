@@ -7,7 +7,6 @@ import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/calendar_widget.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
 
-
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
   static const routeName = '/home';
@@ -61,7 +60,6 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: StreamBuilder<ConnectivityResult>(
         stream: _connectivityService.connectivityStream,
         builder: (context, snapshot) {
@@ -83,38 +81,35 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+
   Widget _buildHomePageContent(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Container(
-      color: DarkModeHandler.getBackgroundColor(), // Main background color of the app
+      color: DarkModeHandler.getBackgroundColor(),
       child: Column(
         children: [
           // Container for white background above the top section
           Container(
-            color: Colors.white, // Set this container to white
+            color: Colors.white,
             child: Column(
               children: [
-                const SizedBox(height: 30), // Space above the top section
+                SizedBox(height: screenHeight * 0.05), // Space above the top section
                 _buildTopSection(screenWidth),
               ],
             ),
           ),
-          const SizedBox(height: 10), // Space between top section and calendar
+          SizedBox(height: screenHeight * 0.02), // Space between top section and calendar
           _buildCalendarContainer(screenWidth),
-          const SizedBox(height: 20),
+          SizedBox(height: screenHeight * 0.02),
           _buildActionButtons(),
-          const SizedBox(height: 20),
-          _buildRecentTransactionHeader(),
-          const SizedBox(height: 5),
+          SizedBox(height: screenHeight * 0.01),
           _buildRecentTransactionsContainer(screenWidth),
         ],
       ),
     );
   }
-
-
-
 
   Widget _buildTopSection(double screenWidth) {
     return Stack(
@@ -225,7 +220,7 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           _buildActionButton('Pay Quick', Icons.flash_on),
           _buildActionButton('Group Pay', Icons.group),
-          _buildActionButton('Link Search', Icons.search),
+          _buildActionButton('Add Event', Icons.add),
         ],
       ),
     );
@@ -242,7 +237,7 @@ class _MyHomePageState extends State<MyHomePage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
-              backgroundColor: const Color(0xFF83B6B9), // Set button color
+              backgroundColor: const Color(0xFF0054FF), // Set button color
               padding: EdgeInsets.zero, // Remove internal padding
             ),
             onPressed: () {},
@@ -265,30 +260,12 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  // Update the _buildRecentTransactionHeader method to center the text
-  Widget _buildRecentTransactionHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Align(
-        alignment: Alignment.center, // Center the text
-        child: Text(
-          'Recent Transaction',
-          style: TextStyle(
-            fontFamily: 'Roboto',
-            fontSize: 20,
-            color: DarkModeHandler.getMainBackgroundTextColor(),
-          ),
-        ),
-      ),
-    );
-  }
-
-// Add a method to build the recent transactions container
+  // Add a method to build the recent transactions container
   Widget _buildRecentTransactionsContainer(double screenWidth) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       width: screenWidth - 20,
-      height: 140,
+      height: 60,
       decoration: BoxDecoration(
         color: DarkModeHandler.getCalendarContainersColor(),
         borderRadius: BorderRadius.circular(10),
@@ -303,13 +280,8 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
     );
-
   }
-
-
-
 }
-
 
 class TopBarFb4 extends StatelessWidget {
   final String title;
