@@ -3,7 +3,7 @@ import '../MainScreens/Link_Screen.dart';
 import '../MainScreens/Home_Screen.dart';
 import '../MainScreens/Notification_Screen.dart';
 import '../MainScreens/Profile_Screen.dart';
-import '../MainScreens/Search_Screen.dart'; // Import the new search page
+import '../MainScreens/TransactionHistory_Screen.dart'; // Import the new transaction history page
 
 class BottomNavigationBarWithFab extends StatefulWidget {
   final int currentIndex;
@@ -20,7 +20,7 @@ class BottomNavigationBarWithFab extends StatefulWidget {
 }
 
 class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
-  final primaryColor = const Color(0xff4338CA);
+  final primaryColor = const Color(0xFF83B6B9);
   final backgroundColor = const Color(0xffffffff);
 
   // Handle navigation on icon tap
@@ -53,7 +53,7 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
       case 4:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => SearchPage()), // Navigate to SearchPage
+          MaterialPageRoute(builder: (context) => TransactionHistoryPage()), // Navigate to Transaction History Page
         );
         break;
       default:
@@ -82,11 +82,11 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
                   },
                 ),
                 IconBottomBar(
-                  icon: Icons.search_outlined,
-                  selected: widget.currentIndex == 4, // Update to handle the search icon
+                  icon: Icons.receipt_long, // Updated to transaction history icon
+                  selected: widget.currentIndex == 4, // Update to handle transaction history icon
                   onPressed: () {
                     widget.onTap(4);
-                    _navigateToPage(4); // Navigate to the new search page
+                    _navigateToPage(4); // Navigate to the transaction history page
                   },
                 ),
                 IconBottomBar2(

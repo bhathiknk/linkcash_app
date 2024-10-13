@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart'; // Import flutter_svg package
 
 import '../MainScreens/Home_Screen.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
@@ -18,7 +19,7 @@ class LoginPage extends StatelessWidget {
         title: const Text(
           "Login",
           style: TextStyle(
-            color: Colors.white,
+            color: Colors.black,
           ),
         ),
         centerTitle: true, // Center the title in the AppBar
@@ -28,13 +29,22 @@ class LoginPage extends StatelessWidget {
         child: Column(
           children: [
             Expanded(
-              child: Container(), // Empty container to fill space
+              child: Container(
+                alignment: Alignment.center, // Center the image
+                child: Image.asset(
+                  'lib/images/logo-no-background.png', // Path to your image
+                  width: 300, // Adjust the width as needed
+                  height: 300, // Adjust the height as needed
+                  fit: BoxFit.contain, // Adjust the fit property as needed
+                ),
+              ),
             ),
+
             Stack(
               children: [
                 Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE3F2FD),
+                    color: const Color(0xFF0054FF),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(10),
                       topRight: Radius.circular(10),
@@ -48,13 +58,13 @@ class LoginPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.start, // Align to the top
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const SizedBox(height: 1),
+                        const SizedBox(height: 10),
                         const Text(
                           'Sign In',
                           style: TextStyle(
                             fontSize: 25,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: Colors.white,
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -75,7 +85,7 @@ class LoginPage extends StatelessWidget {
                           'Create an account?',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey,
+                            color: Colors.white,
                           ),
                         ),
                         GestureDetector(
@@ -83,14 +93,14 @@ class LoginPage extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => const RegisterPage()),
+                                  builder: (context) =>  RegisterPage()),
                             );
                           },
                           child: const Text(
                             'Sign Up',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.blue, // Change text color to blue for link
+                              color:Color(0xFF83B6B9), // Change text color to blue for link
                             ),
                           ),
                         ),
@@ -130,7 +140,7 @@ class LoginPage extends StatelessWidget {
         text,
         style: TextStyle(
           fontSize: 16,
-          color: DarkModeHandler.getMainContainersTextColor(),
+          color: Colors.white,
         ),
       ),
     );
@@ -183,7 +193,7 @@ class LoginPage extends StatelessWidget {
           );
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF0056D2),
+          backgroundColor: const Color(0xFF83B6B9),
           padding: const EdgeInsets.symmetric(vertical: 15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),

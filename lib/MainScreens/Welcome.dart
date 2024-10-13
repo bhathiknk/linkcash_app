@@ -19,20 +19,20 @@ class WelcomeScreen extends StatelessWidget {
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height / 1.6,
               decoration: BoxDecoration(
-                color: Color(0xFFE3F2FD),
+                color: Color(0xFF0054FF),
               ),
             ),
             Container(
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height / 1.6,
               decoration: BoxDecoration(
-                color: Color(0xFF0012fb),
+                color: Color(0xFFFFFFFF),
                 borderRadius:
                 BorderRadius.only(bottomRight: Radius.circular(70)),
               ),
               child: Center(
                 child: Image.asset(
-                  'lib/images/logo.png',
+                  'lib/images/logo-no-background.png',
                   width: 350, // Set the width of the logo
                   height: 350, // Set the height of the logo
                 ),
@@ -44,7 +44,7 @@ class WelcomeScreen extends StatelessWidget {
                 width: MediaQuery.of(context).size.width,
                 height: MediaQuery.of(context).size.height / 2.666,
                 decoration: BoxDecoration(
-                  color: Color(0xFF0012fb),
+                  color: Color(0xFFFFFFFF),
                 ),
               ),
             ),
@@ -55,7 +55,7 @@ class WelcomeScreen extends StatelessWidget {
                 height: MediaQuery.of(context).size.height / 2.666,
                 padding: EdgeInsets.only(top: 40, bottom: 30),
                 decoration: BoxDecoration(
-                  color: Color(0xFFE3F2FD),
+                  color: Color(0xFF0054FF),
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(70),
                   ),
@@ -63,20 +63,20 @@ class WelcomeScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     SizedBox(height: 15),
-                    Padding(
+                    const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 40),
                       child: Text(
                         "Welcome to Link Cash App",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 20,
-                          color: Colors.black.withOpacity(0.6),
+                          color: Colors.white,
                         ),
                       ),
                     ),
                     SizedBox(height: 40),
                     Material(
-                        color:Color(0xFF0056D2),
+                        color:Color(0xFF83B6B9),
                       borderRadius: BorderRadius.circular(40),
                       child: InkWell(
                         onTap: () {
