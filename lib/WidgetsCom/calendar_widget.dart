@@ -28,7 +28,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 300, // Set a fixed height for the calendar
+      height: 280, // Set a fixed height for the calendar
       child: SingleChildScrollView(
         child: ConstrainedBox(
           constraints: const BoxConstraints(

@@ -49,6 +49,11 @@ android {
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+
+        manifestPlaceholders += [
+                'appAuthRedirectScheme': 'linkcash'
+        ]
+
     }
 
     buildTypes {
@@ -64,4 +69,7 @@ flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+    implementation 'net.openid:appauth:0.7.1'
+}
+

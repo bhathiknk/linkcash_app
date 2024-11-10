@@ -29,7 +29,7 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
       case 0:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => MyHomePage()),
+          MaterialPageRoute(builder: (context) => MyHomePage(givenName: '',)),
         );
         break;
       case 1:

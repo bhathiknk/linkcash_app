@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../LogScreen/login_form.dart';
+import '../LogScreen/asgardio_login.dart'; // Import your Asgardeo login file
 
 class WelcomeScreen extends StatelessWidget {
   static const String routeName = '/welcome';
@@ -13,8 +12,7 @@ class WelcomeScreen extends StatelessWidget {
         height: MediaQuery.of(context).size.height,
         child: Stack(
           children: [
-            // Your background and UI elements here
-            // Example:
+            // Background color section
             Container(
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height / 1.6,
@@ -22,22 +20,23 @@ class WelcomeScreen extends StatelessWidget {
                 color: Color(0xFF0054FF),
               ),
             ),
+            // White container with logo
             Container(
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height / 1.6,
               decoration: BoxDecoration(
                 color: Color(0xFFFFFFFF),
-                borderRadius:
-                BorderRadius.only(bottomRight: Radius.circular(70)),
+                borderRadius: BorderRadius.only(bottomRight: Radius.circular(70)),
               ),
               child: Center(
                 child: Image.asset(
                   'lib/images/logo-no-background.png',
-                  width: 350, // Set the width of the logo
-                  height: 350, // Set the height of the logo
+                  width: 350,
+                  height: 350,
                 ),
               ),
             ),
+            // Bottom white container
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
@@ -48,6 +47,7 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
             ),
+            // Bottom blue container with "Get Started" button
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
@@ -76,21 +76,21 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 40),
                     Material(
-                        color:Color(0xFF83B6B9),
+                      color: Color(0xFF83B6B9),
                       borderRadius: BorderRadius.circular(40),
                       child: InkWell(
                         onTap: () {
+                          // Navigate to Asgardeo Login Page on "Get Started" button click
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => LoginPage(),
+                              builder: (context) => AsgardeoLoginPage(),
                             ),
                           );
                         },
                         child: Container(
-                          padding: EdgeInsets.symmetric(
-                              vertical: 15, horizontal: 80),
-                          child: Text(
+                          padding: EdgeInsets.symmetric(vertical: 15, horizontal: 80),
+                          child: const Text(
                             'Get Started',
                             style: TextStyle(
                               color: Colors.white,
@@ -108,10 +108,7 @@ class WelcomeScreen extends StatelessWidget {
             ),
           ],
         ),
-
       ),
-
     );
-
   }
 }

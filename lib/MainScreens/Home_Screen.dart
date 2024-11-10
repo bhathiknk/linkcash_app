@@ -8,7 +8,9 @@ import '../WidgetsCom/calendar_widget.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+  final String givenName; // Accepts given_name from login
+
+  const MyHomePage({Key? key, required this.givenName}) : super(key: key);
   static const routeName = '/home';
 
   @override
@@ -26,11 +28,17 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     _checkInitialConnectivity();
     _loadBalanceVisibility(); // Load the saved visibility state
+
+    // Show success message after login
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Login successful!")),
+      );
+    });
   }
 
   Future<void> _checkInitialConnectivity() async {
-    var initialConnectivityResult =
-    await _connectivityService.checkInitialConnectivity();
+    var initialConnectivityResult = await _connectivityService.checkInitialConnectivity();
     setState(() {
       _initialConnectivityResult = initialConnectivityResult;
       _isInitialCheckComplete = true;
@@ -60,6 +68,12 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white, // White background color for the app bar
+        elevation: 0, // Remove shadow to keep it flat
+        toolbarHeight: 5, // Minimal height for a thin dividing line
+      ),
+      backgroundColor: const Color(0xFFE3F2FD), // Set the background color here
       body: StreamBuilder<ConnectivityResult>(
         stream: _connectivityService.connectivityStream,
         builder: (context, snapshot) {
@@ -84,58 +98,77 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildHomePageContent(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
-    return Container(
-      color: DarkModeHandler.getBackgroundColor(),
-      child: Column(
-        children: [
-          // Container for white background above the top section
-          Container(
-            color: Colors.white,
-            child: Column(
-              children: [
-                SizedBox(height: screenHeight * 0.05), // Space above the top section
-                _buildTopSection(screenWidth),
-              ],
+    return SingleChildScrollView(
+      child: Container(
+        color: const Color(0xFFE3F2FD), // Ensure the entire scrollable area has the background color
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildTopSection(screenWidth), // Make top section full width and no padding at the top
+            const SizedBox(height: 15),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+              child: _buildCalendarContainer(screenWidth),
             ),
-          ),
-          SizedBox(height: screenHeight * 0.02), // Space between top section and calendar
-          _buildCalendarContainer(screenWidth),
-          SizedBox(height: screenHeight * 0.02),
-          _buildActionButtons(),
-          SizedBox(height: screenHeight * 0.01),
-          _buildRecentTransactionsContainer(screenWidth),
-        ],
+            const SizedBox(height: 15),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+              child: _buildActionButtons(),
+            ),
+            const SizedBox(height: 20),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+              child: _buildRecentTransactionsContainer(screenWidth),
+            ),
+            const SizedBox(height: 10), // Add padding here to create space above the bottom navigation bar
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildTopSection(double screenWidth) {
-    return Stack(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: DarkModeHandler.getTopContainerColor(),
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(20),
-              bottomRight: Radius.circular(20),
+    return Container(
+      width: double.infinity, // Make container full width
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(10),
+          bottomRight: Radius.circular(10),
+        ),
+      ),
+      child: Stack(
+        children: [
+          Container(
+            height: 230, // Increased height to accommodate bottom padding
+            decoration: BoxDecoration(
+              color: DarkModeHandler.getTopContainerColor(),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(10),
+                bottomRight: Radius.circular(10),
+              ),
             ),
           ),
-          height: 250,
-        ),
-        TopBarFb4(
-          title: 'Welcome Back',
-          upperTitle: 'Bhathika Nilesh',
-          onTapMenu: () {},
-        ),
-        Positioned(
-          top: 60,
-          left: 10,
-          right: 10,
-          child: _buildMonzoCard(),
-        ),
-      ],
+          Padding(
+            padding: const EdgeInsets.only(top: 1), // Add padding from the top
+            child: TopBarFb4(
+              title: 'Welcome Back',
+              upperTitle: widget.givenName, // Display given_name in the top bar
+              onTapMenu: () {},
+            ),
+          ),
+          Positioned(
+            top: 60,
+            left: screenWidth * 0.02,
+            right: screenWidth * 0.02,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 20), // Add bottom padding to _buildMonzoCard
+              child: _buildMonzoCard(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -146,7 +179,7 @@ class _MyHomePageState extends State<MyHomePage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
       color: DarkModeHandler.getMainBalanceContainer(),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(10.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -202,8 +235,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildCalendarContainer(double screenWidth) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      width: screenWidth - 20,
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      width: screenWidth - 40,
       decoration: BoxDecoration(
         color: DarkModeHandler.getCalendarContainersColor(),
         borderRadius: BorderRadius.circular(10),
@@ -213,23 +246,20 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildActionButtons() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildActionButton('Pay Quick', Icons.flash_on),
-          _buildActionButton('Group Pay', Icons.group),
-          _buildActionButton('Add Event', Icons.add),
-        ],
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildActionButton('Pay Quick', Icons.flash_on),
+        _buildActionButton('Group Pay', Icons.group),
+        _buildActionButton('Add Event', Icons.add),
+      ],
     );
   }
 
   Widget _buildActionButton(String title, IconData icon) {
     return Column(
       children: [
-        Container(
+        SizedBox(
           width: 60,
           height: 60,
           child: ElevatedButton(
@@ -237,18 +267,18 @@ class _MyHomePageState extends State<MyHomePage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
-              backgroundColor: const Color(0xFF0054FF), // Set button color
-              padding: EdgeInsets.zero, // Remove internal padding
+              backgroundColor: const Color(0xFF0054FF),
+              padding: EdgeInsets.zero,
             ),
             onPressed: () {},
             child: Icon(
               icon,
               size: 30,
-              color: Colors.white, // Icon color
+              color: Colors.white,
             ),
           ),
         ),
-        const SizedBox(height: 5), // Space between button and text
+        const SizedBox(height: 5),
         Text(
           title,
           style: TextStyle(
@@ -260,19 +290,18 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  // Add a method to build the recent transactions container
   Widget _buildRecentTransactionsContainer(double screenWidth) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      width: screenWidth - 20,
-      height: 60,
+      padding: const EdgeInsets.all(20),
+      width: screenWidth - 40,
+      height: 180,
       decoration: BoxDecoration(
         color: DarkModeHandler.getCalendarContainersColor(),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Center(
         child: Text(
-          "No recent transactions", // Placeholder text
+          "No recent transactions",
           style: TextStyle(
             color: Colors.grey,
             fontSize: 16,
