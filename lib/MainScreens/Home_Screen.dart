@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../ConnectionCheck/connectivity_service.dart';
+import '../LogScreen/Asgardio_Login.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/calendar_widget.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
@@ -38,9 +41,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _checkInitialConnectivity() async {
-    var initialConnectivityResult = await _connectivityService.checkInitialConnectivity();
+    var initialConnectivityResults =
+    await _connectivityService.checkInitialConnectivity();
     setState(() {
-      _initialConnectivityResult = initialConnectivityResult;
+      _initialConnectivityResult = initialConnectivityResults.contains(ConnectivityResult.none)
+          ? ConnectivityResult.none
+          : ConnectivityResult.wifi; // Default to WiFi if any connection exists
       _isInitialCheckComplete = true;
     });
   }
@@ -65,6 +71,34 @@ class _MyHomePageState extends State<MyHomePage> {
     _saveBalanceVisibility(_isBalanceVisible);
   }
 
+  // Logout Function
+  // Logout Function
+  Future<void> _logout(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Clear all locally stored session data
+    await prefs.clear();
+
+    // Navigate to the AsgardeoLoginPage and clear the navigation stack
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => AsgardeoLoginPage()),
+          (Route<dynamic> route) => false, // Remove all previous routes
+    );
+
+    // Show a logout success toast
+    Fluttertoast.showToast(
+      msg: "Logged out successfully!",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.green,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,13 +108,16 @@ class _MyHomePageState extends State<MyHomePage> {
         toolbarHeight: 5, // Minimal height for a thin dividing line
       ),
       backgroundColor: const Color(0xFFE3F2FD), // Set the background color here
-      body: StreamBuilder<ConnectivityResult>(
+      body: StreamBuilder<List<ConnectivityResult>>(
         stream: _connectivityService.connectivityStream,
         builder: (context, snapshot) {
           if (!_isInitialCheckComplete) {
             return const Center(child: CircularProgressIndicator());
           } else {
-            final result = snapshot.data ?? _initialConnectivityResult;
+            final results = snapshot.data ?? [];
+            final result = results.contains(ConnectivityResult.none)
+                ? ConnectivityResult.none
+                : ConnectivityResult.wifi; // Default to WiFi if any connection exists
             if (result == ConnectivityResult.none) {
               return NoInternetUI();
             } else {
@@ -89,6 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         },
       ),
+
       bottomNavigationBar: BottomNavigationBarWithFab(
         currentIndex: 0,
         onTap: (index) {},
@@ -156,6 +194,7 @@ class _MyHomePageState extends State<MyHomePage> {
               title: 'Welcome Back',
               upperTitle: widget.givenName, // Display given_name in the top bar
               onTapMenu: () {},
+              onTapLogout: () => _logout(context), // Pass the logout function here
             ),
           ),
           Positioned(
@@ -316,11 +355,13 @@ class TopBarFb4 extends StatelessWidget {
   final String title;
   final String upperTitle;
   final Function() onTapMenu;
+  final Function() onTapLogout; // Added logout function
 
   const TopBarFb4({
     required this.title,
     required this.upperTitle,
     required this.onTapMenu,
+    required this.onTapLogout, // Added logout function
     Key? key,
   }) : super(key: key);
 
@@ -359,6 +400,10 @@ class TopBarFb4 extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout), // Logout icon
+            onPressed: onTapLogout, // Call logout function
           ),
         ],
       ),

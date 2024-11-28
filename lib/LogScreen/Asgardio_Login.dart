@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:fluttertoast/fluttertoast.dart'; // For toast notifications
+import 'package:http/http.dart' as http; // For API calls
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:convert'; // For JSON decoding
 import '../MainScreens/Home_Screen.dart';
 
 class AsgardeoLoginPage extends StatefulWidget {
@@ -12,17 +15,18 @@ class AsgardeoLoginPage extends StatefulWidget {
 class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
   final FlutterAppAuth _appAuth = FlutterAppAuth();
   bool _isLoginInProgress = false;
-  String? _givenName;
 
-  // Asgardeo details
   final String clientId = "egRM9OOT5YJvbNWa17QKvXNi450a";
   final String redirectUri = "linkcash://callback";
   final String discoveryUrl =
       "https://api.asgardeo.io/t/silixis/oauth2/token/.well-known/openid-configuration";
   final List<String> scopes = ["openid", "profile", "email"];
 
+  // Login Function
+  // Login Function
   Future<void> _login() async {
     if (_isLoginInProgress) return;
+
     setState(() {
       _isLoginInProgress = true;
     });
@@ -34,19 +38,22 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
           redirectUri,
           discoveryUrl: discoveryUrl,
           scopes: scopes,
+          promptValues: ['login'], // Correct way to enforce login prompt
         ),
       );
 
       if (result != null) {
         Map<String, dynamic> idTokenClaims = JwtDecoder.decode(result.idToken!);
-        String? givenName = idTokenClaims['given_name'];
 
-        setState(() {
-          _givenName = givenName;
-          _isLoginInProgress = false;
-        });
+        // Extract user details
+        final String? asgardeoUserId = idTokenClaims['sub'];
+        final String? email = idTokenClaims['email'];
+        final String? givenName = idTokenClaims['given_name'];
 
-        // Show success toast message and navigate to HomePage
+        // Send user data to the backend to ensure it's saved if new
+        await _sendDataToBackend(asgardeoUserId!, email!, givenName!);
+
+        // Show login success and navigate to the home page
         Fluttertoast.showToast(
           msg: "Login successful!",
           toastLength: Toast.LENGTH_SHORT,
@@ -60,7 +67,7 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
           context,
           MaterialPageRoute(
             builder: (context) => MyHomePage(
-              givenName: _givenName ?? "User",
+              givenName: givenName ?? "User",
             ),
           ),
         );
@@ -81,6 +88,7 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
       setState(() {
         _isLoginInProgress = false;
       });
+
       Fluttertoast.showToast(
         msg: "Error during login: ${e.toString()}",
         toastLength: Toast.LENGTH_SHORT,
@@ -89,6 +97,84 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
         textColor: Colors.white,
         fontSize: 16.0,
       );
+
+      print("Login error: $e");
+    }
+  }
+
+
+
+  // Redirect to Asgardeo Sign-Up
+  Future<void> _signUp() async {
+    final signUpUrl =
+        "https://accounts.asgardeo.io/t/silixis/accountrecoveryendpoint/register.do?client_id=$clientId&redirect_uri=$redirectUri";
+
+    try {
+      Fluttertoast.showToast(
+        msg: "Redirecting to Asgardeo Sign-Up page...",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.blue,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+
+      if (await canLaunch(signUpUrl)) {
+        await launch(signUpUrl, forceSafariVC: false, forceWebView: false);
+
+        // Inform the user to log in after signing up
+        Fluttertoast.showToast(
+          msg: "After signing up, please log in to complete the process.",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.blue,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      } else {
+        Fluttertoast.showToast(
+          msg: "Could not open the sign-up page.",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Error redirecting to sign-up page: ${e.toString()}",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    }
+  }
+
+  // Send Data to Backend
+  Future<void> _sendDataToBackend(String asgardeoUserId, String email, String givenName) async {
+    final String apiUrl = "http://10.0.2.2:8080/api/users/signup";
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "asgardeoUserId": asgardeoUserId,
+          "email": email,
+          "givenName": givenName,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print("User saved or already exists.");
+      } else {
+        print("Backend Error: ${response.body}");
+      }
+    } catch (e) {
+      print("Error sending data to backend: $e");
     }
   }
 
@@ -131,7 +217,7 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
               ),
               const SizedBox(height: 10),
               const Text(
-                "Securely log in to access your account.",
+                "Securely log in or sign up to access your account.",
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.white70,
@@ -147,14 +233,33 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
                 onPressed: _login,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 40, vertical: 15),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
                 child: const Text(
-                  "Login with Asgardeo",
+                  "Sign In with LinkCash",
+                  style: TextStyle(
+                    color: Color(0xFF0054FF),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _signUp,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: const Text(
+                  "Sign Up with LinkCash",
                   style: TextStyle(
                     color: Color(0xFF0054FF),
                     fontSize: 18,

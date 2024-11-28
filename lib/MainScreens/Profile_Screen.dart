@@ -26,13 +26,15 @@ class _ProfilePageState extends State<ProfilePage> {
 
   /// Checks initial network connectivity status
   Future<void> _checkInitialConnectivity() async {
-    var initialConnectivityResult =
-    await _connectivityService.checkInitialConnectivity();
+    var initialConnectivityResults = await _connectivityService.checkInitialConnectivity();
     setState(() {
-      _initialConnectivityResult = initialConnectivityResult;
+      _initialConnectivityResult = initialConnectivityResults.contains(ConnectivityResult.none)
+          ? ConnectivityResult.none
+          : ConnectivityResult.wifi; // Assume WiFi if any connection exists
       _isInitialCheckComplete = true;
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -46,26 +48,25 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         centerTitle: true,
       ),
-      body: StreamBuilder<ConnectivityResult>(
+      body: StreamBuilder<List<ConnectivityResult>>(
         stream: _connectivityService.connectivityStream,
         builder: (context, snapshot) {
-          // Display loading spinner until the initial check is complete
           if (!_isInitialCheckComplete) {
             return const Center(child: CircularProgressIndicator());
           } else {
-            // Check network connectivity and display relevant content
-            ConnectivityResult? result =
-                snapshot.data ?? _initialConnectivityResult;
+            final results = snapshot.data ?? [];
+            final result = results.contains(ConnectivityResult.none)
+                ? ConnectivityResult.none
+                : ConnectivityResult.wifi; // Default to WiFi if any connection exists
             if (result == ConnectivityResult.none) {
-              // Display no internet connection UI
               return NoInternetUI();
             } else {
-              // Display profile page content if connected
               return _buildProfilePageContent(context);
             }
           }
         },
       ),
+
       // Custom bottom navigation bar
       bottomNavigationBar: BottomNavigationBarWithFab(
         currentIndex: 3,

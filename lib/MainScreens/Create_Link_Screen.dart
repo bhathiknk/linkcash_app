@@ -28,17 +28,19 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
   void initState() {
     super.initState();
     _checkConnectivity();
+
     // Listen to connectivity changes
-    _connectivityService.connectivityStream.listen((ConnectivityResult result) {
-      _updateConnectionStatus(result);
+    _connectivityService.connectivityStream.listen((List<ConnectivityResult> results) {
+      _updateConnectionStatus(results as ConnectivityResult);
     });
   }
 
-  // Checks the initial connectivity status
+// Checks the initial connectivity status
   Future<void> _checkConnectivity() async {
-    var connectivityResult = await _connectivityService.checkInitialConnectivity();
-    _updateConnectionStatus(connectivityResult);
+    var connectivityResults = await _connectivityService.checkInitialConnectivity();
+    _updateConnectionStatus(connectivityResults as ConnectivityResult);
   }
+
 
   // Updates the connection status based on the result
   void _updateConnectionStatus(ConnectivityResult result) {

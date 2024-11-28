@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_share/flutter_share.dart';
+import 'package:share_plus/share_plus.dart';
 
 // Importing custom widgets
 import '../WidgetsCom/bottom_navigation_bar.dart';
@@ -147,13 +147,8 @@ class _LinkViewPageState extends State<LinkViewPage> {
         onPressed: () async {
           String link = textEditingController.text.trim();
           if (link.isNotEmpty) {
-            // Share the link using FlutterShare
-            await FlutterShare.share(
-              title: 'Share Link',
-              text: link,
-              linkUrl: link,
-              chooserTitle: 'Share Link with',
-            );
+            // Share the link using share_plus
+            await Share.share(link, subject: 'Share Link');
           } else {
             // Show a message if the link is empty
             ScaffoldMessenger.of(context).showSnackBar(
