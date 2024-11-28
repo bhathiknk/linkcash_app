@@ -181,17 +181,11 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Login to LinkCash"),
-        centerTitle: true,
-        backgroundColor: Color(0xFF0054FF),
-        elevation: 0,
-      ),
       body: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF83B6B9), Color(0xFF0054FF)],
+            colors: [Color(0xFF0054FF), Color(0xFFE3F2FD)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -239,7 +233,7 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
                   ),
                 ),
                 child: const Text(
-                  "Sign In with LinkCash",
+                  "Sign In",
                   style: TextStyle(
                     color: Color(0xFF0054FF),
                     fontSize: 18,
@@ -247,7 +241,17 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
+              const Text(
+                "OR",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: _signUp,
                 style: ElevatedButton.styleFrom(
@@ -259,7 +263,7 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
                   ),
                 ),
                 child: const Text(
-                  "Sign Up with LinkCash",
+                  "Sign Up",
                   style: TextStyle(
                     color: Color(0xFF0054FF),
                     fontSize: 18,
