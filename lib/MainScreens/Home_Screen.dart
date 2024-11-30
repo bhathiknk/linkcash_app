@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -9,6 +10,7 @@ import '../LogScreen/Asgardio_Login.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/calendar_widget.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
+
 
 class MyHomePage extends StatefulWidget {
   final String givenName; // Accepts given_name from login
@@ -22,15 +24,18 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final ConnectivityService _connectivityService = ConnectivityService();
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   ConnectivityResult? _initialConnectivityResult;
   bool _isInitialCheckComplete = false;
   bool _isBalanceVisible = true;
+  String _userId = "Loading..."; // Placeholder for User_ID
 
   @override
   void initState() {
     super.initState();
     _checkInitialConnectivity();
     _loadBalanceVisibility(); // Load the saved visibility state
+    _fetchUserId();
 
     // Show success message after login
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -96,6 +101,29 @@ class _MyHomePageState extends State<MyHomePage> {
       fontSize: 16.0,
     );
   }
+
+  Future<void> _fetchUserId() async {
+    try {
+      final userId = await _secureStorage.read(key: 'User_ID');
+      if (userId != null) {
+        print("Fetched User_ID: $userId");
+        setState(() {
+          _userId = userId;
+        });
+      } else {
+        print("User_ID not found in storage.");
+        setState(() {
+          _userId = "Not Available";
+        });
+      }
+    } catch (e) {
+      print("Error fetching User_ID: $e");
+      setState(() {
+        _userId = "Error";
+      });
+    }
+  }
+
 
 
 
@@ -214,6 +242,10 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildMonzoCard() {
     final titleColor = DarkModeHandler.getMainBalanceContainerTextColor();
 
+    if (_userId == "Loading...") {
+      return Center(child: CircularProgressIndicator()); // Show a loading indicator
+    }
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
       color: DarkModeHandler.getMainBalanceContainer(),
@@ -237,7 +269,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 const Icon(Icons.account_balance_outlined, color: Colors.white),
                 const SizedBox(width: 5),
                 Text(
-                  '04-00-03 • 60526416',
+                  _userId == "Not Available" ? "User ID: N/A" : "User_ID: $_userId", // Fallback
                   style: TextStyle(
                     color: titleColor,
                     fontSize: 16,
@@ -271,6 +303,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+
 
   Widget _buildCalendarContainer(double screenWidth) {
     return Container(

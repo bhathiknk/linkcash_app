@@ -1,11 +1,15 @@
+import 'dart:convert';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For secure storage
 import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../ConnectionCheck/connectivity_service.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart'; // Custom bottom navigation bar with floating action button
 import '../WidgetsCom/dark_mode_handler.dart'; // Handles dark mode colors throughout the app
 import 'Create_Link_Screen.dart'; // Create Link Screen
 import '../WidgetsCom/gradient_button_fb4.dart'; // Gradient button widget
+import 'package:http/http.dart' as http; // For HTTP requests
 
 // Main Link Page Screen
 class LinkPage extends StatefulWidget {
@@ -25,14 +29,28 @@ class _LinkPageState extends State<LinkPage> {
     Color(0xFFEEE2A8), // Bright Gold
   ];
 
-
+  List<String> linkTitles = []; // Store fetched titles
   bool isConnected = true;
+  String? userId; // Store logged-in user's User_ID
 
   @override
   void initState() {
     super.initState();
+    _retrieveUserId(); // Retrieve logged user ID from secure storage
     _checkInitialConnectivity();
     _listenToConnectivityChanges();
+  }
+
+  // Retrieve the logged-in user's User_ID from secure storage
+  Future<void> _retrieveUserId() async {
+    final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
+    String? retrievedUserId = await secureStorage.read(key: 'User_ID');
+    setState(() {
+      userId = retrievedUserId; // Save retrieved User_ID to state
+    });
+    if (userId != null) {
+      _fetchLinkTitles(); // Fetch titles after retrieving user ID
+    }
   }
 
   // Check the initial connectivity status when the page loads
@@ -50,6 +68,25 @@ class _LinkPageState extends State<LinkPage> {
         isConnected = result != ConnectivityResult.none;
       });
     });
+  }
+
+  // Fetch link titles from the API
+  Future<void> _fetchLinkTitles() async {
+    if (userId == null) return; // If userId is not retrieved, skip fetching
+    final String apiUrl = "http://10.0.2.2:8080/api/payment-links/titles/$userId";
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        setState(() {
+          linkTitles = List<String>.from(json.decode(response.body)); // Parse and store titles
+        });
+      } else {
+        print("Failed to fetch link titles: ${response.body}");
+      }
+    } catch (e) {
+      print("Error occurred while fetching link titles: $e");
+    }
   }
 
   @override
@@ -153,40 +190,49 @@ class _LinkPageState extends State<LinkPage> {
     );
   }
 
-  // Builds the list of saved links
+  // Builds the list of saved links dynamically based on fetched titles
   Widget _buildLinkHistoryList(BuildContext context) {
+    if (linkTitles.isEmpty) {
+      return Center(
+        child: Text(
+          "No links found!",
+          style: TextStyle(color: DarkModeHandler.getMainBackgroundTextColor(), fontSize: 16),
+        ),
+      );
+    }
+
     return Expanded(
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: List.generate(
-            8,
-                (index) => _buildLinkHistoryItem(context, index), // Generates a list item for each index
+            linkTitles.length,
+                (index) => _buildLinkHistoryItem(context, index, linkTitles[index]), // Pass title dynamically
           ),
         ),
       ),
     );
   }
 
-  // Builds individual list items for the saved link history
-  Widget _buildLinkHistoryItem(BuildContext context, int index) {
+  // Update the link history item to display dynamic title
+  Widget _buildLinkHistoryItem(BuildContext context, int index, String title) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0), // Padding around each list item
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Center(
         child: Container(
-          width: MediaQuery.of(context).size.width * 0.9, // Sets width relative to screen size
-          height: 100, // Fixed height for each item
+          width: MediaQuery.of(context).size.width * 0.9,
+          height: 100,
           decoration: BoxDecoration(
-            color: DarkModeHandler.getMainContainersColor(), // Background color of the list item
-            borderRadius: BorderRadius.circular(10.0), // Rounded corners
+            color: DarkModeHandler.getMainContainersColor(),
+            borderRadius: BorderRadius.circular(10.0),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(8.0), // Padding inside the list item container
+            padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                _buildIconContainer(index), // Circular colored icon container
-                const SizedBox(width: 20), // Spacer between icon and text
-                _buildLinkText(), // Text section inside the list item
+                _buildIconContainer(index),
+                const SizedBox(width: 20),
+                _buildLinkText(title), // Pass the dynamic title here
               ],
             ),
           ),
@@ -208,24 +254,23 @@ class _LinkPageState extends State<LinkPage> {
     );
   }
 
-
-  // Builds the text section inside each list item
-  Widget _buildLinkText() {
+  // Update the link text to display the dynamic title
+  Widget _buildLinkText(String title) {
     return Expanded(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Link Title",
+            title,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: DarkModeHandler.getMainContainersTextColor(), // Text color based on theme
+              color: DarkModeHandler.getMainContainersTextColor(),
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8), // Spacer between title and any additional text (if needed)
+          const SizedBox(height: 8),
         ],
       ),
     );

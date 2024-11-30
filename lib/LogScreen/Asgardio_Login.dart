@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:fluttertoast/fluttertoast.dart'; // For toast notifications
 import 'package:http/http.dart' as http; // For API calls
@@ -14,6 +15,7 @@ class AsgardeoLoginPage extends StatefulWidget {
 
 class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
   final FlutterAppAuth _appAuth = FlutterAppAuth();
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   bool _isLoginInProgress = false;
 
   final String clientId = "egRM9OOT5YJvbNWa17QKvXNi450a";
@@ -50,8 +52,14 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
         final String? email = idTokenClaims['email'];
         final String? givenName = idTokenClaims['given_name'];
 
-        // Send user data to the backend to ensure it's saved if new
-        await _sendDataToBackend(asgardeoUserId!, email!, givenName!);
+        // Send user data to the backend and fetch User_ID
+        final userId = await _fetchUserIdFromBackend(asgardeoUserId!, email!, givenName!);
+
+        // Save User_ID to secure storage
+        if (userId != null) {
+          await _secureStorage.write(key: 'User_ID', value: userId.toString());
+          print("User_ID saved: $userId");
+        }
 
         // Show login success and navigate to the home page
         Fluttertoast.showToast(
@@ -101,6 +109,35 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
       print("Login error: $e");
     }
   }
+
+  // Fetch User_ID from Backend
+  Future<int?> _fetchUserIdFromBackend(String asgardeoUserId, String email, String givenName) async {
+    final String apiUrl = "http://10.0.2.2:8080/api/users/signup"; // Adjust API path if necessary
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "asgardeoUserId": asgardeoUserId,
+          "email": email,
+          "givenName": givenName,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return responseData['userId']; // Return the User_ID from the response
+      } else {
+        print("Error fetching User_ID: ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("Error sending data to backend: $e");
+      return null;
+    }
+  }
+
 
 
 
