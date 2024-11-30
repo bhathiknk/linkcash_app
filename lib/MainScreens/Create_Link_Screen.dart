@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http; // For HTTP requests
+import 'package:http/http.dart' as http;
 import 'dart:convert'; // For JSON encoding
 import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../ConnectionCheck/connectivity_service.dart';
@@ -84,6 +84,10 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
+
+        // Extract paymentDetailId from the response
+        final int savedPaymentDetailsId = responseData['linkId']; // Adjust the key to match your API response
+
         print("Link created successfully: $responseData");
 
         // Show success message
@@ -94,7 +98,9 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
         // Navigate to the LinkViewPage
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => LinkViewPage()),
+          MaterialPageRoute(
+            builder: (context) => LinkViewPage(paymentDetailId: savedPaymentDetailsId),
+          ),
         );
       } else {
         print("Failed to create link: ${response.body}");
@@ -109,7 +115,6 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -145,20 +150,20 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
             children: [
               _buildLabel("Title"),
               _buildTextField(controller: titleController, hint: 'Enter title...'),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               _buildLabel("Description"),
               _buildTextField(controller: descriptionController, hint: 'Enter description...', maxLines: 5),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               _buildLabel("Amount"),
               _buildTextField(
                 controller: amountController,
                 hint: 'Enter amount...',
                 keyboardType: TextInputType.number,
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               _buildLabel("Expire After"),
               _buildDropdownButton(),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               _buildSaveLinkButton(context),
             ],
           ),
@@ -196,7 +201,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
           hintText: hint,
           hintStyle: TextStyle(color: DarkModeHandler.getInputTextColor()),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
         ),
       ),
     );
@@ -213,7 +218,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
   // Builds a dropdown button for selecting expiry options
   Widget _buildDropdownButton() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.0),
+      padding: const EdgeInsets.symmetric(horizontal: 10.0),
       decoration: _inputBoxDecoration(),
       child: DropdownButtonFormField<String>(
         value: selectedOption,

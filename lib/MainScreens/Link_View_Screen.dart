@@ -1,28 +1,78 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
-
-// Importing custom widgets
+import 'dart:convert'; // For JSON encoding
+import '../ConnectionCheck/connectivity_service.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
 import '../WidgetsCom/gradient_button_fb4.dart';
 
 class LinkViewPage extends StatefulWidget {
-  const LinkViewPage({Key? key}) : super(key: key);
+  final int paymentDetailId; // Accepts paymentDetailId from navigation
+
+  const LinkViewPage({Key? key, required this.paymentDetailId}) : super(key: key);
 
   @override
   _LinkViewPageState createState() => _LinkViewPageState();
 }
 
 class _LinkViewPageState extends State<LinkViewPage> {
-  // Controller for the text field
   final TextEditingController textEditingController = TextEditingController();
+  bool isConnected = true;
+  String? paymentLink; // Store the fetched payment link
+  final ConnectivityService _connectivityService = ConnectivityService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkConnectivity();
+    _fetchPaymentLink(); // Fetch the payment link on page load
+
+    // Listen to connectivity changes
+    _connectivityService.connectivityStream.listen((List<ConnectivityResult> results) {
+      _updateConnectionStatus(results as ConnectivityResult);
+    });
+  }
+
+  // Checks the initial connectivity status
+  Future<void> _checkConnectivity() async {
+    var connectivityResults = await _connectivityService.checkInitialConnectivity();
+    _updateConnectionStatus(connectivityResults as ConnectivityResult);
+  }
+
+  // Updates the connection status based on the result
+  void _updateConnectionStatus(ConnectivityResult result) {
+    setState(() {
+      isConnected = result != ConnectivityResult.none;
+    });
+  }
+
+  // Fetch the payment link using the paymentDetailId
+  Future<void> _fetchPaymentLink() async {
+    final String apiUrl = "http://10.0.2.2:8080/api/payment-links/urls/user/${widget.paymentDetailId}";
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          paymentLink = data['paymentUrl']; // Update the payment link
+          textEditingController.text = paymentLink ?? ''; // Set the link in the text field
+        });
+      } else {
+        print("Failed to fetch payment link: ${response.body}");
+      }
+    } catch (e) {
+      print("Error occurred while fetching payment link: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // AppBar styling and title
         backgroundColor: DarkModeHandler.getAppBarColor(),
         title: const Text(
           'Link View Page',
@@ -32,7 +82,6 @@ class _LinkViewPageState extends State<LinkViewPage> {
         ),
       ),
       body: Container(
-        // Main background color and padding
         color: DarkModeHandler.getBackgroundColor(),
         padding: const EdgeInsets.all(10.0),
         child: Column(
@@ -47,7 +96,6 @@ class _LinkViewPageState extends State<LinkViewPage> {
           ],
         ),
       ),
-      // Custom bottom navigation bar with floating action button
       bottomNavigationBar: BottomNavigationBarWithFab(
         currentIndex: 2,
         onTap: (index) {},
@@ -80,7 +128,6 @@ class _LinkViewPageState extends State<LinkViewPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label for the payment link input
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10.0),
           child: Text(
@@ -92,7 +139,6 @@ class _LinkViewPageState extends State<LinkViewPage> {
           ),
         ),
         const SizedBox(height: 5),
-        // Input field for the payment link with a copy button
         Container(
           decoration: BoxDecoration(
             color: DarkModeHandler.getMainContainersColor(),
@@ -104,8 +150,8 @@ class _LinkViewPageState extends State<LinkViewPage> {
                 child: TextFormField(
                   controller: textEditingController,
                   decoration: InputDecoration(
-                    hintText:
-                    'https://example.com/checkout?product=example_product&price=19.99&currency=USD',
+                    hintText: paymentLink ??
+                        'https://example.com/checkout?product=example_product&price=19.99&currency=USD',
                     hintStyle: TextStyle(
                       color: DarkModeHandler.getInputTextColor(),
                     ),
@@ -115,7 +161,6 @@ class _LinkViewPageState extends State<LinkViewPage> {
                   ),
                 ),
               ),
-              // Copy button to copy the link to clipboard
               IconButton(
                 icon: Icon(Icons.copy, color: DarkModeHandler.getInputTextColor()),
                 onPressed: () {
@@ -143,14 +188,12 @@ class _LinkViewPageState extends State<LinkViewPage> {
     return Align(
       alignment: Alignment.center,
       child: GradientButtonFb4(
-        text: 'Share Link', // Text for the button
+        text: 'Share Link',
         onPressed: () async {
           String link = textEditingController.text.trim();
           if (link.isNotEmpty) {
-            // Share the link using share_plus
             await Share.share(link, subject: 'Share Link');
           } else {
-            // Show a message if the link is empty
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Please enter a link to share'),
@@ -164,7 +207,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
 
   /// Adds padding between the share button and transactions header
   Widget _buildPaddingBetweenSections() {
-    return const SizedBox(height: 20); // Adjust the height as needed
+    return const SizedBox(height: 20);
   }
 
   /// Builds the header for the transactions section
@@ -229,7 +272,6 @@ class _LinkViewPageState extends State<LinkViewPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Column for transaction title and description
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -257,7 +299,6 @@ class _LinkViewPageState extends State<LinkViewPage> {
                     ),
                   ],
                 ),
-                // Text showing the amount of the transaction
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
