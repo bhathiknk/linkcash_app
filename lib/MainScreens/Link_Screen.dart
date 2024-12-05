@@ -119,7 +119,7 @@ class _LinkPageState extends State<LinkPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 10),
+          const SizedBox(height: 2),
           _buildSearchBar(context),
           const SizedBox(height: 20),
           _buildCreateLinkButton(context),
@@ -237,9 +237,18 @@ class _LinkPageState extends State<LinkPage> {
 
 
 
-  // Update the link history item to display dynamic title
+  // Update the link history item to display dynamic title and calculate expired before days
   Widget _buildLinkHistoryItem(BuildContext context, int index, Map<String, dynamic> link) {
     final String title = link['title'] ?? 'Untitled'; // Extract title from the structured data
+    final String expireAfter = link['expireAfter'] ?? 'N/A'; // Extract expireAfter from the structured data
+    final String createdAt = link['createdAt'] ?? ''; // Extract createdAt from the structured data
+
+    // Calculate "expired before" days
+    String expiredBefore = '';
+    if (!showActiveLinks && createdAt.isNotEmpty) {
+      expiredBefore = _calculateExpiredBefore(createdAt, expireAfter);
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Center(
@@ -256,7 +265,7 @@ class _LinkPageState extends State<LinkPage> {
               children: [
                 _buildIconContainer(index),
                 const SizedBox(width: 20),
-                _buildLinkText(title), // Use extracted title here
+                _buildLinkText(title, expireAfter, expiredBefore), // Pass title, expireAfter, and expiredBefore
               ],
             ),
           ),
@@ -302,7 +311,8 @@ class _LinkPageState extends State<LinkPage> {
     );
   }
 
-  Widget _buildLinkText(String title) {
+  // Update the link text widget to include the expireAfter and expiredBefore data
+  Widget _buildLinkText(String title, String expireAfter, String expiredBefore) {
     return Expanded(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -315,11 +325,66 @@ class _LinkPageState extends State<LinkPage> {
               fontWeight: FontWeight.bold,
               color: DarkModeHandler.getMainContainersTextColor(),
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
+          Text(
+            "Expires: $expireAfter", // Display expireAfter under the title
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey, // Use secondary text color
+            ),
+          ),
+          if (expiredBefore.isNotEmpty) // Display "expired before" only in the Expired tab
+            Text(
+              "Expired before: $expiredBefore",
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.redAccent, // Highlight in red
+              ),
+            ),
         ],
       ),
     );
+  }
+
+// Helper function to calculate "expired before" days
+  String _calculateExpiredBefore(String createdAt, String expireAfter) {
+    try {
+      // Parse createdAt date
+      final DateTime createdDate = DateTime.parse(createdAt);
+
+      // Add the expiration period to the createdAt date
+      DateTime expirationDate;
+      switch (expireAfter) {
+        case 'One Hour':
+          expirationDate = createdDate.add(Duration(hours: 1));
+          break;
+        case 'One Day':
+          expirationDate = createdDate.add(Duration(days: 1));
+          break;
+        case 'One Week':
+          expirationDate = createdDate.add(Duration(days: 7));
+          break;
+        case 'Unlimited':
+        case 'One Time Only':
+          return ''; // No expiration for Unlimited or One Time Only
+        default:
+          return ''; // Fallback for unknown values
+      }
+
+      // Calculate difference in days
+      final int daysDifference = DateTime.now().difference(expirationDate).inDays;
+
+      if (daysDifference > 0) {
+        return "$daysDifference days ago";
+      } else if (daysDifference == 0) {
+        return "Today";
+      } else {
+        return "In ${daysDifference.abs()} days"; // If expiration is in the future
+      }
+    } catch (e) {
+      print("Error calculating expired before: $e");
+      return '';
+    }
   }
 }
