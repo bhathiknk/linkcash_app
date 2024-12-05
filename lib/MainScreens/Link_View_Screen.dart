@@ -51,14 +51,13 @@ class _LinkViewPageState extends State<LinkViewPage> {
 
   // Fetch the payment link using the paymentDetailId
   Future<void> _fetchPaymentLink() async {
-    final String apiUrl = "http://10.0.2.2:8080/api/payment-links/urls/user/${widget.paymentDetailId}";
+    final String apiUrl = "http://10.0.2.2:8080/api/payment-links/url/${widget.paymentDetailId}";
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
         setState(() {
-          paymentLink = data['paymentUrl']; // Update the payment link
+          paymentLink = response.body; // The response is directly the payment URL
           textEditingController.text = paymentLink ?? ''; // Set the link in the text field
         });
       } else {
@@ -68,6 +67,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
       print("Error occurred while fetching payment link: $e");
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

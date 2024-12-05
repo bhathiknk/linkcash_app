@@ -11,7 +11,6 @@ import 'Create_Link_Screen.dart'; // Create Link Screen
 import '../WidgetsCom/gradient_button_fb4.dart'; // Gradient button widget
 import 'package:http/http.dart' as http; // For HTTP requests
 
-// Main Link Page Screen
 class LinkPage extends StatefulWidget {
   LinkPage({Key? key}) : super(key: key);
 
@@ -21,39 +20,38 @@ class LinkPage extends StatefulWidget {
 
 class _LinkPageState extends State<LinkPage> {
   final List<Color> circleColors = [
-    Color(0xFFBCC2FF), // Bright Blue
-    Color(0xFFFA9090), // Bright Red
-    Color(0xFFBBF8AB), // Bright Green
-    Color(0xFFEFCDA9), // Bright Orange
-    Color(0xFFE4B6F1), // Bright Purple
-    Color(0xFFEEE2A8), // Bright Gold
+    Color(0xFFBCC2FF),
+    Color(0xFFFA9090),
+    Color(0xFFBBF8AB),
+    Color(0xFFEFCDA9),
+    Color(0xFFE4B6F1),
+    Color(0xFFEEE2A8),
   ];
 
-  List<String> linkTitles = []; // Store fetched titles
+  List<Map<String, dynamic>> linkData = [];// Store fetched titles
   bool isConnected = true;
-  String? userId; // Store logged-in user's User_ID
+  String? userId;
+  bool showActiveLinks = true; // Default to active links
 
   @override
   void initState() {
     super.initState();
-    _retrieveUserId(); // Retrieve logged user ID from secure storage
+    _retrieveUserId();
     _checkInitialConnectivity();
     _listenToConnectivityChanges();
   }
 
-  // Retrieve the logged-in user's User_ID from secure storage
   Future<void> _retrieveUserId() async {
     final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
     String? retrievedUserId = await secureStorage.read(key: 'User_ID');
     setState(() {
-      userId = retrievedUserId; // Save retrieved User_ID to state
+      userId = retrievedUserId;
     });
     if (userId != null) {
-      _fetchLinkTitles(); // Fetch titles after retrieving user ID
+      _fetchLinkTitles(); // Fetch titles initially
     }
   }
 
-  // Check the initial connectivity status when the page loads
   Future<void> _checkInitialConnectivity() async {
     var connectivityResult = await ConnectivityService().checkInitialConnectivity();
     setState(() {
@@ -61,7 +59,6 @@ class _LinkPageState extends State<LinkPage> {
     });
   }
 
-  // Listen to connectivity changes to update the UI accordingly
   void _listenToConnectivityChanges() {
     ConnectivityService().connectivityStream.listen((result) {
       setState(() {
@@ -70,16 +67,20 @@ class _LinkPageState extends State<LinkPage> {
     });
   }
 
+  // Fetch link titles from the API based on active or expired state
   // Fetch link titles from the API
   Future<void> _fetchLinkTitles() async {
     if (userId == null) return; // If userId is not retrieved, skip fetching
-    final String apiUrl = "http://10.0.2.2:8080/api/payment-links/titles/$userId";
+    final String apiUrl = showActiveLinks
+        ? "http://10.0.2.2:8080/api/payment-links/user/$userId/active"
+        : "http://10.0.2.2:8080/api/payment-links/user/$userId/expired";
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
         setState(() {
-          linkTitles = List<String>.from(json.decode(response.body)); // Parse and store titles
+          // Parse API response as List<Map<String, dynamic>>
+          linkData = List<Map<String, dynamic>>.from(json.decode(response.body));
         });
       } else {
         print("Failed to fetch link titles: ${response.body}");
@@ -101,7 +102,7 @@ class _LinkPageState extends State<LinkPage> {
         ),
         centerTitle: true,
       ),
-      body: isConnected ? _buildMainContent(context) : NoInternetUI(), // Show main content or NoInternetUI based on connection
+      body: isConnected ? _buildMainContent(context) : NoInternetUI(),
       bottomNavigationBar: BottomNavigationBarWithFab(
         currentIndex: 2,
         onTap: (index) {
@@ -111,46 +112,47 @@ class _LinkPageState extends State<LinkPage> {
     );
   }
 
-  // Main content builder method
   Widget _buildMainContent(BuildContext context) {
     return Container(
-      color: DarkModeHandler.getBackgroundColor(), // Sets the background color
-      padding: const EdgeInsets.all(10.0), // Padding around the entire body
+      color: DarkModeHandler.getBackgroundColor(),
+      padding: const EdgeInsets.all(10.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 10), // Spacer
-          _buildSearchBar(context), // Search bar widget
-          const SizedBox(height: 20), // Spacer
-          _buildCreateLinkButton(context), // Create Link Button
-          const SizedBox(height: 20), // Spacer
-          _buildLinkHistoryTitle(), // Title for saved link history
-          const SizedBox(height: 10), // Spacer
-          _buildLinkHistoryList(context), // List of saved links
+          const SizedBox(height: 10),
+          _buildSearchBar(context),
+          const SizedBox(height: 20),
+          _buildCreateLinkButton(context),
+          const SizedBox(height: 20),
+          _buildLinkHistoryTitle(),
+          const SizedBox(height: 20),
+          _buildLinkHistoryToggleButtons(), // Toggle buttons for Active and Expired links
+          const SizedBox(height: 10),
+          _buildLinkHistoryList(context),
+
         ],
       ),
     );
   }
 
-  // Builds the search bar widget
   Widget _buildSearchBar(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       height: 50.0,
       child: Container(
         decoration: BoxDecoration(
-          color: DarkModeHandler.getSearchBarColor(), // Search bar color
+          color: DarkModeHandler.getSearchBarColor(),
           borderRadius: BorderRadius.circular(10.0),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0), // Inner padding of the search bar
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: TextField(
             decoration: InputDecoration(
               hintText: 'Search...',
-              hintStyle: TextStyle(color: DarkModeHandler.getInputTextColor()), // Hint text color
-              prefixIcon: Icon(Icons.search, color: DarkModeHandler.getInputTextColor()), // Search icon color
+              hintStyle: TextStyle(color: DarkModeHandler.getInputTextColor()),
+              prefixIcon: Icon(Icons.search, color: DarkModeHandler.getInputTextColor()),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.only(top: 12.0), // Padding for text inside TextField
+              contentPadding: const EdgeInsets.only(top: 12.0),
             ),
           ),
         ),
@@ -158,7 +160,6 @@ class _LinkPageState extends State<LinkPage> {
     );
   }
 
-  // Builds the "Create Link" button
   Widget _buildCreateLinkButton(BuildContext context) {
     return Center(
       child: GradientButtonFb4(
@@ -166,7 +167,7 @@ class _LinkPageState extends State<LinkPage> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => CreateLinkPage()), // Navigates to Create Link Screen
+            MaterialPageRoute(builder: (context) => CreateLinkPage()),
           );
         },
       ),
@@ -190,32 +191,55 @@ class _LinkPageState extends State<LinkPage> {
     );
   }
 
-  // Builds the list of saved links dynamically based on fetched titles
-  Widget _buildLinkHistoryList(BuildContext context) {
-    if (linkTitles.isEmpty) {
-      return Center(
-        child: Text(
-          "No links found!",
-          style: TextStyle(color: DarkModeHandler.getMainBackgroundTextColor(), fontSize: 16),
-        ),
-      );
-    }
-
-    return Expanded(
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: List.generate(
-            linkTitles.length,
-                (index) => _buildLinkHistoryItem(context, index, linkTitles[index]), // Pass title dynamically
+  Widget _buildLinkHistoryToggleButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        ElevatedButton(
+          onPressed: () {
+            if (!showActiveLinks) {
+              setState(() {
+                showActiveLinks = true;
+                _fetchLinkTitles(); // Fetch Active links
+              });
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: showActiveLinks
+                ? Color(0xFF83B6B9) // Selected button color
+                : Colors.grey.withOpacity(0.3), // Unselected button color
+            foregroundColor: Colors.white,
           ),
+          child: const Text('Active'),
         ),
-      ),
+        const SizedBox(width: 10),
+        ElevatedButton(
+          onPressed: () {
+            if (showActiveLinks) {
+              setState(() {
+                showActiveLinks = false;
+                _fetchLinkTitles(); // Fetch Expired links
+              });
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: !showActiveLinks
+                ? Color(0xFF83B6B9) // Selected button color
+                : Colors.grey.withOpacity(0.3), // Unselected button color
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Expired'),
+        ),
+      ],
     );
   }
 
+
+
+
   // Update the link history item to display dynamic title
-  Widget _buildLinkHistoryItem(BuildContext context, int index, String title) {
+  Widget _buildLinkHistoryItem(BuildContext context, int index, Map<String, dynamic> link) {
+    final String title = link['title'] ?? 'Untitled'; // Extract title from the structured data
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Center(
@@ -232,7 +256,7 @@ class _LinkPageState extends State<LinkPage> {
               children: [
                 _buildIconContainer(index),
                 const SizedBox(width: 20),
-                _buildLinkText(title), // Pass the dynamic title here
+                _buildLinkText(title), // Use extracted title here
               ],
             ),
           ),
@@ -241,20 +265,43 @@ class _LinkPageState extends State<LinkPage> {
     );
   }
 
-  // Builds the circular icon container
+// Update link history list to use structured data
+  Widget _buildLinkHistoryList(BuildContext context) {
+    if (linkData.isEmpty) {
+      return Center(
+        child: Text(
+          "No links found!",
+          style: TextStyle(color: DarkModeHandler.getMainBackgroundTextColor(), fontSize: 16),
+        ),
+      );
+    }
+
+    return Expanded(
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: List.generate(
+            linkData.length,
+                (index) => _buildLinkHistoryItem(context, index, linkData[index]), // Pass entire object
+          ),
+        ),
+      ),
+    );
+  }
+
+
   Widget _buildIconContainer(int index) {
     return Container(
       width: 50,
       height: 50,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10.0), // Rounded corners for the icon container
-        color: circleColors[index % circleColors.length], // Dynamic color from the updated list
-        shape: BoxShape.rectangle, // Shape of the icon container
+        borderRadius: BorderRadius.circular(10.0),
+        color: circleColors[index % circleColors.length],
+        shape: BoxShape.rectangle,
       ),
     );
   }
 
-  // Update the link text to display the dynamic title
   Widget _buildLinkText(String title) {
     return Expanded(
       child: Column(
