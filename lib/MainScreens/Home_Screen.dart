@@ -37,12 +37,6 @@ class _MyHomePageState extends State<MyHomePage> {
     _loadBalanceVisibility(); // Load the saved visibility state
     _fetchUserId();
 
-    // Show success message after login
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Login successful!")),
-      );
-    });
   }
 
   Future<void> _checkInitialConnectivity() async {
