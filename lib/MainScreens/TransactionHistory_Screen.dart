@@ -177,7 +177,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                           ),
                         ),
                         TextSpan(
-                          text: "\$${transaction['amount'].toStringAsFixed(2)}",
+                          text: "\£${transaction['amount'].toStringAsFixed(2)}",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

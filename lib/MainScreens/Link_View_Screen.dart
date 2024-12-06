@@ -322,7 +322,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
                     ),
                   ),
                   TextSpan(
-                    text: "\$${amount.toStringAsFixed(2)}",
+                    text: "\£${amount.toStringAsFixed(2)}",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

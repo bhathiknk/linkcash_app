@@ -4,6 +4,11 @@ import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../ConnectionCheck/connectivity_service.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -18,15 +23,20 @@ class _ProfilePageState extends State<ProfilePage> {
   ConnectivityResult? _initialConnectivityResult;
   bool _isInitialCheckComplete = false;
 
+  String? userId;
+  String? stripeAccountId;
+
   @override
   void initState() {
     super.initState();
     _checkInitialConnectivity();
+    _retrieveUserId();
   }
 
   /// Checks initial network connectivity status
   Future<void> _checkInitialConnectivity() async {
-    var initialConnectivityResults = await _connectivityService.checkInitialConnectivity();
+    var initialConnectivityResults =
+    await _connectivityService.checkInitialConnectivity();
     setState(() {
       _initialConnectivityResult = initialConnectivityResults.contains(ConnectivityResult.none)
           ? ConnectivityResult.none
@@ -35,6 +45,90 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  /// Retrieve User ID from secure storage
+  Future<void> _retrieveUserId() async {
+    final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
+    String? retrievedUserId = await secureStorage.read(key: 'User_ID');
+    setState(() {
+      userId = retrievedUserId;
+    });
+    if (userId != null) {
+      _fetchStripeAccountId(); // Fetch Stripe account ID after retrieving User ID
+    }
+  }
+
+  /// Fetch the Stripe account ID for the logged-in user
+  Future<void> _fetchStripeAccountId() async {
+    final String apiUrl = "http://10.0.2.2:8080/api/users/$userId/stripe-account";
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        setState(() {
+          stripeAccountId = responseData['stripeAccountId'];
+        });
+      } else {
+        Fluttertoast.showToast(
+          msg: "Failed to fetch Stripe Account ID: ${response.body}",
+          backgroundColor: Colors.red,
+        );
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Error fetching Stripe Account ID: $e",
+        backgroundColor: Colors.red,
+      );
+    }
+  }
+
+
+
+  /// Start the Stripe onboarding process
+  Future<void> _startStripeOnboarding() async {
+    if (stripeAccountId == null) {
+      await _fetchStripeAccountId();
+    }
+
+    final String apiUrl = "https://api.stripe.com/v1/account_links";
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Authorization': 'Bearer sk_test_51QMX8zCrXpZkt7CpIykAqsMtW7zXU8d1zULNaTpufKxvNheZa8iB6gvYWDA4RjKaL94flK136I48c7q4qSsHZJrp00PV0Po5XS',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'account': stripeAccountId!,
+          'refresh_url': 'https://your-app.com/refresh',
+          'return_url': 'linkcash://onboarding-complete',
+          'type': 'account_onboarding',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        final onboardingUrl = responseData['url'];
+
+        if (await canLaunch(onboardingUrl)) {
+          await launch(onboardingUrl);
+        } else {
+          throw 'Could not launch $onboardingUrl';
+        }
+      } else {
+        Fluttertoast.showToast(
+          msg: "Failed to create Stripe onboarding link: ${response.body}",
+          backgroundColor: Colors.red,
+        );
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Error starting Stripe onboarding: $e",
+        backgroundColor: Colors.red,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +200,13 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           const SizedBox(height: 20),
-          // Display the settings and support containers
+          // Display the settings, support, and verify containers
+          _buildProfileItem(
+            icon: Icons.verified_user,
+            title: 'Verify Stripe Account',
+            onTap: _startStripeOnboarding,
+            showArrow: true,
+          ),
           _buildProfileItem(
             icon: Icons.settings,
             title: 'Settings',
@@ -126,7 +226,6 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildProfileHeader(BuildContext context) {
     return Stack(
       children: [
-        // Background container with rounded corners
         Container(
           decoration: BoxDecoration(
             color: DarkModeHandler.getTopContainerColor(),
@@ -137,13 +236,11 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           height: 230,
         ),
-        // Edit icon positioned at the top right
         const Positioned(
           top: 10,
           right: 10,
           child: Icon(Icons.edit, size: 25, color: Colors.grey),
         ),
-        // Profile image container in the center
         Positioned(
           top: 30,
           left: MediaQuery.of(context).size.width / 2 - 70,
@@ -171,7 +268,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
         ),
-        // Dark mode toggle button
         Positioned(
           top: 5,
           left: 5,
@@ -244,53 +340,45 @@ class _ProfilePageState extends State<ProfilePage> {
     required IconData icon,
     required String title,
     bool showArrow = false,
+    Function()? onTap, // Add onTap callback
   }) {
     return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5.0), // Padding around each list item
-    child: Center(
-    child: Container(
-    width: MediaQuery.of(context).size.width * 0.9, // Sets width relative to screen size
-    height: 80, // Fixed height for each item
-    decoration: BoxDecoration(
-    color: DarkModeHandler.getMainContainersColor(), // Background color of the list item
-    borderRadius: BorderRadius.circular(10.0), // Rounded corners
-    ),
-        // Adjust padding to ensure proper left and right padding of the container
-        padding: const EdgeInsets.symmetric(horizontal: 20.0), // Even padding on both sides
-        child: Row(
-          children: [
-            // Icon for each profile item
-            Icon(
-              icon,
-              size: 30,
-              color: DarkModeHandler.getProfilePageIconColor(),
+      padding: const EdgeInsets.symmetric(vertical: 5.0),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Center(
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            height: 80,
+            decoration: BoxDecoration(
+              color: DarkModeHandler.getMainContainersColor(),
+              borderRadius: BorderRadius.circular(10.0),
             ),
-            // Space between the icon and the text
-            const SizedBox(width: 16.0), // Add spacing after the icon
-            // Title and optional arrow for navigable items
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: DarkModeHandler.getMainContainersTextColor(),
-                    ),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Row(
+              children: [
+                Icon(icon, size: 30, color: DarkModeHandler.getProfilePageIconColor()),
+                const SizedBox(width: 16.0),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: DarkModeHandler.getMainContainersTextColor(),
+                        ),
+                      ),
+                      if (showArrow) const Icon(Icons.arrow_forward_ios),
+                    ],
                   ),
-                  // Optional arrow for settings and support items
-                  if (showArrow) const Icon(Icons.arrow_forward_ios),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    ),
     );
   }
-
-
-
 }
