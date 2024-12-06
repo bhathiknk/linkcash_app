@@ -40,28 +40,25 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
           redirectUri,
           discoveryUrl: discoveryUrl,
           scopes: scopes,
-          promptValues: ['login'], // Correct way to enforce login prompt
+          promptValues: ['login'],
         ),
       );
 
       if (result != null) {
         Map<String, dynamic> idTokenClaims = JwtDecoder.decode(result.idToken!);
 
-        // Extract user details
         final String? asgardeoUserId = idTokenClaims['sub'];
         final String? email = idTokenClaims['email'];
         final String? givenName = idTokenClaims['given_name'];
 
-        // Send user data to the backend and fetch User_ID
         final userId = await _fetchUserIdFromBackend(asgardeoUserId!, email!, givenName!);
 
-        // Save User_ID to secure storage
         if (userId != null) {
           await _secureStorage.write(key: 'User_ID', value: userId.toString());
+          await _secureStorage.write(key: 'Given_Name', value: givenName ?? "User");
           print("User_ID saved: $userId");
         }
 
-        // Show login success and navigate to the home page
         Fluttertoast.showToast(
           msg: "Login successful!",
           toastLength: Toast.LENGTH_SHORT,
@@ -74,9 +71,7 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => MyHomePage(
-              givenName: givenName ?? "User",
-            ),
+            builder: (context) => MyHomePage(givenName: givenName ?? "User"),
           ),
         );
       } else {

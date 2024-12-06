@@ -30,6 +30,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isBalanceVisible = true;
   String _userId = "Loading...";
   String _pendingBalance = "Loading...";
+  String _givenName = "User"; // Default value for givenName
 
   @override
   void initState() {
@@ -37,6 +38,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _checkInitialConnectivity();
     _loadBalanceVisibility();
     _fetchUserId();
+    _fetchGivenName();
   }
 
   Future<void> _checkInitialConnectivity() async {
@@ -110,6 +112,18 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         _pendingBalance = "Error";
       });
+    }
+  }
+  Future<void> _fetchGivenName() async {
+    try {
+      final storedGivenName = await _secureStorage.read(key: 'Given_Name');
+      if (storedGivenName != null) {
+        setState(() {
+          _givenName = storedGivenName;
+        });
+      }
+    } catch (e) {
+      print("Error fetching givenName: $e");
     }
   }
 
@@ -224,7 +238,7 @@ class _MyHomePageState extends State<MyHomePage> {
             padding: const EdgeInsets.only(top: 1),
             child: TopBarFb4(
               title: 'Welcome Back',
-              upperTitle: widget.givenName,
+              upperTitle: _givenName,
               onTapMenu: () {},
               onTapLogout: () => _logout(context),
             ),
