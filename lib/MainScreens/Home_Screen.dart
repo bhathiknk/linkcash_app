@@ -3,7 +3,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert'; // For JSON decoding
 import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../ConnectionCheck/connectivity_service.dart';
 import '../LogScreen/Asgardio_Login.dart';
@@ -11,9 +12,8 @@ import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/calendar_widget.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
 
-
 class MyHomePage extends StatefulWidget {
-  final String givenName; // Accepts given_name from login
+  final String givenName;
 
   const MyHomePage({Key? key, required this.givenName}) : super(key: key);
   static const routeName = '/home';
@@ -28,15 +28,15 @@ class _MyHomePageState extends State<MyHomePage> {
   ConnectivityResult? _initialConnectivityResult;
   bool _isInitialCheckComplete = false;
   bool _isBalanceVisible = true;
-  String _userId = "Loading..."; // Placeholder for User_ID
+  String _userId = "Loading...";
+  String _pendingBalance = "Loading...";
 
   @override
   void initState() {
     super.initState();
     _checkInitialConnectivity();
-    _loadBalanceVisibility(); // Load the saved visibility state
+    _loadBalanceVisibility();
     _fetchUserId();
-
   }
 
   Future<void> _checkInitialConnectivity() async {
@@ -62,7 +62,6 @@ class _MyHomePageState extends State<MyHomePage> {
     await prefs.setBool('isBalanceVisible', isVisible);
   }
 
-  // Toggle balance visibility
   void _toggleBalanceVisibility() {
     setState(() {
       _isBalanceVisible = !_isBalanceVisible;
@@ -70,22 +69,59 @@ class _MyHomePageState extends State<MyHomePage> {
     _saveBalanceVisibility(_isBalanceVisible);
   }
 
-  // Logout Function
-  // Logout Function
+  Future<void> _fetchUserId() async {
+    try {
+      final userId = await _secureStorage.read(key: 'User_ID');
+      if (userId != null) {
+        setState(() {
+          _userId = userId;
+        });
+        _fetchPendingBalance(userId); // Fetch pending balance after retrieving userId
+      } else {
+        setState(() {
+          _userId = "Not Available";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _userId = "Error";
+      });
+    }
+  }
+
+  Future<void> _fetchPendingBalance(String userId) async {
+    final String apiUrl = "http://10.0.2.2:8080/api/stripe/balance/$userId";
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        final pendingAmount = responseData['pending'][0]['amount'] ?? 0;
+        final formattedBalance = (pendingAmount / 100).toStringAsFixed(2); // Convert cents to pounds
+        setState(() {
+          _pendingBalance = "£$formattedBalance";
+        });
+      } else {
+        setState(() {
+          _pendingBalance = "Error";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _pendingBalance = "Error";
+      });
+    }
+  }
+
   Future<void> _logout(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    // Clear all locally stored session data
     await prefs.clear();
-
-    // Navigate to the AsgardeoLoginPage and clear the navigation stack
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => AsgardeoLoginPage()),
-          (Route<dynamic> route) => false, // Remove all previous routes
+          (Route<dynamic> route) => false,
     );
 
-    // Show a logout success toast
     Fluttertoast.showToast(
       msg: "Logged out successfully!",
       toastLength: Toast.LENGTH_SHORT,
@@ -96,40 +132,15 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Future<void> _fetchUserId() async {
-    try {
-      final userId = await _secureStorage.read(key: 'User_ID');
-      if (userId != null) {
-        print("Fetched User_ID: $userId");
-        setState(() {
-          _userId = userId;
-        });
-      } else {
-        print("User_ID not found in storage.");
-        setState(() {
-          _userId = "Not Available";
-        });
-      }
-    } catch (e) {
-      print("Error fetching User_ID: $e");
-      setState(() {
-        _userId = "Error";
-      });
-    }
-  }
-
-
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white, // White background color for the app bar
-        elevation: 0, // Remove shadow to keep it flat
-        toolbarHeight: 5, // Minimal height for a thin dividing line
+        backgroundColor: Colors.white,
+        elevation: 0,
+        toolbarHeight: 5,
       ),
-      backgroundColor: const Color(0xFFE3F2FD), // Set the background color here
+      backgroundColor: const Color(0xFFE3F2FD),
       body: StreamBuilder<List<ConnectivityResult>>(
         stream: _connectivityService.connectivityStream,
         builder: (context, snapshot) {
@@ -139,7 +150,7 @@ class _MyHomePageState extends State<MyHomePage> {
             final results = snapshot.data ?? [];
             final result = results.contains(ConnectivityResult.none)
                 ? ConnectivityResult.none
-                : ConnectivityResult.wifi; // Default to WiFi if any connection exists
+                : ConnectivityResult.wifi;
             if (result == ConnectivityResult.none) {
               return NoInternetUI();
             } else {
@@ -148,7 +159,6 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         },
       ),
-
       bottomNavigationBar: BottomNavigationBarWithFab(
         currentIndex: 0,
         onTap: (index) {},
@@ -161,11 +171,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return SingleChildScrollView(
       child: Container(
-        color: const Color(0xFFE3F2FD), // Ensure the entire scrollable area has the background color
+        color: const Color(0xFFE3F2FD),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTopSection(screenWidth), // Make top section full width and no padding at the top
+            _buildTopSection(screenWidth),
             const SizedBox(height: 15),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
@@ -181,7 +191,7 @@ class _MyHomePageState extends State<MyHomePage> {
               padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
               child: _buildRecentTransactionsContainer(screenWidth),
             ),
-            const SizedBox(height: 10), // Add padding here to create space above the bottom navigation bar
+            const SizedBox(height: 10),
           ],
         ),
       ),
@@ -190,7 +200,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildTopSection(double screenWidth) {
     return Container(
-      width: double.infinity, // Make container full width
+      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.only(
@@ -201,7 +211,7 @@ class _MyHomePageState extends State<MyHomePage> {
       child: Stack(
         children: [
           Container(
-            height: 230, // Increased height to accommodate bottom padding
+            height: 230,
             decoration: BoxDecoration(
               color: DarkModeHandler.getTopContainerColor(),
               borderRadius: const BorderRadius.only(
@@ -211,12 +221,12 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 1), // Add padding from the top
+            padding: const EdgeInsets.only(top: 1),
             child: TopBarFb4(
               title: 'Welcome Back',
-              upperTitle: widget.givenName, // Display given_name in the top bar
+              upperTitle: widget.givenName,
               onTapMenu: () {},
-              onTapLogout: () => _logout(context), // Pass the logout function here
+              onTapLogout: () => _logout(context),
             ),
           ),
           Positioned(
@@ -224,7 +234,7 @@ class _MyHomePageState extends State<MyHomePage> {
             left: screenWidth * 0.02,
             right: screenWidth * 0.02,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 20), // Add bottom padding to _buildMonzoCard
+              padding: const EdgeInsets.only(bottom: 20),
               child: _buildMonzoCard(),
             ),
           ),
@@ -235,10 +245,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildMonzoCard() {
     final titleColor = DarkModeHandler.getMainBalanceContainerTextColor();
-
-    if (_userId == "Loading...") {
-      return Center(child: CircularProgressIndicator()); // Show a loading indicator
-    }
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
@@ -263,7 +269,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 const Icon(Icons.account_balance_outlined, color: Colors.white),
                 const SizedBox(width: 5),
                 Text(
-                  _userId == "Not Available" ? "User ID: N/A" : "User_ID: $_userId", // Fallback
+                  _userId == "Not Available" ? "User ID: N/A" : "User_ID: $_userId",
                   style: TextStyle(
                     color: titleColor,
                     fontSize: 16,
@@ -283,7 +289,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
                 Text(
-                  '£32.56',
+                  _pendingBalance,
                   style: TextStyle(
                     color: titleColor,
                     fontSize: 36,
@@ -297,7 +303,6 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
-
 
   Widget _buildCalendarContainer(double screenWidth) {
     return Container(
@@ -382,13 +387,13 @@ class TopBarFb4 extends StatelessWidget {
   final String title;
   final String upperTitle;
   final Function() onTapMenu;
-  final Function() onTapLogout; // Added logout function
+  final Function() onTapLogout;
 
   const TopBarFb4({
     required this.title,
     required this.upperTitle,
     required this.onTapMenu,
-    required this.onTapLogout, // Added logout function
+    required this.onTapLogout,
     Key? key,
   }) : super(key: key);
 
@@ -429,8 +434,8 @@ class TopBarFb4 extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.logout), // Logout icon
-            onPressed: onTapLogout, // Call logout function
+            icon: const Icon(Icons.logout),
+            onPressed: onTapLogout,
           ),
         ],
       ),
