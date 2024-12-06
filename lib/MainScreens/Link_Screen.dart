@@ -9,7 +9,9 @@ import '../WidgetsCom/bottom_navigation_bar.dart'; // Custom bottom navigation b
 import '../WidgetsCom/dark_mode_handler.dart'; // Handles dark mode colors throughout the app
 import 'Create_Link_Screen.dart'; // Create Link Screen
 import '../WidgetsCom/gradient_button_fb4.dart'; // Gradient button widget
-import 'package:http/http.dart' as http; // For HTTP requests
+import 'package:http/http.dart' as http;
+
+import 'Link_View_Screen.dart'; // For HTTP requests
 
 class LinkPage extends StatefulWidget {
   LinkPage({Key? key}) : super(key: key);
@@ -72,8 +74,8 @@ class _LinkPageState extends State<LinkPage> {
   Future<void> _fetchLinkTitles() async {
     if (userId == null) return; // If userId is not retrieved, skip fetching
     final String apiUrl = showActiveLinks
-        ? "http://10.0.2.2:8080/api/payment-links/user/$userId/active"
-        : "http://10.0.2.2:8080/api/payment-links/user/$userId/expired";
+        ? "http://10.0.2.2:8080/api/payment-details/user/$userId/active"
+        : "http://10.0.2.2:8080/api/payment-details/user/$userId/expired";
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
@@ -242,6 +244,7 @@ class _LinkPageState extends State<LinkPage> {
     final String title = link['title'] ?? 'Untitled'; // Extract title from the structured data
     final String expireAfter = link['expireAfter'] ?? 'N/A'; // Extract expireAfter from the structured data
     final String createdAt = link['createdAt'] ?? ''; // Extract createdAt from the structured data
+    final int paymentDetailId = link['paymentDetailId']; // Extract paymentDetailId from the structured data
 
     // Calculate "expired before" days
     String expiredBefore = '';
@@ -249,30 +252,44 @@ class _LinkPageState extends State<LinkPage> {
       expiredBefore = _calculateExpiredBefore(createdAt, expireAfter);
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: Center(
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.9,
-          height: 100,
-          decoration: BoxDecoration(
-            color: DarkModeHandler.getMainContainersColor(),
-            borderRadius: BorderRadius.circular(10.0),
+    return GestureDetector(
+      onTap: () {
+        // Navigate to LinkViewPage with the paymentDetailId
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LinkViewPage(paymentDetailId: paymentDetailId),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                _buildIconContainer(index),
-                const SizedBox(width: 20),
-                _buildLinkText(title, expireAfter, expiredBefore), // Pass title, expireAfter, and expiredBefore
-              ],
+        );
+        print("Opening LinkViewPage with paymentDetailId: $paymentDetailId");
+
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10.0),
+        child: Center(
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            height: 100,
+            decoration: BoxDecoration(
+              color: DarkModeHandler.getMainContainersColor(),
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  _buildIconContainer(index),
+                  const SizedBox(width: 20),
+                  _buildLinkText(title, expireAfter, expiredBefore), // Pass title, expireAfter, and expiredBefore
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+
 
 // Update link history list to use structured data
   Widget _buildLinkHistoryList(BuildContext context) {

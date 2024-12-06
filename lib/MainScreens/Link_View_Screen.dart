@@ -22,6 +22,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
   final TextEditingController textEditingController = TextEditingController();
   bool isConnected = true;
   String? paymentLink; // Store the fetched payment link
+  List<Map<String, dynamic>> transactionData = []; // Store fetched transaction data
   final ConnectivityService _connectivityService = ConnectivityService();
 
   @override
@@ -29,6 +30,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
     super.initState();
     _checkConnectivity();
     _fetchPaymentLink(); // Fetch the payment link on page load
+    _fetchTransactions(); // Fetch transaction data on page load
 
     // Listen to connectivity changes
     _connectivityService.connectivityStream.listen((List<ConnectivityResult> results) {
@@ -36,20 +38,17 @@ class _LinkViewPageState extends State<LinkViewPage> {
     });
   }
 
-  // Checks the initial connectivity status
   Future<void> _checkConnectivity() async {
     var connectivityResults = await _connectivityService.checkInitialConnectivity();
     _updateConnectionStatus(connectivityResults as ConnectivityResult);
   }
 
-  // Updates the connection status based on the result
   void _updateConnectionStatus(ConnectivityResult result) {
     setState(() {
       isConnected = result != ConnectivityResult.none;
     });
   }
 
-  // Fetch the payment link using the paymentDetailId
   Future<void> _fetchPaymentLink() async {
     final String apiUrl = "http://10.0.2.2:8080/api/payment-links/url/${widget.paymentDetailId}";
 
@@ -68,6 +67,22 @@ class _LinkViewPageState extends State<LinkViewPage> {
     }
   }
 
+  Future<void> _fetchTransactions() async {
+    final String apiUrl = "http://10.0.2.2:8080/api/payments/transactions/${widget.paymentDetailId}";
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        setState(() {
+          transactionData = List<Map<String, dynamic>>.from(json.decode(response.body));
+        });
+      } else {
+        print("Failed to fetch transactions: ${response.body}");
+      }
+    } catch (e) {
+      print("Error occurred while fetching transactions: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +107,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
             _buildShareButton(),
             _buildPaddingBetweenSections(),
             _buildTransactionsHeader(),
-            _buildTransactionsList(),
+            _buildTransactionsList(), // Show transaction list
           ],
         ),
       ),
@@ -103,7 +118,6 @@ class _LinkViewPageState extends State<LinkViewPage> {
     );
   }
 
-  /// Builds the section with the QR code image
   Widget _buildQrCodeSection() {
     return Align(
       alignment: FractionalOffset.topCenter,
@@ -123,7 +137,6 @@ class _LinkViewPageState extends State<LinkViewPage> {
     );
   }
 
-  /// Builds the section with the payment link input and copy button
   Widget _buildPaymentLinkSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,14 +163,12 @@ class _LinkViewPageState extends State<LinkViewPage> {
                 child: TextFormField(
                   controller: textEditingController,
                   decoration: InputDecoration(
-                    hintText: paymentLink ??
-                        'https://example.com/checkout?product=example_product&price=19.99&currency=USD',
+                    hintText: paymentLink ?? 'https://example.com/checkout?product=example_product&price=19.99&currency=USD',
                     hintStyle: TextStyle(
                       color: DarkModeHandler.getInputTextColor(),
                     ),
                     border: InputBorder.none,
-                    contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
                   ),
                 ),
               ),
@@ -183,7 +194,6 @@ class _LinkViewPageState extends State<LinkViewPage> {
     );
   }
 
-  // Builds the share link button using GradientButtonFb4
   Widget _buildShareButton() {
     return Align(
       alignment: Alignment.center,
@@ -205,12 +215,10 @@ class _LinkViewPageState extends State<LinkViewPage> {
     );
   }
 
-  /// Adds padding between the share button and transactions header
   Widget _buildPaddingBetweenSections() {
     return const SizedBox(height: 20);
   }
 
-  /// Builds the header for the transactions section
   Widget _buildTransactionsHeader() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -230,91 +238,111 @@ class _LinkViewPageState extends State<LinkViewPage> {
     );
   }
 
-  /// Builds the list of transaction containers
   Widget _buildTransactionsList() {
-    return Expanded(
-      child: Align(
-        alignment: Alignment.center,
-        child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: DarkModeHandler.getBackgroundColor(),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: List.generate(
-                5, // Number of transactions to display
-                    (index) => _buildTransactionItem(),
-              ),
-            ),
-          ),
+    if (transactionData.isEmpty) {
+      return Center(
+        child: Text(
+          "No transactions found!",
+          style: TextStyle(color: DarkModeHandler.getMainContainersTextColor()),
         ),
+      );
+    }
+
+    return Expanded(
+      child: ListView.builder(
+        itemCount: transactionData.length,
+        itemBuilder: (context, index) {
+          final transaction = transactionData[index];
+          return _buildTransactionCard(
+            title: transaction['title'],
+            transactionId: transaction['stripeTransactionId'],
+            amount: transaction['amount'],
+            createdAt: transaction['createdAt'],
+          );
+        },
       ),
     );
   }
 
-  /// Builds a single transaction item
-  Widget _buildTransactionItem() {
-    return Column(
-      children: [
-        const SizedBox(height: 20),
-        Container(
-          width: MediaQuery.of(context).size.width - 23,
-          decoration: BoxDecoration(
-            color: DarkModeHandler.getMainContainersColor(),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: SizedBox(
-            width: double.infinity,
-            height: 100,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildTransactionCard({
+    required String title,
+    required String transactionId,
+    required double amount,
+    required String createdAt,
+  }) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 5.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      elevation: 0.0,
+      color: Colors.white, // Explicitly set the card background color to white
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: Text(
-                        "Payment Link Title",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: DarkModeHandler.getMainContainersTextColor(),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0, top: 8.0),
-                      child: Text(
-                        "Bhathika",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: DarkModeHandler.getMainContainersTextColor(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
+                Icon(Icons.payment, color: Colors.green, size: 30),
+
+                const SizedBox(width: 10),
+
+                Expanded(
                   child: Text(
-                    "+ \$300",
+                    title,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: DarkModeHandler.getMainContainersTextColor(),
+                      color: Colors.black, // Set text color to black for contrast
                     ),
                   ),
                 ),
               ],
             ),
-          ),
+
+            const SizedBox(height: 10),
+
+            Text(
+              "Transaction ID: $transactionId",
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+
+            const SizedBox(height: 5),
+
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: "Amount: ",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  TextSpan(
+                    text: "\$${amount.toStringAsFixed(2)}",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green, // Amount value is green
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 5),
+
+            Text(
+              "Date: $createdAt",
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
+
 }

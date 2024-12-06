@@ -52,7 +52,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
 
   // Save the payment link by calling the backend API
   Future<void> _saveLink(BuildContext context) async {
-    final String apiUrl = "http://10.0.2.2:8080/api/payment-links/save"; // Replace with your backend URL
+    final String apiUrl = "http://10.0.2.2:8080/api/payment-details/save"; // Replace with your backend URL
 
     // Retrieve the logged-in user's User_ID from secure storage
     final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
@@ -66,9 +66,10 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
       return;
     }
 
+
     // Prepare the payload
     final Map<String, dynamic> payload = {
-      "linkUserId": int.parse(userId), // Use the logged User_ID
+      "paymentDetailUserId": int.parse(userId), // Use the logged User_ID
       "title": titleController.text,
       "description": descriptionController.text,
       "amount": double.tryParse(amountController.text) ?? 0.0,
@@ -82,11 +83,12 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
         body: jsonEncode(payload),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
+
         final responseData = jsonDecode(response.body);
 
         // Extract paymentDetailId from the response
-        final int savedPaymentDetailsId = responseData['linkId']; // Adjust the key to match your API response
+        final int savedPaymentDetailsId = responseData['id'] ?? responseData['paymentDetailId']; // Adjust the key to match your API response
 
         print("Link created successfully: $responseData");
 
