@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../ConnectionCheck/connectivity_service.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
@@ -17,7 +18,8 @@ class ProfilePage extends StatefulWidget {
   _ProfilePageState createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage>
+    with WidgetsBindingObserver {
   bool isDarkMode = DarkModeHandler.isDarkMode;
   final ConnectivityService _connectivityService = ConnectivityService();
   ConnectivityResult? _initialConnectivityResult;
@@ -30,8 +32,24 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this); // Add observer
     _checkInitialConnectivity();
     _retrieveUserId();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this); // Remove observer
+    super.dispose();
+  }
+
+  /// Detect app lifecycle changes
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Refresh the page when the app is resumed
+      _retrieveUserId();
+    }
   }
 
   /// Checks initial network connectivity status
@@ -124,7 +142,7 @@ class _ProfilePageState extends State<ProfilePage> {
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {
-          'Authorization': 'Bearer sk_test_51QMX8zCrXpZkt7CpIykAqsMtW7zXU8d1zULNaTpufKxvNheZa8iB6gvYWDA4RjKaL94flK136I48c7q4qSsHZJrp00PV0Po5XS',
+          'Authorization': 'Bearer ${dotenv.env['STRIPE_API_KEY']}', // Fetch API key from .env
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: {
@@ -132,7 +150,7 @@ class _ProfilePageState extends State<ProfilePage> {
           'refresh_url': 'https://your-app.com/refresh',
           'return_url': 'https://your-app.com/return',
           'type': 'account_onboarding',
-        },
+        }, // Removed 'return_url' and 'refresh_url'
       );
 
       if (response.statusCode == 200) {
@@ -157,6 +175,7 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
