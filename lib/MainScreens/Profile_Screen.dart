@@ -25,6 +25,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   String? userId;
   String? stripeAccountId;
+  String? verificationStatus = "Fetching...";
 
   @override
   void initState() {
@@ -68,6 +69,7 @@ class _ProfilePageState extends State<ProfilePage> {
         setState(() {
           stripeAccountId = responseData['stripeAccountId'];
         });
+        _fetchVerificationStatus(); // Fetch verification status after getting account ID
       } else {
         Fluttertoast.showToast(
           msg: "Failed to fetch Stripe Account ID: ${response.body}",
@@ -82,7 +84,33 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  /// Fetch the Stripe account verification status
+  Future<void> _fetchVerificationStatus() async {
+    if (stripeAccountId == null) return;
 
+    final String apiUrl =
+        "http://10.0.2.2:8080/api/stripe/$stripeAccountId/verification-status";
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        setState(() {
+          verificationStatus = responseData['verificationStatus'];
+        });
+      } else {
+        Fluttertoast.showToast(
+          msg: "Failed to fetch verification status: ${response.body}",
+          backgroundColor: Colors.red,
+        );
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Error fetching verification status: $e",
+        backgroundColor: Colors.red,
+      );
+    }
+  }
 
   /// Start the Stripe onboarding process
   Future<void> _startStripeOnboarding() async {
@@ -102,7 +130,7 @@ class _ProfilePageState extends State<ProfilePage> {
         body: {
           'account': stripeAccountId!,
           'refresh_url': 'https://your-app.com/refresh',
-          'return_url': 'linkcash://onboarding-complete',
+          'return_url': 'https://your-app.com/return',
           'type': 'account_onboarding',
         },
       );
@@ -181,31 +209,31 @@ class _ProfilePageState extends State<ProfilePage> {
           _buildProfileHeader(context),
           const SizedBox(height: 20),
           Padding(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildProfileDetail(
                   icon: Icons.email,
                   text: 'bhathika@gmail.com',
                   iconColor: Colors.grey,
                 ),
+                const SizedBox(height: 10),
                 _buildProfileDetail(
-                  icon: Icons.phone,
-                  text: '11111111111',
-                  iconColor: Colors.grey,
+                  icon: Icons.verified,
+                  text: 'Verification Status: $verificationStatus',
+                  iconColor: verificationStatus == "Verified" ? Colors.green : Colors.red,
                 ),
               ],
             ),
           ),
           const SizedBox(height: 20),
-          // Display the settings, support, and verify containers
           _buildProfileItem(
             icon: Icons.verified_user,
             title: 'Verify Stripe Account',
             onTap: _startStripeOnboarding,
             showArrow: true,
+            isEnabled: verificationStatus != "Verified", // Disable if user is verified
           ),
           _buildProfileItem(
             icon: Icons.settings,
@@ -341,23 +369,32 @@ class _ProfilePageState extends State<ProfilePage> {
     required String title,
     bool showArrow = false,
     Function()? onTap, // Add onTap callback
+    bool isEnabled = true, // Add an 'isEnabled' flag
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5.0),
       child: GestureDetector(
-        onTap: onTap,
+        onTap: isEnabled ? onTap : null, // Only allow tap if enabled
         child: Center(
           child: Container(
             width: MediaQuery.of(context).size.width * 0.9,
             height: 80,
             decoration: BoxDecoration(
-              color: DarkModeHandler.getMainContainersColor(),
+              color: isEnabled
+                  ? DarkModeHandler.getMainContainersColor()
+                  : Colors.grey.shade300, // Greyed out if disabled
               borderRadius: BorderRadius.circular(10.0),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Row(
               children: [
-                Icon(icon, size: 30, color: DarkModeHandler.getProfilePageIconColor()),
+                Icon(
+                  icon,
+                  size: 30,
+                  color: isEnabled
+                      ? DarkModeHandler.getProfilePageIconColor()
+                      : Colors.grey, // Greyed out icon if disabled
+                ),
                 const SizedBox(width: 16.0),
                 Expanded(
                   child: Row(
@@ -367,10 +404,16 @@ class _ProfilePageState extends State<ProfilePage> {
                         title,
                         style: TextStyle(
                           fontSize: 18,
-                          color: DarkModeHandler.getMainContainersTextColor(),
+                          color: isEnabled
+                              ? DarkModeHandler.getMainContainersTextColor()
+                              : Colors.grey, // Greyed out text if disabled
                         ),
                       ),
-                      if (showArrow) const Icon(Icons.arrow_forward_ios),
+                      if (showArrow)
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          color: isEnabled ? Colors.black : Colors.grey, // Grey arrow if disabled
+                        ),
                     ],
                   ),
                 ),
