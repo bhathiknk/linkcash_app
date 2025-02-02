@@ -125,32 +125,35 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: transactions.map((transaction) {
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          // Reduced vertical margin from 8.0 to 4.0.
+          padding: const EdgeInsets.symmetric(vertical: 4.0),
           child: Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10.0),
-            ),
+            // Remove all shadows by setting elevation to 0.
             elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
             color: Colors.white,
             child: Padding(
-              padding: const EdgeInsets.all(15.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
+                      // Updated icon for transaction history.
                       CircleAvatar(
                         backgroundColor: Colors.grey[200],
-                        child: Icon(
-                          Icons.monetization_on,
+                        child: const Icon(
+                          Icons.receipt_long,
                           color: Colors.black,
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           transaction['title'] ?? "No Title",
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
@@ -159,12 +162,15 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   Text(
                     "Transaction ID: ${transaction['stripeTransactionId']}",
-                    style: TextStyle(color: Colors.grey, fontSize: 14),
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontSize: 14,
+                    ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 8),
                   Text.rich(
                     TextSpan(
                       children: [
@@ -177,7 +183,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                           ),
                         ),
                         TextSpan(
-                          text: "\£${transaction['amount'].toStringAsFixed(2)}",
+                          text: transaction['amount'].toStringAsFixed(2),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -189,10 +195,13 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 8),
                   Text(
                     "Date: ${transaction['createdAt']}",
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
