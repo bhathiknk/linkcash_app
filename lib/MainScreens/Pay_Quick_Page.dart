@@ -4,11 +4,29 @@ import 'package:flutter/services.dart'; // For Clipboard
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For JSON encoding/decoding
+
 import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../ConnectionCheck/connectivity_service.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
 import '../WidgetsCom/gradient_button_fb4.dart';
+
+// A simple model class to represent a payment link item.
+class PaymentLinkItem {
+  final String title;
+  final String paymentUrl;
+  final double amount;
+
+  PaymentLinkItem({required this.title, required this.paymentUrl, required this.amount});
+
+  factory PaymentLinkItem.fromJson(Map<String, dynamic> json) {
+    return PaymentLinkItem(
+      title: json['title'],
+      paymentUrl: json['paymentUrl'],
+      amount: (json['amount'] as num).toDouble(),
+    );
+  }
+}
 
 class PayQuickPage extends StatefulWidget {
   const PayQuickPage({Key? key}) : super(key: key);
@@ -18,13 +36,17 @@ class PayQuickPage extends StatefulWidget {
 }
 
 class _PayQuickPageState extends State<PayQuickPage> {
-  // Controllers for the input fields
+  // Controllers for the input fields.
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
 
   bool isConnected = true;
-  String? paymentLink; // Will store the created payment link
+  String? paymentLink; // Latest created payment link.
+
+  // For filtering the list: false = Unpaid, true = Paid.
+  bool filterPaid = false;
+  List<PaymentLinkItem> paymentLinkItems = [];
 
   final ConnectivityService _connectivityService = ConnectivityService();
   final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
@@ -36,6 +58,8 @@ class _PayQuickPageState extends State<PayQuickPage> {
     _connectivityService.connectivityStream.listen((List<ConnectivityResult> results) {
       _updateConnectionStatus(results.first);
     });
+    // Initially fetch list for default filter (Unpaid).
+    fetchPaymentLinkList();
   }
 
   Future<void> _checkConnectivity() async {
@@ -101,6 +125,8 @@ class _PayQuickPageState extends State<PayQuickPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Payment Link created successfully!")),
         );
+        // Refresh the list after creation.
+        fetchPaymentLinkList();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Failed to create link: ${response.body}")),
@@ -109,6 +135,32 @@ class _PayQuickPageState extends State<PayQuickPage> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Error occurred while creating link!")),
+      );
+    }
+  }
+
+  // Fetch the list of payment links filtered by paid/unpaid.
+  Future<void> fetchPaymentLinkList() async {
+    // Use the new backend endpoint.
+    final String apiUrl =
+        "http://10.0.2.2:8080/api/one-time-payment-links/list?used=$filterPaid";
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        List<dynamic> data = jsonDecode(response.body);
+        List<PaymentLinkItem> items =
+        data.map((json) => PaymentLinkItem.fromJson(json)).toList();
+        setState(() {
+          paymentLinkItems = items;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to fetch link list: ${response.body}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error occurred while fetching link list!")),
       );
     }
   }
@@ -143,7 +195,7 @@ class _PayQuickPageState extends State<PayQuickPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Always show the white section at the top.
+              // Top white section for the latest created link.
               _buildOneTimeLinkSection(),
               const SizedBox(height: 15),
               _buildLabel("Enter Title"),
@@ -168,6 +220,9 @@ class _PayQuickPageState extends State<PayQuickPage> {
               ),
               const SizedBox(height: 20),
               _buildCreateLinkButton(context),
+              const SizedBox(height: 20),
+              // Enhanced Payment List Section.
+              _buildPaymentListSection(),
             ],
           ),
         ),
@@ -175,9 +230,7 @@ class _PayQuickPageState extends State<PayQuickPage> {
     );
   }
 
-  // The white container that always appears at the top.
-  // If no payment link has been created yet, it shows a default message.
-  // Otherwise, it shows the created link and a copy button.
+  // Top white section always visible.
   Widget _buildOneTimeLinkSection() {
     return Container(
       width: double.infinity,
@@ -186,6 +239,7 @@ class _PayQuickPageState extends State<PayQuickPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
+        // Using a subtle boxShadow for elevation (if desired, you can remove it).
         boxShadow: const [
           BoxShadow(
             color: Colors.black12,
@@ -237,6 +291,173 @@ class _PayQuickPageState extends State<PayQuickPage> {
               backgroundColor: Colors.blue,
               foregroundColor: Colors.white,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Enhanced Payment List Section with a clean, professional look.
+  /// This section uses only three colours:
+  /// - Color(0xFF83B6B9) (accent)
+  /// - Color(0xFFE3F2FD) (light blue)
+  /// - Colors.white
+  Widget _buildPaymentListSection() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Color(0xFFE3F2FD), // Light blue background.
+        borderRadius: BorderRadius.circular(15),
+      ),
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row with title and filter toggles.
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Color(0xFF83B6B9), // Primary accent.
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Payment Links",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Row(
+                  children: [
+                    ChoiceChip(
+                      label: const Text("Unpaid"),
+                      labelStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: filterPaid == false ? Color(0xFF83B6B9) : Color(0xFF83B6B9).withOpacity(0.6),
+                      ),
+                      selected: filterPaid == false,
+                      backgroundColor: Colors.white,
+                      selectedColor: Color(0xFFE3F2FD),
+                      onSelected: (bool selected) {
+                        setState(() {
+                          filterPaid = false;
+                        });
+                        fetchPaymentLinkList();
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: const Text("Paid"),
+                      labelStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: filterPaid == true ? Color(0xFF83B6B9) : Color(0xFF83B6B9).withOpacity(0.6),
+                      ),
+                      selected: filterPaid == true,
+                      backgroundColor: Colors.white,
+                      selectedColor: Color(0xFFE3F2FD),
+                      onSelected: (bool selected) {
+                        setState(() {
+                          filterPaid = true;
+                        });
+                        fetchPaymentLinkList();
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 1),
+          // A simple divider in light blue.
+          Container(height: 1, color: Color(0xFFE3F2FD)),
+          const SizedBox(height: 15),
+          // List of payment link items.
+          paymentLinkItems.isEmpty
+              ? Center(
+            child: Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Text(
+                "No links found for the selected filter.",
+                style: const TextStyle(
+                  color: Color(0xFF83B6B9),
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
+              : ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: paymentLinkItems.length,
+            itemBuilder: (context, index) {
+              final item = paymentLinkItems[index];
+              return Container(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Color(0xFFE3F2FD), width: 1),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF83B6B9),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    SelectableText(
+                      item.paymentUrl,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF83B6B9),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Amount: \$${item.amount.toStringAsFixed(2)}",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF83B6B9),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: item.paymentUrl));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Link copied!")),
+                          );
+                        },
+                        icon: const Icon(Icons.copy, size: 16),
+                        label: const Text("Copy"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFFE3F2FD),
+                          foregroundColor: Color(0xFF83B6B9),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),
