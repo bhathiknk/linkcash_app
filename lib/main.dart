@@ -7,7 +7,6 @@ import 'MainScreens/Welcome.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DarkModeHandler.initialize();
-  await dotenv.load(fileName: ".env"); // Load the .env file
   runApp(MyApp());
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:linkcash_app/MainScreens/Pay_Quick_Page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For JSON decoding
@@ -355,7 +356,15 @@ class _MyHomePageState extends State<MyHomePage> {
               backgroundColor: const Color(0xFF0054FF),
               padding: EdgeInsets.zero,
             ),
-            onPressed: () {},
+            onPressed: () {
+              if (title == "Pay Quick") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PayQuickPage()),
+                );
+              }
+              // Add navigation for Group Pay and Add Event if needed
+            },
             child: Icon(
               icon,
               size: 30,
@@ -374,6 +383,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ],
     );
   }
+
 
   Widget _buildRecentTransactionsContainer(double screenWidth) {
     return Container(
