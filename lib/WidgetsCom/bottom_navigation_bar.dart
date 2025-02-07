@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../MainScreens/Link_Screen.dart';
 import '../MainScreens/Home_Screen.dart';
 import '../MainScreens/Notification_Screen.dart';
-import '../MainScreens/Profile_Screen.dart';
+import '../MainScreens/ProfileComponents/Profile_Screen.dart';
 import '../MainScreens/TransactionHistory_Screen.dart'; // Import the new transaction history page
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;

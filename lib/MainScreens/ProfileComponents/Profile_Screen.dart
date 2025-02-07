@@ -1,15 +1,17 @@
+import 'dart:core';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import '../ConnectionCheck/No_Internet_Ui.dart';
-import '../ConnectionCheck/connectivity_service.dart';
-import '../WidgetsCom/bottom_navigation_bar.dart';
-import '../WidgetsCom/dark_mode_handler.dart';
+import '../../ConnectionCheck/No_Internet_Ui.dart';
+import '../../ConnectionCheck/connectivity_service.dart';
+import '../../WidgetsCom/bottom_navigation_bar.dart';
+import '../../WidgetsCom/dark_mode_handler.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
+import 'settings_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -18,8 +20,7 @@ class ProfilePage extends StatefulWidget {
   _ProfilePageState createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage>
-    with WidgetsBindingObserver {
+class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
   bool isDarkMode = DarkModeHandler.isDarkMode;
   final ConnectivityService _connectivityService = ConnectivityService();
   ConnectivityResult? _initialConnectivityResult;
@@ -32,39 +33,38 @@ class _ProfilePageState extends State<ProfilePage>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this); // Add observer
+    WidgetsBinding.instance.addObserver(this);
     _checkInitialConnectivity();
     _retrieveUserId();
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this); // Remove observer
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
-  /// Detect app lifecycle changes
+  /// App lifecycle
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Refresh the page when the app is resumed
       _retrieveUserId();
     }
   }
 
-  /// Checks initial network connectivity status
+  /// Check connectivity
   Future<void> _checkInitialConnectivity() async {
     var initialConnectivityResults =
     await _connectivityService.checkInitialConnectivity();
     setState(() {
       _initialConnectivityResult = initialConnectivityResults.contains(ConnectivityResult.none)
           ? ConnectivityResult.none
-          : ConnectivityResult.wifi; // Assume WiFi if any connection exists
+          : ConnectivityResult.wifi;
       _isInitialCheckComplete = true;
     });
   }
 
-  /// Retrieve User ID from secure storage
+  /// Retrieve user ID
   Future<void> _retrieveUserId() async {
     final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
     String? retrievedUserId = await secureStorage.read(key: 'User_ID');
@@ -72,14 +72,13 @@ class _ProfilePageState extends State<ProfilePage>
       userId = retrievedUserId;
     });
     if (userId != null) {
-      _fetchStripeAccountId(); // Fetch Stripe account ID after retrieving User ID
+      _fetchStripeAccountId();
     }
   }
 
   /// Fetch the Stripe account ID for the logged-in user
   Future<void> _fetchStripeAccountId() async {
     final String apiUrl = "http://10.0.2.2:8080/api/users/$userId/stripe-account";
-
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -87,7 +86,7 @@ class _ProfilePageState extends State<ProfilePage>
         setState(() {
           stripeAccountId = responseData['stripeAccountId'];
         });
-        _fetchVerificationStatus(); // Fetch verification status after getting account ID
+        _fetchVerificationStatus();
       } else {
         Fluttertoast.showToast(
           msg: "Failed to fetch Stripe Account ID: ${response.body}",
@@ -102,13 +101,11 @@ class _ProfilePageState extends State<ProfilePage>
     }
   }
 
-  /// Fetch the Stripe account verification status
+  /// Fetch verification status
   Future<void> _fetchVerificationStatus() async {
     if (stripeAccountId == null) return;
-
     final String apiUrl =
         "http://10.0.2.2:8080/api/stripe/$stripeAccountId/verification-status";
-
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -135,14 +132,12 @@ class _ProfilePageState extends State<ProfilePage>
     if (stripeAccountId == null) {
       await _fetchStripeAccountId();
     }
-
     final String apiUrl = "https://api.stripe.com/v1/account_links";
-
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {
-          'Authorization': 'Bearer ${dotenv.env['STRIPE_API_KEY']}', // Fetch API key from .env
+          'Authorization': 'Bearer ${dotenv.env['STRIPE_API_KEY']}',
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: {
@@ -150,13 +145,11 @@ class _ProfilePageState extends State<ProfilePage>
           'refresh_url': 'https://your-app.com/refresh',
           'return_url': 'https://your-app.com/return',
           'type': 'account_onboarding',
-        }, // Removed 'return_url' and 'refresh_url'
+        },
       );
-
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         final onboardingUrl = responseData['url'];
-
         if (await canLaunch(onboardingUrl)) {
           await launch(onboardingUrl);
         } else {
@@ -176,10 +169,12 @@ class _ProfilePageState extends State<ProfilePage>
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Ensure the Scaffold background matches the page background
+      backgroundColor: DarkModeHandler.getBackgroundColor(),
+
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: DarkModeHandler.getAppBarColor(),
@@ -189,6 +184,7 @@ class _ProfilePageState extends State<ProfilePage>
         ),
         centerTitle: true,
       ),
+
       body: StreamBuilder<List<ConnectivityResult>>(
         stream: _connectivityService.connectivityStream,
         builder: (context, snapshot) {
@@ -198,79 +194,88 @@ class _ProfilePageState extends State<ProfilePage>
             final results = snapshot.data ?? [];
             final result = results.contains(ConnectivityResult.none)
                 ? ConnectivityResult.none
-                : ConnectivityResult.wifi; // Default to WiFi if any connection exists
+                : ConnectivityResult.wifi;
             if (result == ConnectivityResult.none) {
               return NoInternetUI();
             } else {
-              return _buildProfilePageContent(context);
+              // Use SingleChildScrollView directly
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildProfileHeader(),
+                    const SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0, vertical: 10.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildProfileDetail(
+                            icon: Icons.email,
+                            text: 'bhathika@gmail.com',
+                            iconColor: Colors.grey,
+                          ),
+                          const SizedBox(height: 10),
+                          _buildProfileDetail(
+                            icon: Icons.verified,
+                            text: 'Verification Status: $verificationStatus',
+                            iconColor: verificationStatus == "Verified"
+                                ? Colors.green
+                                : Colors.red,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // 1) Stripe Onboarding item
+                    _buildProfileItem(
+                      icon: Icons.verified_user,
+                      title: 'Verify Stripe Account',
+                      onTap: _startStripeOnboarding,
+                      showArrow: true,
+                      isEnabled: verificationStatus != "Verified",
+                    ),
+
+                    // 2) Master "Settings" item
+                    _buildProfileItem(
+                      icon: Icons.settings,
+                      title: 'Settings',
+                      showArrow: true,
+                      onTap: () {
+                        // Navigate to new SettingsPage
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SettingsPage(
+                              stripeAccountId: stripeAccountId,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
+                    // Remove or reduce extra bottom space
+                    // const SizedBox(height: 30), // <— removed
+                  ],
+                ),
+              );
             }
           }
         },
       ),
-
-      // Custom bottom navigation bar
       bottomNavigationBar: BottomNavigationBarWithFab(
         currentIndex: 3,
         onTap: (index) {
-          // Handle navigation if needed
+          // handle nav if needed
         },
       ),
     );
   }
 
-  /// Builds the main content of the profile page
-  Widget _buildProfilePageContent(BuildContext context) {
-    return Container(
-      color: DarkModeHandler.getBackgroundColor(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildProfileHeader(context),
-          const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildProfileDetail(
-                  icon: Icons.email,
-                  text: 'bhathika@gmail.com',
-                  iconColor: Colors.grey,
-                ),
-                const SizedBox(height: 10),
-                _buildProfileDetail(
-                  icon: Icons.verified,
-                  text: 'Verification Status: $verificationStatus',
-                  iconColor: verificationStatus == "Verified" ? Colors.green : Colors.red,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          _buildProfileItem(
-            icon: Icons.verified_user,
-            title: 'Verify Stripe Account',
-            onTap: _startStripeOnboarding,
-            showArrow: true,
-            isEnabled: verificationStatus != "Verified", // Disable if user is verified
-          ),
-          _buildProfileItem(
-            icon: Icons.settings,
-            title: 'Settings',
-            showArrow: true,
-          ),
-          _buildProfileItem(
-            icon: Icons.support,
-            title: 'Support',
-            showArrow: true,
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Builds the profile header with user image, name, and edit options
-  Widget _buildProfileHeader(BuildContext context) {
+  /// Profile header
+  Widget _buildProfileHeader() {
     return Stack(
       children: [
         Container(
@@ -293,7 +298,7 @@ class _ProfilePageState extends State<ProfilePage>
           left: MediaQuery.of(context).size.width / 2 - 70,
           child: Column(
             children: [
-              Container(
+              SizedBox(
                 width: 130,
                 height: 130,
                 child: ClipOval(
@@ -329,16 +334,14 @@ class _ProfilePageState extends State<ProfilePage>
               duration: const Duration(milliseconds: 600),
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: isDarkMode ? Colors.black : Color(0xFF83B6B9),
+                color: isDarkMode ? Colors.black : const Color(0xFF83B6B9),
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    isDarkMode
-                        ? Icons.nightlight_round
-                        : Icons.wb_sunny_rounded,
+                    isDarkMode ? Icons.nightlight_round : Icons.wb_sunny_rounded,
                     size: 25,
                     color: Colors.yellow,
                   ),
@@ -360,7 +363,7 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  /// Builds a profile detail with an icon and text
+  /// Builds a profile detail row
   Widget _buildProfileDetail({
     required IconData icon,
     required String text,
@@ -382,18 +385,18 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  /// Builds a single profile item row with icon, title, and optional arrow
+  /// Builds a single profile item row
   Widget _buildProfileItem({
     required IconData icon,
     required String title,
     bool showArrow = false,
-    Function()? onTap, // Add onTap callback
-    bool isEnabled = true, // Add an 'isEnabled' flag
+    Function()? onTap,
+    bool isEnabled = true,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5.0),
       child: GestureDetector(
-        onTap: isEnabled ? onTap : null, // Only allow tap if enabled
+        onTap: isEnabled ? onTap : null,
         child: Center(
           child: Container(
             width: MediaQuery.of(context).size.width * 0.9,
@@ -401,7 +404,7 @@ class _ProfilePageState extends State<ProfilePage>
             decoration: BoxDecoration(
               color: isEnabled
                   ? DarkModeHandler.getMainContainersColor()
-                  : Colors.grey.shade300, // Greyed out if disabled
+                  : Colors.grey.shade300,
               borderRadius: BorderRadius.circular(10.0),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -412,7 +415,7 @@ class _ProfilePageState extends State<ProfilePage>
                   size: 30,
                   color: isEnabled
                       ? DarkModeHandler.getProfilePageIconColor()
-                      : Colors.grey, // Greyed out icon if disabled
+                      : Colors.grey,
                 ),
                 const SizedBox(width: 16.0),
                 Expanded(
@@ -425,13 +428,13 @@ class _ProfilePageState extends State<ProfilePage>
                           fontSize: 18,
                           color: isEnabled
                               ? DarkModeHandler.getMainContainersTextColor()
-                              : Colors.grey, // Greyed out text if disabled
+                              : Colors.grey,
                         ),
                       ),
                       if (showArrow)
                         Icon(
                           Icons.arrow_forward_ios,
-                          color: isEnabled ? Colors.black : Colors.grey, // Grey arrow if disabled
+                          color: isEnabled ? Colors.black : Colors.grey,
                         ),
                     ],
                   ),

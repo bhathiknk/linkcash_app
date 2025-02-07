@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For secure storage
 import 'package:http/http.dart' as http;
-import 'dart:convert'; // For JSON decoding
+import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -12,6 +12,7 @@ import '../LogScreen/Asgardio_Login.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/calendar_widget.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
+import 'Group_Payment_Page.dart';
 
 // New DTO classes for transaction summary (matching backend DTOs)
 class TransactionMonthlySummaryDTO {
@@ -436,9 +437,16 @@ class _MyHomePageState extends State<MyHomePage> {
                   context,
                   MaterialPageRoute(builder: (context) => const PayQuickPage()),
                 );
+              } else if (title == "Group Pay") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const GroupPaymentPage()),
+                );
+              } else if (title == "Add Event") {
+                // Add navigation for Add Event if needed.
               }
-              // Add navigation for Group Pay and Add Event if needed.
             },
+
             child: Icon(
               icon,
               size: 30,
