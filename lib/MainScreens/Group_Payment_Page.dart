@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For Clipboard
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
 import '../WidgetsCom/gradient_button_fb4.dart';
 
-/// A model for the group member that will be part of the final (added) list.
+/// Model for a group member.
 class GroupMember {
   final String memberName;
   double assignedAmount;
@@ -16,7 +19,7 @@ class GroupMember {
   });
 }
 
-/// A simple helper class to hold the two text controllers for an "in-progress" member row.
+/// Helper class to hold the two text controllers for an in-progress member row.
 class _MemberInputFields {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
@@ -30,7 +33,7 @@ class GroupPaymentPage extends StatefulWidget {
 }
 
 class _GroupPaymentPageState extends State<GroupPaymentPage> {
-  // Controllers for the main "Group Payment" inputs.
+  // Controllers for main inputs.
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
@@ -39,23 +42,24 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
   final ScrollController _scrollController = ScrollController();
   bool _showScrollToTop = false;
 
-  String? paymentLink; // Latest created group payment link
+  String? paymentLink; // Latest created group payment link.
   int _linkCounter = 0;
 
-  // Final list of members that have been added.
+  // Final list of members.
   final List<GroupMember> _groupMembers = [];
 
-  // A list of "in-progress" rows for new members (not yet added).
+  // List of in-progress new member rows.
   final List<_MemberInputFields> _newMemberRows = [];
 
-  /// Whether the user is currently adding a member (so we lock the plus icon).
+  /// Whether a member row is currently being added.
   bool _isAddingMember = false;
+
+  // Instance of secure storage.
+  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
-
-    // Listen to scroll changes to show/hide the "scroll to top" button.
     _scrollController.addListener(() {
       if (_scrollController.offset > 300 && !_showScrollToTop) {
         setState(() {
@@ -75,7 +79,7 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
     titleController.dispose();
     descriptionController.dispose();
     amountController.dispose();
-    // Dispose controllers in the pending input rows, too.
+    // Dispose all text controllers for in-progress member rows.
     for (var row in _newMemberRows) {
       row.nameController.dispose();
       row.amountController.dispose();
@@ -83,7 +87,7 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
     super.dispose();
   }
 
-  /// Returns true if the user has entered a valid Title, Description, and positive total amount.
+  /// Returns true if the main inputs (Title, Description, and Total Amount) are valid.
   bool _hasValidMainInputs() {
     final title = titleController.text.trim();
     final desc = descriptionController.text.trim();
@@ -91,17 +95,11 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
     return (title.isNotEmpty && desc.isNotEmpty && total > 0);
   }
 
-  /// Invoked when the user taps the plus icon.
-  ///  - Ensures main inputs are valid (title/desc/total).
-  ///  - Ensures sum of assigned amounts is still less than total.
-  ///  - Ensures we are not already adding a member row.
+  /// Called when the user taps the plus icon to add a new member.
   void _addNewMemberRow() {
-    // 1) Check if main fields are valid.
     if (!_hasValidMainInputs()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please complete Title, Description, and Total."),
-        ),
+        const SnackBar(content: Text("Please complete Title, Description, and Total.")),
       );
       return;
     }
@@ -109,35 +107,27 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
     final sumAssigned = _groupMembers.fold(0.0, (prev, m) => prev + m.assignedAmount);
     final totalAmount = double.tryParse(amountController.text.trim()) ?? 0.0;
 
-    // 2) Check if sumAssigned already equals or exceeds total.
     if (sumAssigned >= totalAmount) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Cannot add more members. The total is fully allocated."),
-        ),
+        const SnackBar(content: Text("Cannot add more members. The total is fully allocated.")),
       );
       return;
     }
 
-    // 3) Only allow one row at a time.
     if (_isAddingMember) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Finish adding the current member before adding another."),
-        ),
+        const SnackBar(content: Text("Finish adding the current member before adding another.")),
       );
       return;
     }
 
-    // If all checks are OK, add a new row.
     setState(() {
       _isAddingMember = true;
       _newMemberRows.add(_MemberInputFields());
     });
   }
 
-  /// Called when the user presses the "Add" button next to a row of text fields.
-  /// Moves that row into the final _groupMembers list (if valid), then removes it from _newMemberRows.
+  /// Called when the user confirms adding a new member.
   void _confirmAddMember(int index) {
     final row = _newMemberRows[index];
     final name = row.nameController.text.trim();
@@ -161,7 +151,6 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
     final totalAmount = double.tryParse(amountController.text.trim()) ?? 0.0;
     final sumAssigned = _groupMembers.fold(0.0, (prev, m) => prev + m.assignedAmount);
 
-    // Check if adding this member would exceed the total.
     if (sumAssigned + parsedAmount > totalAmount) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -173,26 +162,41 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
       return;
     }
 
-    // Add to final list.
     setState(() {
-      _groupMembers.add(
-        GroupMember(memberName: name, assignedAmount: parsedAmount),
-      );
-      // Remove the row of text fields since it's now added.
+      _groupMembers.add(GroupMember(memberName: name, assignedAmount: parsedAmount));
       _newMemberRows.removeAt(index);
       _isAddingMember = false;
     });
   }
 
-  /// Delete a final added member by index.
+  /// Delete an added member by index.
   void _deleteMember(int index) {
     setState(() {
       _groupMembers.removeAt(index);
     });
   }
 
-  /// Creates the group payment link, ensuring the sum of assigned amounts matches the total.
-  void _createGroupPaymentLink(BuildContext context) {
+  /// Creates the group payment link by calling the backend API.
+  /// Retrieves the user ID from secure storage and includes it in the payload.
+  Future<void> _createGroupPaymentLink(BuildContext context) async {
+    // Retrieve user ID from secure storage.
+    String? storedUserId = await secureStorage.read(key: 'User_ID');
+    if (storedUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error: User is not logged in!")),
+      );
+      return;
+    }
+    int userId;
+    try {
+      userId = int.parse(storedUserId);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error: Invalid User ID stored!")),
+      );
+      return;
+    }
+
     final title = titleController.text.trim();
     final description = descriptionController.text.trim();
     final totalText = amountController.text.trim();
@@ -219,27 +223,25 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
       return;
     }
 
-    // Sum of assigned amounts must match the total if that is desired logic.
     final sumAssigned = _groupMembers.fold(0.0, (prev, m) => prev + m.assignedAmount);
     if ((sumAssigned - totalAmount).abs() > 0.01) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "The sum of assigned amounts (\$${sumAssigned.toStringAsFixed(2)}) must equal "
-                "the total amount (\$${totalAmount.toStringAsFixed(2)}).",
+            "The sum of assigned amounts (\$${sumAssigned.toStringAsFixed(2)}) must equal the total amount (\$${totalAmount.toStringAsFixed(2)}).",
           ),
         ),
       );
       return;
     }
 
-    // Build the payload for your backend.
+    // Build the payload including the userId from secure storage.
     final payload = {
-      "userId": 0,
+      "userId": userId,
       "title": title,
       "description": description,
       "totalAmount": totalAmount,
-      "splitEqually": false, // or remove if not needed
+      "splitEqually": false,
       "members": _groupMembers
           .map(
             (m) => {
@@ -250,30 +252,47 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
           .toList(),
     };
 
-    // Simulate a backend call by generating a dummy link.
-    _linkCounter++;
-    final dummyLink = "https://grouppayment.com/link_$_linkCounter";
-
-    setState(() {
-      paymentLink = dummyLink;
-      // Optionally clear all inputs.
-      titleController.clear();
-      descriptionController.clear();
-      amountController.clear();
-      _groupMembers.clear();
-      // Also remove any pending newMemberRows.
-      _newMemberRows.clear();
-      _isAddingMember = false;
-    });
-
     debugPrint("Payload to send: $payload");
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Group Payment created successfully!")),
-    );
+    try {
+      // Replace with your actual backend endpoint URL.
+      final response = await http.post(
+        Uri.parse("http://10.0.2.2:8080/api/group-payments/create"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(payload),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        // Assumes that the backend returns the generated payment link under "paymentUrl"
+        final String newPaymentLink = responseData['paymentUrl'] ?? "";
+        debugPrint("Backend response paymentUrl: '$newPaymentLink'");
+        setState(() {
+          paymentLink = newPaymentLink;
+          // Clear all inputs and member lists.
+          titleController.clear();
+          descriptionController.clear();
+          amountController.clear();
+          _groupMembers.clear();
+          _newMemberRows.clear();
+          _isAddingMember = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Group Payment created successfully!")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error creating group payment: ${response.statusCode}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
+      );
+    }
   }
 
-  // UI building:
+  // -------------------- UI Building --------------------
 
   @override
   Widget build(BuildContext context) {
@@ -325,18 +344,14 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
           children: [
             _buildGroupPaymentLinkSection(),
             const SizedBox(height: 15),
-
-            // Main inputs:
             _buildLabel("Enter Title"),
             _buildTextField(
               controller: titleController,
               hint: 'Enter title...',
               keyboardType: TextInputType.text,
-              // Rebuild on text change so plus button updates.
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 15),
-
             _buildLabel("Enter Description"),
             _buildTextField(
               controller: descriptionController,
@@ -345,7 +360,6 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 15),
-
             _buildLabel("Enter Total Amount"),
             _buildTextField(
               controller: amountController,
@@ -354,24 +368,20 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 20),
-
-            // Title row (Members + plus icon).
+            // Row with Members title and plus icon.
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildLabel("Members"),
                 IconButton(
                   icon: const Icon(Icons.add_circle, color: Color(0xFF83B6B9), size: 28),
-                  // The plus icon is disabled if _isAddingMember is true,
-                  // or if sumAssigned >= total, or if main inputs are invalid.
                   onPressed: (!_hasValidMainInputs() || sumAssigned >= totalAmount)
                       ? null
-                      : _addNewMemberRow, // Otherwise, call _addNewMemberRow
+                      : _addNewMemberRow,
                 ),
               ],
             ),
-
-            // Already added (final) members:
+            // Display already added members.
             if (_groupMembers.isEmpty)
               const Padding(
                 padding: EdgeInsets.only(top: 8.0),
@@ -392,7 +402,6 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Show the final member name and assigned amount with minimal styling.
                         Expanded(
                           child: Text(
                             "${member.memberName} - \$${member.assignedAmount.toStringAsFixed(2)}",
@@ -408,11 +417,8 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
                   );
                 },
               ),
-
             const SizedBox(height: 10),
-
-            // "In-progress" new member rows (not yet added).
-            // Each row shows Name, Amount, and an "Add" button.
+            // In-progress new member rows.
             if (_newMemberRows.isNotEmpty)
               Column(
                 children: List.generate(_newMemberRows.length, (index) {
@@ -420,18 +426,15 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
                 }),
               ),
             const SizedBox(height: 10),
-
             // Summary.
             Text(
-              "Total Assigned: \$${sumAssigned.toStringAsFixed(2)} "
-                  "/ Total Amount: \$${totalAmount.toStringAsFixed(2)}",
+              "Total Assigned: \$${sumAssigned.toStringAsFixed(2)} / Total Amount: \$${totalAmount.toStringAsFixed(2)}",
               style: TextStyle(
                 color: assignmentMatches ? Colors.green : Colors.red,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 20),
-
             // Create link button.
             Center(
               child: GradientButtonFb4(
@@ -446,8 +449,7 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
     );
   }
 
-  /// A single row of new member text fields + "Add" button.
-  /// Displays them inline (no extra containers).
+  /// Builds a single row for new member inputs with an "Add" button.
   Widget _buildNewMemberRow(int index) {
     final rowData = _newMemberRows[index];
     return Padding(
@@ -485,8 +487,10 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
     );
   }
 
-  /// Displays the latest created group payment link, if any.
+  /// Displays the created group payment link at the top of the white container.
   Widget _buildGroupPaymentLinkSection() {
+    // If paymentLink is null or empty, show the default message.
+    final bool showDefault = paymentLink == null || paymentLink!.trim().isEmpty;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 20),
@@ -495,14 +499,10 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
-      child: paymentLink == null
+      child: showDefault
           ? const Text(
         "Your group payment link will appear here after creation.",
         style: TextStyle(fontSize: 16, color: Colors.grey),
@@ -548,8 +548,8 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
     );
   }
 
+  /// Builds a label with minimal styling.
   Widget _buildLabel(String text) {
-    // Minimal label styling.
     return Padding(
       padding: const EdgeInsets.only(bottom: 4.0, left: 10.0),
       child: Text(
@@ -562,7 +562,7 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
     );
   }
 
-  /// Adds an optional `onChanged` callback to re-check valid input states.
+  /// Builds a text field with a hint, styling, and an optional onChanged callback.
   Widget _buildTextField({
     required TextEditingController controller,
     required String hint,
@@ -573,7 +573,7 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
       controller: controller,
       style: TextStyle(color: DarkModeHandler.getInputTypeTextColor()),
       keyboardType: keyboardType,
-      onChanged: onChanged, // <<--- triggers rebuild on user input
+      onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.grey),
@@ -588,6 +588,7 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
     );
   }
 
+  /// Builds the bottom navigation bar.
   Widget _buildBottomNavigationBar() {
     return BottomNavigationBarWithFab(
       currentIndex: 0,
