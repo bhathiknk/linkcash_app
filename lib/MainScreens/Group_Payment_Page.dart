@@ -7,6 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
 import '../WidgetsCom/gradient_button_fb4.dart';
+import 'group_payment_history_page.dart'; // Import the history page
 
 /// Model for a group member.
 class GroupMember {
@@ -297,7 +298,7 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(),
+      appBar: _buildAppBar(), // AppBar without a history button.
       backgroundColor: DarkModeHandler.getBackgroundColor(),
       body: _buildMainContent(),
       bottomNavigationBar: _buildBottomNavigationBar(),
@@ -319,6 +320,7 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
     );
   }
 
+  // AppBar without the history button.
   AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: DarkModeHandler.getAppBarColor(),
@@ -435,11 +437,28 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
               ),
             ),
             const SizedBox(height: 20),
-            // Create link button.
+            // Create Group Payment Link button.
             Center(
               child: GradientButtonFb4(
                 text: 'Create Group Payment Link',
                 onPressed: () => _createGroupPaymentLink(context),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // History button using GradientButtonFb4 style.
+            Center(
+              child: GradientButtonFb4(
+                text: 'History',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const GroupPaymentHistoryPage(),
+                    ),
+                  );
+                },
+                backgroundColor: Colors.white,
+                textColor: Colors.blueAccent,
               ),
             ),
             const SizedBox(height: 20),

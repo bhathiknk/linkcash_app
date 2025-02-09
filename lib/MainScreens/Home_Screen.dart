@@ -6,15 +6,18 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:linkcash_app/MainScreens/Pay_Quick_Page.dart';
+import 'package:pie_chart/pie_chart.dart'; // For the pie chart
+
 import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../ConnectionCheck/connectivity_service.dart';
+
 import '../LogScreen/Asgardio_Login.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/calendar_widget.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
 import 'Group_Payment_Page.dart';
 
-// New DTO classes for transaction summary (matching backend DTOs)
+// DTO classes for transaction summary (matching backend DTOs)
 class TransactionMonthlySummaryDTO {
   final String month;
   final double oneTimeTotal;
@@ -77,7 +80,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String _pendingBalance = "Loading...";
   String _givenName = "User"; // Default value for givenName
 
-  // New variable for transaction summary.
+  // Variable for transaction summary.
   TransactionSummaryResponse? _transactionSummary;
   bool _isSummaryLoading = true;
 
@@ -91,8 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _checkInitialConnectivity() async {
-    var connectivityResults =
-    await _connectivityService.checkInitialConnectivity();
+    var connectivityResults = await _connectivityService.checkInitialConnectivity();
     setState(() {
       _initialConnectivityResult = connectivityResults.contains(ConnectivityResult.none)
           ? ConnectivityResult.none
@@ -128,7 +130,7 @@ class _MyHomePageState extends State<MyHomePage> {
           _userId = userId;
         });
         _fetchPendingBalance(userId);
-        _fetchTransactionSummary(userId); // Fetch summary after userId is available.
+        _fetchTransactionSummary(userId);
       } else {
         setState(() {
           _userId = "Not Available";
@@ -143,7 +145,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _fetchPendingBalance(String userId) async {
     final String apiUrl = "http://10.0.2.2:8080/api/stripe/balance/$userId";
-
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -174,7 +175,7 @@ class _MyHomePageState extends State<MyHomePage> {
         });
       }
     } catch (e) {
-      print("Error fetching givenName: $e");
+      debugPrint("Error fetching givenName: $e");
     }
   }
 
@@ -189,13 +190,13 @@ class _MyHomePageState extends State<MyHomePage> {
           _isSummaryLoading = false;
         });
       } else {
-        print("Failed to fetch summary: ${response.body}");
+        debugPrint("Failed to fetch summary: ${response.body}");
         setState(() {
           _isSummaryLoading = false;
         });
       }
     } catch (e) {
-      print("Error fetching summary: $e");
+      debugPrint("Error fetching summary: $e");
       setState(() {
         _isSummaryLoading = false;
       });
@@ -221,14 +222,11 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  // We have a "circular button with 'Today' & day" that shows a popup calendar
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        toolbarHeight: 5,
-      ),
+      appBar: AppBar(backgroundColor: Colors.white, elevation: 0, toolbarHeight: 5),
       backgroundColor: const Color(0xFFE3F2FD),
       body: StreamBuilder<List<ConnectivityResult>>(
         stream: _connectivityService.connectivityStream,
@@ -243,7 +241,17 @@ class _MyHomePageState extends State<MyHomePage> {
             if (result == ConnectivityResult.none) {
               return NoInternetUI();
             } else {
-              return _buildHomePageContent(context);
+              return Stack(
+                children: [
+                  _buildHomePageContent(context),
+                  // Circle button pinned to bottom-right corner
+                  Positioned(
+                    bottom: 20,
+                    right: 20,
+                    child: _buildTodayCircleButton(),
+                  ),
+                ],
+              );
             }
           }
         },
@@ -254,6 +262,107 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+
+  Widget _buildTodayCircleButton() {
+    final now = DateTime.now();
+    final dayString = now.day.toString(); // e.g. 2, 15, 30
+
+    return InkWell(
+      onTap: _showCalendarPopup,
+      child: Container(
+        width: 70,
+        height: 70,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xFF0054FF),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(2, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "TODAY",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.2, // Adds some spacing between letters
+              ),
+            ),
+            Text(
+              dayString,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(
+                    offset: Offset(0.5, 0.5),
+                    blurRadius: 3,
+                    color: Colors.black38,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  // Show an attractive calendar popup
+  void _showCalendarPopup() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0), // Rounded corners
+          ),
+          elevation: 10,
+          backgroundColor: Colors.white,
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            width: 340,
+            height: 420,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0054FF),
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  child: Row(
+                    children: [
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed: () => Navigator.of(context).pop(),
+                      )
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: CalendarWidget(), // Custom calendar widget
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
 
   Widget _buildHomePageContent(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -268,19 +377,14 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(height: 15),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-              child: _buildCalendarContainer(screenWidth),
-            ),
-            const SizedBox(height: 15),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
               child: _buildActionButtons(),
             ),
             const SizedBox(height: 20),
-            // New Transaction Summary Graph Section.
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-              child: _buildTransactionSummaryContainer(screenWidth),
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.015),
+              child: _buildTransactionSummaryContainer(),
             ),
+            const SizedBox(height: 15),
             const SizedBox(height: 10),
           ],
         ),
@@ -394,15 +498,237 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildCalendarContainer(double screenWidth) {
+
+  Widget _buildTransactionSummaryContainer() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      width: screenWidth - 40,
+      // Now takes full available width
+      width: double.infinity,
+
+      // Padding, borderRadius, and shadow remain the same
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
-        color: DarkModeHandler.getCalendarContainersColor(),
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: const CalendarWidget(),
+      child: _buildTransactionSummaryContent(),
+    );
+  }
+
+
+
+
+  Widget _buildTransactionSummaryContent() {
+    if (_isSummaryLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_transactionSummary == null) {
+      return Center(
+        child: Text(
+          "No transaction summary available.",
+          style: TextStyle(
+            color: DarkModeHandler.getMainContainersTextColor(),
+            fontSize: 16,
+          ),
+        ),
+      );
+    }
+
+    // Build a data map for the pie chart using the totalOneTime & totalRegular
+    final dataMap = <String, double>{
+      "One-Time": _transactionSummary!.totalOneTime,
+      "Regular": _transactionSummary!.totalRegular,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Title of the summary section.
+        Text(
+          "Transaction Summary",
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: DarkModeHandler.getMainContainersTextColor(),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Overall totals card
+        Card(
+          color: const Color(0xFFE3F2FD),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Column(
+              children: [
+                // One-Time Total Row
+                Row(
+                  children: [
+                    const Icon(Icons.event_available, color:Color(0xFF148E00)),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        "One-Time Total:",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF148E00),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      "£${_transactionSummary!.totalOneTime.toStringAsFixed(2)}",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF148E00),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                // Regular Total Row
+                Row(
+                  children: [
+                    const Icon(Icons.credit_card, color: Color(0xFF060DF3)),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        "Regular Total:",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF060DF3),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      "£${_transactionSummary!.totalRegular.toStringAsFixed(2)}",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color:Color(0xFF060DF3),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 20),
+        Text(
+          "Overall Summary (Pie Chart)",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: DarkModeHandler.getMainContainersTextColor(),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Pie Chart for overall summary
+        SizedBox(
+          height: 200,
+          child: PieChart(
+            dataMap: dataMap,
+            colorList:     const [Color(0xFF80ED6B), Color(0xFF4489F8)],
+            chartType: ChartType.disc,
+            legendOptions: const LegendOptions(
+              legendPosition: LegendPosition.right,
+              showLegendsInRow: false,
+            ),
+            chartValuesOptions: const ChartValuesOptions(
+              showChartValuesInPercentage: true,
+              showChartValues: true,
+              decimalPlaces: 1,
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 20),
+        Text(
+          "Monthly Totals",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: DarkModeHandler.getMainContainersTextColor(),
+          ),
+        ),
+        const SizedBox(height: 10),
+        // Horizontal list of monthly summaries.
+        SizedBox(
+          height: 110,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _transactionSummary!.monthlySummaries.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final monthly = _transactionSummary!.monthlySummaries[index];
+              return Container(
+                width: 140,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE3F2FD),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      monthly.month,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF83B6B9),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // One-Time total in monthly summary
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.event_available, size: 14, color: Color(0xFF148E00)),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            monthly.oneTimeTotal.toStringAsFixed(2),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: Color(0xFF148E00),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    // Regular total in monthly summary
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.credit_card, size: 14, color: Color(0xFF060DF3)),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            monthly.regularTotal.toStringAsFixed(2),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: Color(0xFF060DF3),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -443,10 +769,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   MaterialPageRoute(builder: (context) => const GroupPaymentPage()),
                 );
               } else if (title == "Add Event") {
-                // Add navigation for Add Event if needed.
+                // Add navigation if needed.
               }
             },
-
             child: Icon(
               icon,
               size: 30,
@@ -465,215 +790,8 @@ class _MyHomePageState extends State<MyHomePage> {
       ],
     );
   }
-
-  // New Transaction Summary Graph Section.
-  Widget _buildTransactionSummaryContainer(double screenWidth) {
-    return Container(
-      width: screenWidth - 40,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: _buildTransactionSummaryContent(),
-    );
-  }
-
-  Widget _buildTransactionSummaryContent() {
-    if (_isSummaryLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_transactionSummary == null) {
-      return Center(
-        child: Text(
-          "No transaction summary available.",
-          style: TextStyle(
-            color: DarkModeHandler.getMainContainersTextColor(),
-            fontSize: 16,
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Title of the summary section.
-        Text(
-          "Transaction Summary",
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: DarkModeHandler.getMainContainersTextColor(),
-          ),
-        ),
-        const SizedBox(height: 12),
-        // Overall totals card.
-        Card(
-          color: Colors.white,
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Column(
-              children: [
-                // One-Time Total Row with updated icon.
-                Row(
-                  children: [
-                    const Icon(Icons.event_available, color: Colors.green),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        "One-Time Total:",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.green[800],
-                        ),
-                      ),
-                    ),
-                    Text(
-                      "£${_transactionSummary!.totalOneTime.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                // Regular Total Row with updated icon.
-                Row(
-                  children: [
-                    const Icon(Icons.credit_card, color: Colors.blue),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        "Regular Total:",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.blue[800],
-                        ),
-                      ),
-                    ),
-                    Text(
-                      "£${_transactionSummary!.totalRegular.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          "Monthly Totals",
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: DarkModeHandler.getMainContainersTextColor(),
-          ),
-        ),
-        const SizedBox(height: 10),
-        // Horizontal list of monthly summaries.
-        SizedBox(
-          height: 110,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _transactionSummary!.monthlySummaries.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final monthly = _transactionSummary!.monthlySummaries[index];
-              return Container(
-                width: 140,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE3F2FD),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      monthly.month,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF83B6B9),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // One-Time total in monthly summary with updated icon.
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.event_available, size: 14, color: Colors.green),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            monthly.oneTimeTotal.toStringAsFixed(2),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.green,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    // Regular total in monthly summary with updated icon.
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.credit_card, size: 14, color: Colors.blue),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            monthly.regularTotal.toStringAsFixed(2),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.blue,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBarWithFab(
-      currentIndex: 0,
-      onTap: (index) {
-        // Handle navigation if needed.
-      },
-    );
-  }
 }
+
 
 class TopBarFb4 extends StatelessWidget {
   final String title;
