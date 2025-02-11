@@ -12,7 +12,7 @@ import '../WidgetsCom/gradient_button_fb4.dart';
 class LinkViewPage extends StatefulWidget {
   final int paymentDetailId; // Accepts paymentDetailId from navigation
 
-  const LinkViewPage({Key? key, required this.paymentDetailId}) : super(key: key);
+  const LinkViewPage({super.key, required this.paymentDetailId});
 
   @override
   _LinkViewPageState createState() => _LinkViewPageState();
@@ -22,7 +22,8 @@ class _LinkViewPageState extends State<LinkViewPage> {
   final TextEditingController textEditingController = TextEditingController();
   bool isConnected = true;
   String? paymentLink; // Store the fetched payment link
-  List<Map<String, dynamic>> transactionData = []; // Store fetched transaction data
+  List<Map<String, dynamic>> transactionData =
+      []; // Store fetched transaction data
   final ConnectivityService _connectivityService = ConnectivityService();
 
   @override
@@ -33,13 +34,15 @@ class _LinkViewPageState extends State<LinkViewPage> {
     _fetchTransactions(); // Fetch transaction data on page load
 
     // Listen to connectivity changes
-    _connectivityService.connectivityStream.listen((List<ConnectivityResult> results) {
+    _connectivityService.connectivityStream
+        .listen((List<ConnectivityResult> results) {
       _updateConnectionStatus(results as ConnectivityResult);
     });
   }
 
   Future<void> _checkConnectivity() async {
-    var connectivityResults = await _connectivityService.checkInitialConnectivity();
+    var connectivityResults =
+        await _connectivityService.checkInitialConnectivity();
     _updateConnectionStatus(connectivityResults as ConnectivityResult);
   }
 
@@ -50,14 +53,17 @@ class _LinkViewPageState extends State<LinkViewPage> {
   }
 
   Future<void> _fetchPaymentLink() async {
-    final String apiUrl = "http://10.0.2.2:8080/api/payment-links/url/${widget.paymentDetailId}";
+    final String apiUrl =
+        "http://10.0.2.2:8080/api/payment-links/url/${widget.paymentDetailId}";
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
         setState(() {
-          paymentLink = response.body; // The response is directly the payment URL
-          textEditingController.text = paymentLink ?? ''; // Set the link in the text field
+          paymentLink =
+              response.body; // The response is directly the payment URL
+          textEditingController.text =
+              paymentLink ?? ''; // Set the link in the text field
         });
       } else {
         print("Failed to fetch payment link: ${response.body}");
@@ -68,13 +74,15 @@ class _LinkViewPageState extends State<LinkViewPage> {
   }
 
   Future<void> _fetchTransactions() async {
-    final String apiUrl = "http://10.0.2.2:8080/api/payments/transactions/${widget.paymentDetailId}";
+    final String apiUrl =
+        "http://10.0.2.2:8080/api/payments/transactions/${widget.paymentDetailId}";
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
         setState(() {
-          transactionData = List<Map<String, dynamic>>.from(json.decode(response.body));
+          transactionData =
+              List<Map<String, dynamic>>.from(json.decode(response.body));
         });
       } else {
         print("Failed to fetch transactions: ${response.body}");
@@ -163,17 +171,20 @@ class _LinkViewPageState extends State<LinkViewPage> {
                 child: TextFormField(
                   controller: textEditingController,
                   decoration: InputDecoration(
-                    hintText: paymentLink ?? 'https://example.com/checkout?product=example_product&price=19.99&currency=USD',
+                    hintText: paymentLink ??
+                        'https://example.com/checkout?product=example_product&price=19.99&currency=USD',
                     hintStyle: TextStyle(
                       color: DarkModeHandler.getInputTextColor(),
                     ),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10.0, vertical: 8.0),
                   ),
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.copy, color: DarkModeHandler.getInputTextColor()),
+                icon: Icon(Icons.copy,
+                    color: DarkModeHandler.getInputTextColor()),
                 onPressed: () {
                   String text = textEditingController.text;
                   if (text.isNotEmpty) {
@@ -285,31 +296,26 @@ class _LinkViewPageState extends State<LinkViewPage> {
             Row(
               children: [
                 Icon(Icons.payment, color: Colors.green, size: 30),
-
                 const SizedBox(width: 10),
-
                 Expanded(
                   child: Text(
                     title,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black, // Set text color to black for contrast
+                      color:
+                          Colors.black, // Set text color to black for contrast
                     ),
                   ),
                 ),
               ],
             ),
-
             const SizedBox(height: 10),
-
             Text(
               "Transaction ID: $transactionId",
               style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
-
             const SizedBox(height: 5),
-
             Text.rich(
               TextSpan(
                 children: [
@@ -322,7 +328,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
                     ),
                   ),
                   TextSpan(
-                    text: "\£${amount.toStringAsFixed(2)}",
+                    text: "£${amount.toStringAsFixed(2)}",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -332,9 +338,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
                 ],
               ),
             ),
-
             const SizedBox(height: 5),
-
             Text(
               "Date: $createdAt",
               style: TextStyle(color: Colors.grey),
@@ -344,5 +348,4 @@ class _LinkViewPageState extends State<LinkViewPage> {
       ),
     );
   }
-
 }

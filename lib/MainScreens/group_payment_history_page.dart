@@ -69,10 +69,11 @@ class GroupMemberHistoryItem {
 }
 
 class GroupPaymentHistoryPage extends StatefulWidget {
-  const GroupPaymentHistoryPage({Key? key}) : super(key: key);
+  const GroupPaymentHistoryPage({super.key});
 
   @override
-  _GroupPaymentHistoryPageState createState() => _GroupPaymentHistoryPageState();
+  _GroupPaymentHistoryPageState createState() =>
+      _GroupPaymentHistoryPageState();
 }
 
 class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
@@ -134,7 +135,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as List<dynamic>;
         final items =
-        data.map((item) => GroupPaymentHistoryItem.fromJson(item)).toList();
+            data.map((item) => GroupPaymentHistoryItem.fromJson(item)).toList();
 
         // Sort descending by createdAt
         items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -148,7 +149,8 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
       } else {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to load history: ${response.statusCode}")),
+          SnackBar(
+              content: Text("Failed to load history: ${response.statusCode}")),
         );
       }
     } catch (e) {
@@ -172,7 +174,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
   @override
   Widget build(BuildContext context) {
     final unpaidItems = _filteredItems.where((h) => !h.completed).toList();
-    final paidItems   = _filteredItems.where((h) =>  h.completed).toList();
+    final paidItems = _filteredItems.where((h) => h.completed).toList();
 
     return DefaultTabController(
       length: 2,
@@ -180,8 +182,8 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
         backgroundColor: const Color(0xFFE3F2FD),
         appBar: AppBar(
           backgroundColor: Colors.white,
-          elevation: 0,            // Remove shadow if you want
-          toolbarHeight: 48,       // Make the app bar smaller
+          elevation: 0, // Remove shadow if you want
+          toolbarHeight: 48, // Make the app bar smaller
           // No title here
           bottom: TabBar(
             controller: _tabController,
@@ -197,21 +199,21 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : Column(
-          children: [
-            // The date filter row
-            _buildDateSelectorRow(),
-            // Tab content
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
                 children: [
-                  _buildTabContent(unpaidItems, isPaidTab: false),
-                  _buildTabContent(paidItems, isPaidTab: true),
+                  // The date filter row
+                  _buildDateSelectorRow(),
+                  // Tab content
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildTabContent(unpaidItems, isPaidTab: false),
+                        _buildTabContent(paidItems, isPaidTab: true),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -252,8 +254,18 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
               },
               display: (val) {
                 final monthNames = [
-                  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+                  "Jan",
+                  "Feb",
+                  "Mar",
+                  "Apr",
+                  "May",
+                  "Jun",
+                  "Jul",
+                  "Aug",
+                  "Sep",
+                  "Oct",
+                  "Nov",
+                  "Dec"
                 ];
                 return monthNames[val - 1];
               },
@@ -302,7 +314,8 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     );
   }
 
-  Widget _buildTabContent(List<GroupPaymentHistoryItem> items, {required bool isPaidTab}) {
+  Widget _buildTabContent(List<GroupPaymentHistoryItem> items,
+      {required bool isPaidTab}) {
     if (items.isEmpty) {
       return Center(
         child: Text(
@@ -345,7 +358,8 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
                 Flexible(
                   child: Text(
                     item.title,
-                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 17, fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -454,7 +468,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
           if (members.isEmpty)
             const Text("No members found", style: TextStyle(fontSize: 14))
           else
-            ...members.map((m) => _buildMemberRow(m)).toList(),
+            ...members.map((m) => _buildMemberRow(m)),
         ],
       ),
     );

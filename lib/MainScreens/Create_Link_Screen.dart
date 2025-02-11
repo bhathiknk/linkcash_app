@@ -11,7 +11,7 @@ import '../WidgetsCom/gradient_button_fb4.dart';
 import 'Link_View_Screen.dart';
 
 class CreateLinkPage extends StatefulWidget {
-  const CreateLinkPage({Key? key}) : super(key: key);
+  const CreateLinkPage({super.key});
 
   @override
   _CreateLinkPageState createState() => _CreateLinkPageState();
@@ -37,14 +37,16 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
     _checkConnectivity();
 
     // Listen to connectivity changes
-    _connectivityService.connectivityStream.listen((List<ConnectivityResult> results) {
+    _connectivityService.connectivityStream
+        .listen((List<ConnectivityResult> results) {
       _updateConnectionStatus(results as ConnectivityResult);
     });
   }
 
   // Checks the initial connectivity status
   Future<void> _checkConnectivity() async {
-    var connectivityResults = await _connectivityService.checkInitialConnectivity();
+    var connectivityResults =
+        await _connectivityService.checkInitialConnectivity();
     _updateConnectionStatus(connectivityResults as ConnectivityResult);
   }
 
@@ -127,7 +129,8 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
         print("Link created successfully: $responseData");
 
         // Extract the ID field from the response
-        final int savedPaymentId = responseData['id'] ?? responseData['paymentDetailId'];
+        final int savedPaymentId =
+            responseData['id'] ?? responseData['paymentDetailId'];
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Link created successfully!")),
@@ -252,7 +255,8 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
         borderRadius: BorderRadius.circular(10.0),
         decoration: const InputDecoration(
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+          contentPadding:
+              EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
         ),
         // Dropdown options without "One Time Only"
         items: <String>['One Hour', 'One Day', 'One Week', 'Unlimited']
@@ -300,7 +304,8 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
       child: Text(
         text,
-        style: TextStyle(fontSize: 16, color: DarkModeHandler.getMainContainersTextColor()),
+        style: TextStyle(
+            fontSize: 16, color: DarkModeHandler.getMainContainersTextColor()),
       ),
     );
   }
@@ -326,7 +331,8 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
           hintText: hint,
           hintStyle: TextStyle(color: DarkModeHandler.getInputTextColor()),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
         ),
       ),
     );

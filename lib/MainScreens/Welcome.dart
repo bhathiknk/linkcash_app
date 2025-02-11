@@ -4,10 +4,12 @@ import '../LogScreen/asgardio_login.dart'; // Import your Asgardeo login file
 class WelcomeScreen extends StatelessWidget {
   static const String routeName = '/welcome';
 
+  const WelcomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Material(
-      child: Container(
+      child: SizedBox(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
         child: Stack(
@@ -26,7 +28,8 @@ class WelcomeScreen extends StatelessWidget {
               height: MediaQuery.of(context).size.height / 1.6,
               decoration: BoxDecoration(
                 color: Color(0xFFFFFFFF),
-                borderRadius: BorderRadius.only(bottomRight: Radius.circular(70)),
+                borderRadius:
+                    BorderRadius.only(bottomRight: Radius.circular(70)),
               ),
               child: Center(
                 child: Image.asset(
@@ -89,7 +92,8 @@ class WelcomeScreen extends StatelessWidget {
                           );
                         },
                         child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 15, horizontal: 80),
+                          padding: EdgeInsets.symmetric(
+                              vertical: 15, horizontal: 80),
                           child: const Text(
                             'Get Started',
                             style: TextStyle(

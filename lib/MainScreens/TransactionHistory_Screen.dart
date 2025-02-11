@@ -6,7 +6,7 @@ import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
 
 class TransactionHistoryPage extends StatefulWidget {
-  const TransactionHistoryPage({Key? key}) : super(key: key);
+  const TransactionHistoryPage({super.key});
 
   @override
   State<TransactionHistoryPage> createState() => _TransactionHistoryPageState();
@@ -52,14 +52,16 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   Future<void> _fetchTransactions() async {
     if (userId == null) return;
 
-    final String apiUrl = "http://10.0.2.2:8080/api/payments/transactions/user/$userId";
+    final String apiUrl =
+        "http://10.0.2.2:8080/api/payments/transactions/user/$userId";
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
         setState(() {
-          transactions = List<Map<String, dynamic>>.from(json.decode(response.body));
-          transactions.sort((a, b) =>
-              DateTime.parse(b['createdAt']).compareTo(DateTime.parse(a['createdAt'])));
+          transactions =
+              List<Map<String, dynamic>>.from(json.decode(response.body));
+          transactions.sort((a, b) => DateTime.parse(b['createdAt'])
+              .compareTo(DateTime.parse(a['createdAt'])));
           isLoading = false;
         });
       } else {
@@ -98,21 +100,21 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : transactions.isEmpty
-          ? Center(
-        child: Text(
-          "No transactions found!",
-          style: TextStyle(
-            color: DarkModeHandler.getMainContainersTextColor(),
-            fontSize: 18,
-          ),
-        ),
-      )
-          : SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: _buildTransactionList(),
-        ),
-      ),
+              ? Center(
+                  child: Text(
+                    "No transactions found!",
+                    style: TextStyle(
+                      color: DarkModeHandler.getMainContainersTextColor(),
+                      fontSize: 18,
+                    ),
+                  ),
+                )
+              : SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: _buildTransactionList(),
+                  ),
+                ),
       bottomNavigationBar: BottomNavigationBarWithFab(
         currentIndex: currentIndex,
         onTap: _onBottomNavTap,
@@ -187,7 +189,9 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: double.tryParse(transaction['amount'].toString())! >= 0
+                            color: double.tryParse(
+                                        transaction['amount'].toString())! >=
+                                    0
                                 ? Colors.green
                                 : Colors.red,
                           ),

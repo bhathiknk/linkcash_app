@@ -15,8 +15,8 @@ class BottomNavigationBarWithFab extends StatefulWidget {
   const BottomNavigationBarWithFab({
     required this.currentIndex,
     required this.onTap,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   _BottomNavBarFb1State createState() => _BottomNavBarFb1State();
@@ -49,7 +49,8 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
 
   /// Fetch the Stripe account ID for the logged-in user
   Future<void> _fetchStripeAccountId() async {
-    final String apiUrl = "http://10.0.2.2:8080/api/users/$userId/stripe-account";
+    final String apiUrl =
+        "http://10.0.2.2:8080/api/users/$userId/stripe-account";
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
@@ -123,19 +124,16 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor:Color(0xFF0054FF), // Button background color
+                backgroundColor: Color(0xFF0054FF), // Button background color
               ),
-              child: const Text(
-                  "Go to Profile",
-                  style: TextStyle(color: Colors.white)
-              ),
+              child: const Text("Go to Profile",
+                  style: TextStyle(color: Colors.white)),
             ),
           ],
         );
       },
     );
   }
-
 
   /// Handle navigation on icon tap
   void _navigateToPage(int index) {
@@ -145,8 +143,8 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
           context,
           MaterialPageRoute(
               builder: (context) => MyHomePage(
-                givenName: '',
-              )),
+                    givenName: '',
+                  )),
         );
         break;
       case 1:
@@ -190,7 +188,8 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
         child: BottomAppBar(
           color: backgroundColor,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0), // Adjust horizontal padding if needed
+            padding: const EdgeInsets.symmetric(
+                horizontal: 8.0), // Adjust horizontal padding if needed
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -203,11 +202,14 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
                   },
                 ),
                 IconBottomBar(
-                  icon: Icons.receipt_long, // Updated to transaction history icon
-                  selected: widget.currentIndex == 4, // Update to handle transaction history icon
+                  icon:
+                      Icons.receipt_long, // Updated to transaction history icon
+                  selected: widget.currentIndex ==
+                      4, // Update to handle transaction history icon
                   onPressed: () {
                     widget.onTap(4);
-                    _navigateToPage(4); // Navigate to the transaction history page
+                    _navigateToPage(
+                        4); // Navigate to the transaction history page
                   },
                 ),
                 IconBottomBar2(
@@ -245,11 +247,11 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
 
 class IconBottomBar extends StatelessWidget {
   const IconBottomBar({
-    Key? key,
+    super.key,
     required this.icon,
     required this.selected,
     required this.onPressed,
-  }) : super(key: key);
+  });
 
   final IconData icon;
   final bool selected;
@@ -282,11 +284,11 @@ class IconBottomBar extends StatelessWidget {
 
 class IconBottomBar2 extends StatelessWidget {
   const IconBottomBar2({
-    Key? key,
+    super.key,
     required this.icon,
     required this.selected,
     required this.onPressed,
-  }) : super(key: key);
+  });
 
   final IconData icon;
   final bool selected;

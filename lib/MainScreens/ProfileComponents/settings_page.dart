@@ -9,9 +9,9 @@ class SettingsPage extends StatefulWidget {
   final String? stripeAccountId;
 
   const SettingsPage({
-    Key? key,
+    super.key,
     required this.stripeAccountId,
-  }) : super(key: key);
+  });
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -96,7 +96,8 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   /// Update payout schedule on the backend
-  Future<void> _updatePayoutSchedule(String interval, {String? anchorDay}) async {
+  Future<void> _updatePayoutSchedule(String interval,
+      {String? anchorDay}) async {
     if (widget.stripeAccountId == null) {
       Fluttertoast.showToast(
         msg: "No Stripe account found. Please try again.",
@@ -384,7 +385,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     if (tempInterval == 'daily') {
                       await _updatePayoutSchedule('daily');
                     } else {
-                      await _updatePayoutSchedule('weekly', anchorDay: tempAnchor);
+                      await _updatePayoutSchedule('weekly',
+                          anchorDay: tempAnchor);
                     }
                   },
                   child: const Text('Confirm'),

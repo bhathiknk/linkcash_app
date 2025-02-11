@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -24,7 +22,7 @@ class DarkModeHandler {
 
   //background color
   static Color getBackgroundColor() {
-    return isDarkMode ? Color(0xFF303030) :  Color(0xFFE3F2FD);
+    return isDarkMode ? Color(0xFF303030) : Color(0xFFE3F2FD);
   }
 
   //home page balance container included container
@@ -44,9 +42,11 @@ class DarkModeHandler {
   static Color getMainContainersColor() {
     return isDarkMode ? Color(0xFF424242) : Color(0xFFFFFFFF);
   }
+
   static Color getMainContainersTextColor() {
     return isDarkMode ? Colors.white : Colors.black;
   }
+
   //home page Transaction Text color
   static Color getMainBackgroundTextColor() {
     return isDarkMode ? Colors.white : Colors.black;
@@ -83,9 +83,11 @@ class DarkModeHandler {
   static Color getInputTypeTextColor() {
     return isDarkMode ? Color(0xFFFFFFFF) : Color(0xff6b6b6b);
   }
+
   static Color getProfilePageIconColor() {
     return isDarkMode ? Color(0xFFFFFFFF) : Color(0xFF0054FF);
   }
+
   static Color getCalendarTodayTextColor() {
     return isDarkMode ? Color(0xFFFFFFFF) : Color(0xffffffff);
   }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
-import 'MainScreens/Home_Screen.dart';
 import 'WidgetsCom/dark_mode_handler.dart';
 import 'MainScreens/Welcome.dart';
 
@@ -16,6 +15,8 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

@@ -12,15 +12,16 @@ class GradientButtonFb4 extends StatelessWidget {
     required this.onPressed,
     this.backgroundColor,
     this.textColor,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final double borderRadius = 25;
 
   @override
   Widget build(BuildContext context) {
     // Use the provided colors if given; otherwise, fall back to defaults.
-    final Color bgColor = backgroundColor ?? DarkModeHandler.getMainButtonsColor();
+    final Color bgColor =
+        backgroundColor ?? DarkModeHandler.getMainButtonsColor();
     final Color txtColor = textColor ?? Colors.white;
 
     return DecoratedBox(
@@ -30,13 +31,13 @@ class GradientButtonFb4 extends StatelessWidget {
       ),
       child: ElevatedButton(
         style: ButtonStyle(
-          elevation: MaterialStateProperty.all(0),
+          elevation: WidgetStateProperty.all(0),
           alignment: Alignment.center,
-          padding: MaterialStateProperty.all(
+          padding: WidgetStateProperty.all(
             const EdgeInsets.symmetric(horizontal: 75, vertical: 15),
           ),
-          backgroundColor: MaterialStateProperty.all(Colors.transparent),
-          shape: MaterialStateProperty.all(
+          backgroundColor: WidgetStateProperty.all(Colors.transparent),
+          shape: WidgetStateProperty.all(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(borderRadius),
             ),

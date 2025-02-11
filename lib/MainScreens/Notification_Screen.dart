@@ -3,7 +3,7 @@ import 'package:linkcash_app/WidgetsCom/dark_mode_handler.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 
 class NotificationPage extends StatefulWidget {
-  const NotificationPage({Key? key}) : super(key: key);
+  const NotificationPage({super.key});
 
   @override
   _NotificationPageState createState() => _NotificationPageState();
@@ -35,25 +35,31 @@ class _NotificationPageState extends State<NotificationPage> {
               padding: const EdgeInsets.only(top: 5.0),
               child: Container(
                 color: DarkModeHandler.getTopContainerColor(),
-                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0), // Added horizontal padding
+                padding: const EdgeInsets.symmetric(
+                    vertical: 8.0,
+                    horizontal: 16.0), // Added horizontal padding
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Flexible(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5.0), // Adjust horizontal padding
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5.0), // Adjust horizontal padding
                         child: SizedBox(
                           height: 45, // Set a consistent height if needed
                           width: 150, // Set a consistent width if needed
                           child: TextButton(
                             style: TextButton.styleFrom(
                               backgroundColor: selectedIndex == 0
-                                  ? const Color(0xFF83B6B9) // Color for selected button
-                                  : const Color(0xFFB0BEC5), // Lighter color for unselected button
+                                  ? const Color(
+                                      0xFF83B6B9) // Color for selected button
+                                  : const Color(
+                                      0xFFB0BEC5), // Lighter color for unselected button
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10.0),
                               ),
-                              padding: const EdgeInsets.symmetric(vertical: 10.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10.0),
                             ),
                             onPressed: () {
                               setState(() {
@@ -72,22 +78,27 @@ class _NotificationPageState extends State<NotificationPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8), // Adjust space between buttons if needed
+                    const SizedBox(
+                        width: 8), // Adjust space between buttons if needed
                     Flexible(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5.0), // Adjust horizontal padding
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5.0), // Adjust horizontal padding
                         child: SizedBox(
                           height: 45, // Set a consistent height if needed
                           width: 150, // Set a consistent width if needed
                           child: TextButton(
                             style: TextButton.styleFrom(
                               backgroundColor: selectedIndex == 1
-                                  ? const Color(0xFF83B6B9) // Color for selected button
-                                  : const Color(0xFFB0BEC5), // Lighter color for unselected button
+                                  ? const Color(
+                                      0xFF83B6B9) // Color for selected button
+                                  : const Color(
+                                      0xFFB0BEC5), // Lighter color for unselected button
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10.0),
                               ),
-                              padding: const EdgeInsets.symmetric(vertical: 10.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10.0),
                             ),
                             onPressed: () {
                               setState(() {

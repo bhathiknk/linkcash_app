@@ -9,6 +9,8 @@ import 'dart:convert'; // For JSON decoding
 import '../MainScreens/Home_Screen.dart';
 
 class AsgardeoLoginPage extends StatefulWidget {
+  const AsgardeoLoginPage({super.key});
+
   @override
   _AsgardeoLoginPageState createState() => _AsgardeoLoginPageState();
 }
@@ -44,49 +46,37 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
         ),
       );
 
-      if (result != null) {
-        Map<String, dynamic> idTokenClaims = JwtDecoder.decode(result.idToken!);
+      Map<String, dynamic> idTokenClaims = JwtDecoder.decode(result.idToken!);
 
-        final String? asgardeoUserId = idTokenClaims['sub'];
-        final String? email = idTokenClaims['email'];
-        final String? givenName = idTokenClaims['given_name'];
+      final String? asgardeoUserId = idTokenClaims['sub'];
+      final String? email = idTokenClaims['email'];
+      final String? givenName = idTokenClaims['given_name'];
 
-        final userId = await _fetchUserIdFromBackend(asgardeoUserId!, email!, givenName!);
+      final userId =
+          await _fetchUserIdFromBackend(asgardeoUserId!, email!, givenName!);
 
-        if (userId != null) {
-          await _secureStorage.write(key: 'User_ID', value: userId.toString());
-          await _secureStorage.write(key: 'Given_Name', value: givenName ?? "User");
-          print("User_ID saved: $userId");
-        }
-
-        Fluttertoast.showToast(
-          msg: "Login successful!",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MyHomePage(givenName: givenName ?? "User"),
-          ),
-        );
-      } else {
-        setState(() {
-          _isLoginInProgress = false;
-        });
-        Fluttertoast.showToast(
-          msg: "Login failed.",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
+      if (userId != null) {
+        await _secureStorage.write(key: 'User_ID', value: userId.toString());
+        await _secureStorage.write(
+            key: 'Given_Name', value: givenName ?? "User");
+        print("User_ID saved: $userId");
       }
+
+      Fluttertoast.showToast(
+        msg: "Login successful!",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MyHomePage(givenName: givenName ?? "User"),
+        ),
+      );
     } catch (e) {
       setState(() {
         _isLoginInProgress = false;
@@ -106,8 +96,10 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
   }
 
   // Fetch User_ID from Backend
-  Future<int?> _fetchUserIdFromBackend(String asgardeoUserId, String email, String givenName) async {
-    final String apiUrl = "http://10.0.2.2:8080/api/users/signup"; // Adjust API path if necessary
+  Future<int?> _fetchUserIdFromBackend(
+      String asgardeoUserId, String email, String givenName) async {
+    final String apiUrl =
+        "http://10.0.2.2:8080/api/users/signup"; // Adjust API path if necessary
 
     try {
       final response = await http.post(
@@ -132,9 +124,6 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
       return null;
     }
   }
-
-
-
 
   // Redirect to Asgardeo Sign-Up
   Future<void> _signUp() async {
@@ -186,7 +175,8 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
   }
 
   // Send Data to Backend
-  Future<void> _sendDataToBackend(String asgardeoUserId, String email, String givenName) async {
+  Future<void> _sendDataToBackend(
+      String asgardeoUserId, String email, String givenName) async {
     final String apiUrl = "http://10.0.2.2:8080/api/users/signup";
 
     try {
@@ -253,26 +243,27 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
               const SizedBox(height: 40),
               _isLoginInProgress
                   ? CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              )
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    )
                   : ElevatedButton(
-                onPressed: _login,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: const Text(
-                  "Sign In",
-                  style: TextStyle(
-                    color: Color(0xFF0054FF),
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+                      onPressed: _login,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 40, vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: const Text(
+                        "Sign In",
+                        style: TextStyle(
+                          color: Color(0xFF0054FF),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
               const SizedBox(height: 10),
               const Text(
                 "OR",
@@ -289,7 +280,7 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),

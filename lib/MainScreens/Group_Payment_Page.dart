@@ -27,7 +27,7 @@ class _MemberInputFields {
 }
 
 class GroupPaymentPage extends StatefulWidget {
-  const GroupPaymentPage({Key? key}) : super(key: key);
+  const GroupPaymentPage({super.key});
 
   @override
   _GroupPaymentPageState createState() => _GroupPaymentPageState();
@@ -44,7 +44,7 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
   bool _showScrollToTop = false;
 
   String? paymentLink; // Latest created group payment link.
-  int _linkCounter = 0;
+  final int _linkCounter = 0;
 
   // Final list of members.
   final List<GroupMember> _groupMembers = [];
@@ -100,24 +100,30 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
   void _addNewMemberRow() {
     if (!_hasValidMainInputs()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please complete Title, Description, and Total.")),
+        const SnackBar(
+            content: Text("Please complete Title, Description, and Total.")),
       );
       return;
     }
 
-    final sumAssigned = _groupMembers.fold(0.0, (prev, m) => prev + m.assignedAmount);
+    final sumAssigned =
+        _groupMembers.fold(0.0, (prev, m) => prev + m.assignedAmount);
     final totalAmount = double.tryParse(amountController.text.trim()) ?? 0.0;
 
     if (sumAssigned >= totalAmount) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Cannot add more members. The total is fully allocated.")),
+        const SnackBar(
+            content:
+                Text("Cannot add more members. The total is fully allocated.")),
       );
       return;
     }
 
     if (_isAddingMember) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Finish adding the current member before adding another.")),
+        const SnackBar(
+            content: Text(
+                "Finish adding the current member before adding another.")),
       );
       return;
     }
@@ -144,13 +150,16 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
     final parsedAmount = double.tryParse(amountText);
     if (parsedAmount == null || parsedAmount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a valid assigned amount (greater than 0).")),
+        const SnackBar(
+            content:
+                Text("Please enter a valid assigned amount (greater than 0).")),
       );
       return;
     }
 
     final totalAmount = double.tryParse(amountController.text.trim()) ?? 0.0;
-    final sumAssigned = _groupMembers.fold(0.0, (prev, m) => prev + m.assignedAmount);
+    final sumAssigned =
+        _groupMembers.fold(0.0, (prev, m) => prev + m.assignedAmount);
 
     if (sumAssigned + parsedAmount > totalAmount) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -164,7 +173,8 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
     }
 
     setState(() {
-      _groupMembers.add(GroupMember(memberName: name, assignedAmount: parsedAmount));
+      _groupMembers
+          .add(GroupMember(memberName: name, assignedAmount: parsedAmount));
       _newMemberRows.removeAt(index);
       _isAddingMember = false;
     });
@@ -224,7 +234,8 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
       return;
     }
 
-    final sumAssigned = _groupMembers.fold(0.0, (prev, m) => prev + m.assignedAmount);
+    final sumAssigned =
+        _groupMembers.fold(0.0, (prev, m) => prev + m.assignedAmount);
     if ((sumAssigned - totalAmount).abs() > 0.01) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -246,10 +257,10 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
       "members": _groupMembers
           .map(
             (m) => {
-          "memberName": m.memberName,
-          "assignedAmount": m.assignedAmount,
-        },
-      )
+              "memberName": m.memberName,
+              "assignedAmount": m.assignedAmount,
+            },
+          )
           .toList(),
     };
 
@@ -283,7 +294,9 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error creating group payment: ${response.statusCode}")),
+          SnackBar(
+              content:
+                  Text("Error creating group payment: ${response.statusCode}")),
         );
       }
     } catch (e) {
@@ -304,16 +317,16 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
       bottomNavigationBar: _buildBottomNavigationBar(),
       floatingActionButton: _showScrollToTop
           ? FloatingActionButton(
-        onPressed: () {
-          _scrollController.animateTo(
-            0.0,
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeOut,
-          );
-        },
-        child: const Icon(Icons.arrow_upward, color: Colors.black),
-        backgroundColor: const Color(0xFF83B6B9),
-      )
+              onPressed: () {
+                _scrollController.animateTo(
+                  0.0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeOut,
+                );
+              },
+              backgroundColor: const Color(0xFF83B6B9),
+              child: const Icon(Icons.arrow_upward, color: Colors.black),
+            )
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       resizeToAvoidBottomInset: true,
@@ -332,7 +345,8 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
   }
 
   Widget _buildMainContent() {
-    final sumAssigned = _groupMembers.fold(0.0, (prev, m) => prev + m.assignedAmount);
+    final sumAssigned =
+        _groupMembers.fold(0.0, (prev, m) => prev + m.assignedAmount);
     final totalAmount = double.tryParse(amountController.text) ?? 0.0;
     final assignmentMatches = (sumAssigned - totalAmount).abs() < 0.01;
 
@@ -376,10 +390,12 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
               children: [
                 _buildLabel("Members"),
                 IconButton(
-                  icon: const Icon(Icons.add_circle, color: Color(0xFF83B6B9), size: 28),
-                  onPressed: (!_hasValidMainInputs() || sumAssigned >= totalAmount)
-                      ? null
-                      : _addNewMemberRow,
+                  icon: const Icon(Icons.add_circle,
+                      color: Color(0xFF83B6B9), size: 28),
+                  onPressed:
+                      (!_hasValidMainInputs() || sumAssigned >= totalAmount)
+                          ? null
+                          : _addNewMemberRow,
                 ),
               ],
             ),
@@ -523,47 +539,49 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
       ),
       child: showDefault
           ? const Text(
-        "Your group payment link will appear here after creation.",
-        style: TextStyle(fontSize: 16, color: Colors.grey),
-        textAlign: TextAlign.center,
-      )
+              "Your group payment link will appear here after creation.",
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+              textAlign: TextAlign.center,
+            )
           : Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Group Payment Link:",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: DarkModeHandler.getMainContainersTextColor(),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Group Payment Link:",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: DarkModeHandler.getMainContainersTextColor(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SelectableText(
+                  paymentLink!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.blue,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: paymentLink!));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content:
+                              Text("Group payment link copied to clipboard!")),
+                    );
+                  },
+                  icon: const Icon(Icons.copy, size: 16),
+                  label: const Text("Copy Link"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 10),
-          SelectableText(
-            paymentLink!,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.blue,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 10),
-          ElevatedButton.icon(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: paymentLink!));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Group payment link copied to clipboard!")),
-              );
-            },
-            icon: const Icon(Icons.copy, size: 16),
-            label: const Text("Copy Link"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -602,7 +620,8 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
           borderRadius: BorderRadius.circular(10.0),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
       ),
     );
   }

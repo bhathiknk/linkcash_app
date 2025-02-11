@@ -17,7 +17,8 @@ class PaymentLinkItem {
   final String paymentUrl;
   final double amount;
 
-  PaymentLinkItem({required this.title, required this.paymentUrl, required this.amount});
+  PaymentLinkItem(
+      {required this.title, required this.paymentUrl, required this.amount});
 
   factory PaymentLinkItem.fromJson(Map<String, dynamic> json) {
     return PaymentLinkItem(
@@ -29,7 +30,7 @@ class PaymentLinkItem {
 }
 
 class PayQuickPage extends StatefulWidget {
-  const PayQuickPage({Key? key}) : super(key: key);
+  const PayQuickPage({super.key});
 
   @override
   _PayQuickPageState createState() => _PayQuickPageState();
@@ -59,7 +60,8 @@ class _PayQuickPageState extends State<PayQuickPage> {
   void initState() {
     super.initState();
     _checkConnectivity();
-    _connectivityService.connectivityStream.listen((List<ConnectivityResult> results) {
+    _connectivityService.connectivityStream
+        .listen((List<ConnectivityResult> results) {
       _updateConnectionStatus(results.first);
     });
     // Initially fetch list for default filter (Unpaid).
@@ -91,7 +93,8 @@ class _PayQuickPageState extends State<PayQuickPage> {
   }
 
   Future<void> _checkConnectivity() async {
-    var connectivityResult = await _connectivityService.checkInitialConnectivity();
+    var connectivityResult =
+        await _connectivityService.checkInitialConnectivity();
     _updateConnectionStatus(connectivityResult as ConnectivityResult);
   }
 
@@ -171,18 +174,20 @@ class _PayQuickPageState extends State<PayQuickPage> {
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
         List<PaymentLinkItem> items =
-        data.map((json) => PaymentLinkItem.fromJson(json)).toList();
+            data.map((json) => PaymentLinkItem.fromJson(json)).toList();
         setState(() {
           paymentLinkItems = items;
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to fetch link list: ${response.body}")),
+          SnackBar(
+              content: Text("Failed to fetch link list: ${response.body}")),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error occurred while fetching link list!")),
+        const SnackBar(
+            content: Text("Error occurred while fetching link list!")),
       );
     }
   }
@@ -196,13 +201,14 @@ class _PayQuickPageState extends State<PayQuickPage> {
       bottomNavigationBar: _buildBottomNavigationBar(),
       floatingActionButton: _showScrollToTop
           ? FloatingActionButton(
-        onPressed: () {
-          _scrollController.animateTo(0.0,
-              duration: const Duration(milliseconds: 500), curve: Curves.easeOut);
-        },
-        child: const Icon(Icons.arrow_upward, color: Colors.black),
-        backgroundColor: const Color(0xFF83B6B9),
-      )
+              onPressed: () {
+                _scrollController.animateTo(0.0,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOut);
+              },
+              backgroundColor: const Color(0xFF83B6B9),
+              child: const Icon(Icons.arrow_upward, color: Colors.black),
+            )
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       resizeToAvoidBottomInset: true,
@@ -281,50 +287,51 @@ class _PayQuickPageState extends State<PayQuickPage> {
       ),
       child: paymentLink == null
           ? const Text(
-        "Your one-time payment link will appear here after creation.",
-        style: TextStyle(
-          fontSize: 16,
-          color: Colors.grey,
-        ),
-        textAlign: TextAlign.center,
-      )
+              "Your one-time payment link will appear here after creation.",
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.center,
+            )
           : Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "One-time Link:",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: DarkModeHandler.getMainContainersTextColor(),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "One-time Link:",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: DarkModeHandler.getMainContainersTextColor(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SelectableText(
+                  paymentLink!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.blue,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: paymentLink!));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text("Payment link copied to clipboard!")),
+                    );
+                  },
+                  icon: const Icon(Icons.copy, size: 16),
+                  label: const Text("Copy Link"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 10),
-          SelectableText(
-            paymentLink!,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.blue,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 10),
-          ElevatedButton.icon(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: paymentLink!));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Payment link copied to clipboard!")),
-              );
-            },
-            icon: const Icon(Icons.copy, size: 16),
-            label: const Text("Copy Link"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -368,7 +375,9 @@ class _PayQuickPageState extends State<PayQuickPage> {
                       label: const Text("Unpaid"),
                       labelStyle: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: filterPaid == false ? const Color(0xFF83B6B9) : const Color(0xFF83B6B9).withOpacity(0.6),
+                        color: filterPaid == false
+                            ? const Color(0xFF83B6B9)
+                            : const Color(0xFF83B6B9).withOpacity(0.6),
                       ),
                       selected: filterPaid == false,
                       backgroundColor: Colors.white,
@@ -385,7 +394,9 @@ class _PayQuickPageState extends State<PayQuickPage> {
                       label: const Text("Paid"),
                       labelStyle: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: filterPaid == true ? const Color(0xFF83B6B9) : const Color(0xFF83B6B9).withOpacity(0.6),
+                        color: filterPaid == true
+                            ? const Color(0xFF83B6B9)
+                            : const Color(0xFF83B6B9).withOpacity(0.6),
                       ),
                       selected: filterPaid == true,
                       backgroundColor: Colors.white,
@@ -409,87 +420,91 @@ class _PayQuickPageState extends State<PayQuickPage> {
           // List of payment link items.
           paymentLinkItems.isEmpty
               ? Center(
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Text(
-                "No links found for the selected filter.",
-                style: const TextStyle(
-                  color: Color(0xFF83B6B9),
-                  fontSize: 16,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          )
-              : ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: paymentLinkItems.length,
-            itemBuilder: (context, index) {
-              final item = paymentLinkItems[index];
-              return Container(
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE3F2FD), width: 1),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.title,
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Text(
+                      "No links found for the selected filter.",
                       style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    SelectableText(
-                      item.paymentUrl,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF0054FF),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      "Amount: \$${item.amount.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
                         color: Color(0xFF83B6B9),
+                        fontSize: 16,
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 10),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(text: item.paymentUrl));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Link copied!")),
-                          );
-                        },
-                        icon: const Icon(Icons.copy, size: 16, color: Colors.black),
-                        label: const Text("Copy"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE3F2FD),
-                          foregroundColor: const Color(0xFF83B6B9),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                  ),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: paymentLinkItems.length,
+                  itemBuilder: (context, index) {
+                    final item = paymentLinkItems[index];
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color: const Color(0xFFE3F2FD), width: 1),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black,
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 6),
+                          SelectableText(
+                            item.paymentUrl,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF0054FF),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "Amount: \$${item.amount.toStringAsFixed(2)}",
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF83B6B9),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Clipboard.setData(
+                                    ClipboardData(text: item.paymentUrl));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Link copied!")),
+                                );
+                              },
+                              icon: const Icon(Icons.copy,
+                                  size: 16, color: Colors.black),
+                              label: const Text("Copy"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFE3F2FD),
+                                foregroundColor: const Color(0xFF83B6B9),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ],
       ),
     );
@@ -521,9 +536,10 @@ class _PayQuickPageState extends State<PayQuickPage> {
         keyboardType: keyboardType,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color:Colors.grey),
+          hintStyle: TextStyle(color: Colors.grey),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
         ),
       ),
     );

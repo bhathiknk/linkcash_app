@@ -14,7 +14,7 @@ import 'package:http/http.dart' as http;
 import 'Link_View_Screen.dart'; // For HTTP requests
 
 class LinkPage extends StatefulWidget {
-  LinkPage({Key? key}) : super(key: key);
+  const LinkPage({super.key});
 
   @override
   _LinkPageState createState() => _LinkPageState();
@@ -30,7 +30,7 @@ class _LinkPageState extends State<LinkPage> {
     Color(0xFFEEE2A8),
   ];
 
-  List<Map<String, dynamic>> linkData = [];// Store fetched titles
+  List<Map<String, dynamic>> linkData = []; // Store fetched titles
   bool isConnected = true;
   String? userId;
   bool showActiveLinks = true; // Default to active links
@@ -55,7 +55,8 @@ class _LinkPageState extends State<LinkPage> {
   }
 
   Future<void> _checkInitialConnectivity() async {
-    var connectivityResult = await ConnectivityService().checkInitialConnectivity();
+    var connectivityResult =
+        await ConnectivityService().checkInitialConnectivity();
     setState(() {
       isConnected = connectivityResult != ConnectivityResult.none;
     });
@@ -82,7 +83,8 @@ class _LinkPageState extends State<LinkPage> {
       if (response.statusCode == 200) {
         setState(() {
           // Parse API response as List<Map<String, dynamic>>
-          linkData = List<Map<String, dynamic>>.from(json.decode(response.body));
+          linkData =
+              List<Map<String, dynamic>>.from(json.decode(response.body));
         });
       } else {
         print("Failed to fetch link titles: ${response.body}");
@@ -131,7 +133,6 @@ class _LinkPageState extends State<LinkPage> {
           _buildLinkHistoryToggleButtons(), // Toggle buttons for Active and Expired links
           const SizedBox(height: 10),
           _buildLinkHistoryList(context),
-
         ],
       ),
     );
@@ -152,7 +153,8 @@ class _LinkPageState extends State<LinkPage> {
             decoration: InputDecoration(
               hintText: 'Search...',
               hintStyle: TextStyle(color: DarkModeHandler.getInputTextColor()),
-              prefixIcon: Icon(Icons.search, color: DarkModeHandler.getInputTextColor()),
+              prefixIcon: Icon(Icons.search,
+                  color: DarkModeHandler.getInputTextColor()),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.only(top: 12.0),
             ),
@@ -186,7 +188,8 @@ class _LinkPageState extends State<LinkPage> {
           'Saved Link History',
           style: TextStyle(
             fontSize: 18,
-            color: DarkModeHandler.getMainBackgroundTextColor(), // Text color based on theme
+            color: DarkModeHandler
+                .getMainBackgroundTextColor(), // Text color based on theme
           ),
         ),
       ),
@@ -236,15 +239,17 @@ class _LinkPageState extends State<LinkPage> {
     );
   }
 
-
-
-
   // Update the link history item to display dynamic title and calculate expired before days
-  Widget _buildLinkHistoryItem(BuildContext context, int index, Map<String, dynamic> link) {
-    final String title = link['title'] ?? 'Untitled'; // Extract title from the structured data
-    final String expireAfter = link['expireAfter'] ?? 'N/A'; // Extract expireAfter from the structured data
-    final String createdAt = link['createdAt'] ?? ''; // Extract createdAt from the structured data
-    final int paymentDetailId = link['paymentDetailId']; // Extract paymentDetailId from the structured data
+  Widget _buildLinkHistoryItem(
+      BuildContext context, int index, Map<String, dynamic> link) {
+    final String title =
+        link['title'] ?? 'Untitled'; // Extract title from the structured data
+    final String expireAfter = link['expireAfter'] ??
+        'N/A'; // Extract expireAfter from the structured data
+    final String createdAt =
+        link['createdAt'] ?? ''; // Extract createdAt from the structured data
+    final int paymentDetailId = link[
+        'paymentDetailId']; // Extract paymentDetailId from the structured data
 
     // Calculate "expired before" days
     String expiredBefore = '';
@@ -258,11 +263,11 @@ class _LinkPageState extends State<LinkPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => LinkViewPage(paymentDetailId: paymentDetailId),
+            builder: (context) =>
+                LinkViewPage(paymentDetailId: paymentDetailId),
           ),
         );
         print("Opening LinkViewPage with paymentDetailId: $paymentDetailId");
-
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -280,7 +285,8 @@ class _LinkPageState extends State<LinkPage> {
                 children: [
                   _buildIconContainer(index),
                   const SizedBox(width: 20),
-                  _buildLinkText(title, expireAfter, expiredBefore), // Pass title, expireAfter, and expiredBefore
+                  _buildLinkText(title, expireAfter,
+                      expiredBefore), // Pass title, expireAfter, and expiredBefore
                 ],
               ),
             ),
@@ -290,14 +296,15 @@ class _LinkPageState extends State<LinkPage> {
     );
   }
 
-
 // Update link history list to use structured data
   Widget _buildLinkHistoryList(BuildContext context) {
     if (linkData.isEmpty) {
       return Center(
         child: Text(
           "No links found!",
-          style: TextStyle(color: DarkModeHandler.getMainBackgroundTextColor(), fontSize: 16),
+          style: TextStyle(
+              color: DarkModeHandler.getMainBackgroundTextColor(),
+              fontSize: 16),
         ),
       );
     }
@@ -308,13 +315,13 @@ class _LinkPageState extends State<LinkPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: List.generate(
             linkData.length,
-                (index) => _buildLinkHistoryItem(context, index, linkData[index]), // Pass entire object
+            (index) => _buildLinkHistoryItem(
+                context, index, linkData[index]), // Pass entire object
           ),
         ),
       ),
     );
   }
-
 
   Widget _buildIconContainer(int index) {
     return Container(
@@ -329,7 +336,8 @@ class _LinkPageState extends State<LinkPage> {
   }
 
   // Update the link text widget to include the expireAfter and expiredBefore data
-  Widget _buildLinkText(String title, String expireAfter, String expiredBefore) {
+  Widget _buildLinkText(
+      String title, String expireAfter, String expiredBefore) {
     return Expanded(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -351,7 +359,8 @@ class _LinkPageState extends State<LinkPage> {
               color: Colors.grey, // Use secondary text color
             ),
           ),
-          if (expiredBefore.isNotEmpty) // Display "expired before" only in the Expired tab
+          if (expiredBefore
+              .isNotEmpty) // Display "expired before" only in the Expired tab
             Text(
               "Expired before: $expiredBefore",
               style: TextStyle(
@@ -390,7 +399,8 @@ class _LinkPageState extends State<LinkPage> {
       }
 
       // Calculate difference in days
-      final int daysDifference = DateTime.now().difference(expirationDate).inDays;
+      final int daysDifference =
+          DateTime.now().difference(expirationDate).inDays;
 
       if (daysDifference > 0) {
         return "$daysDifference days ago";

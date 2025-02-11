@@ -61,7 +61,7 @@ class TransactionSummaryResponse {
 class MyHomePage extends StatefulWidget {
   final String givenName;
 
-  const MyHomePage({Key? key, required this.givenName}) : super(key: key);
+  const MyHomePage({super.key, required this.givenName});
   static const routeName = '/home';
 
   @override
@@ -92,11 +92,13 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _checkInitialConnectivity() async {
-    var connectivityResults = await _connectivityService.checkInitialConnectivity();
+    var connectivityResults =
+        await _connectivityService.checkInitialConnectivity();
     setState(() {
-      _initialConnectivityResult = connectivityResults.contains(ConnectivityResult.none)
-          ? ConnectivityResult.none
-          : ConnectivityResult.wifi;
+      _initialConnectivityResult =
+          connectivityResults.contains(ConnectivityResult.none)
+              ? ConnectivityResult.none
+              : ConnectivityResult.wifi;
       _isInitialCheckComplete = true;
     });
   }
@@ -178,13 +180,15 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _fetchTransactionSummary(String userId) async {
-    final String apiUrl = "http://10.0.2.2:8080/api/transactions/summary/user/$userId";
+    final String apiUrl =
+        "http://10.0.2.2:8080/api/transactions/summary/user/$userId";
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
         final summaryData = jsonDecode(response.body);
         setState(() {
-          _transactionSummary = TransactionSummaryResponse.fromJson(summaryData);
+          _transactionSummary =
+              TransactionSummaryResponse.fromJson(summaryData);
           _isSummaryLoading = false;
         });
       } else {
@@ -207,7 +211,7 @@ class _MyHomePageState extends State<MyHomePage> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => AsgardeoLoginPage()),
-          (Route<dynamic> route) => false,
+      (Route<dynamic> route) => false,
     );
 
     Fluttertoast.showToast(
@@ -224,7 +228,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.white, elevation: 0, toolbarHeight: 5),
+      appBar:
+          AppBar(backgroundColor: Colors.white, elevation: 0, toolbarHeight: 5),
       backgroundColor: const Color(0xFFE3F2FD),
       body: StreamBuilder<List<ConnectivityResult>>(
         stream: _connectivityService.connectivityStream,
@@ -314,7 +319,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-
   // Show an attractive calendar popup
   void _showCalendarPopup() {
     showDialog(
@@ -334,7 +338,8 @@ class _MyHomePageState extends State<MyHomePage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                   decoration: BoxDecoration(
                     color: const Color(0xFF0054FF),
                     borderRadius: BorderRadius.circular(12.0),
@@ -360,7 +365,6 @@ class _MyHomePageState extends State<MyHomePage> {
       },
     );
   }
-
 
   Widget _buildHomePageContent(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -461,7 +465,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 const Icon(Icons.account_balance_outlined, color: Colors.white),
                 const SizedBox(width: 5),
                 Text(
-                  _userId == "Not Available" ? "User ID: N/A" : "User-ID: $_userId",
+                  _userId == "Not Available"
+                      ? "User ID: N/A"
+                      : "User-ID: $_userId",
                   style: TextStyle(
                     color: titleColor,
                     fontSize: 16,
@@ -496,7 +502,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-
   Widget _buildTransactionSummaryContainer() {
     return Container(
       // Now takes full available width
@@ -511,9 +516,6 @@ class _MyHomePageState extends State<MyHomePage> {
       child: _buildTransactionSummaryContent(),
     );
   }
-
-
-
 
   Widget _buildTransactionSummaryContent() {
     if (_isSummaryLoading) {
@@ -564,7 +566,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 // One-Time Total Row
                 Row(
                   children: [
-                    const Icon(Icons.event_available, color:Color(0xFF148E00)),
+                    const Icon(Icons.event_available, color: Color(0xFF148E00)),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
@@ -605,7 +607,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color:Color(0xFF060DF3),
+                        color: Color(0xFF060DF3),
                       ),
                     ),
                   ],
@@ -631,7 +633,7 @@ class _MyHomePageState extends State<MyHomePage> {
           height: 200,
           child: PieChart(
             dataMap: dataMap,
-            colorList:     const [Color(0xFF80ED6B), Color(0xFF4489F8)],
+            colorList: const [Color(0xFF80ED6B), Color(0xFF4489F8)],
             chartType: ChartType.disc,
             legendOptions: const LegendOptions(
               legendPosition: LegendPosition.right,
@@ -666,7 +668,8 @@ class _MyHomePageState extends State<MyHomePage> {
               final monthly = _transactionSummary!.monthlySummaries[index];
               return Container(
                 width: 140,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE3F2FD),
                   borderRadius: BorderRadius.circular(10),
@@ -687,7 +690,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.event_available, size: 14, color: Color(0xFF148E00)),
+                        const Icon(Icons.event_available,
+                            size: 14, color: Color(0xFF148E00)),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
@@ -706,7 +710,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.credit_card, size: 14, color: Color(0xFF060DF3)),
+                        const Icon(Icons.credit_card,
+                            size: 14, color: Color(0xFF060DF3)),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
@@ -764,7 +769,8 @@ class _MyHomePageState extends State<MyHomePage> {
               } else if (title == "Group Pay") {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const GroupPaymentPage()),
+                  MaterialPageRoute(
+                      builder: (context) => const GroupPaymentPage()),
                 );
               } else if (title == "Add Event") {
                 // Add navigation if needed.
@@ -790,7 +796,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-
 class TopBarFb4 extends StatelessWidget {
   final String title;
   final String upperTitle;
@@ -802,8 +807,8 @@ class TopBarFb4 extends StatelessWidget {
     required this.upperTitle,
     required this.onTapMenu,
     required this.onTapLogout,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

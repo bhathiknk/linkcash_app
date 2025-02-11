@@ -4,7 +4,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'dark_mode_handler.dart';
 
 class CalendarWidget extends StatefulWidget {
-  const CalendarWidget({Key? key}) : super(key: key);
+  const CalendarWidget({super.key});
 
   @override
   _CalendarWidgetState createState() => _CalendarWidgetState();
@@ -32,45 +32,64 @@ class _CalendarWidgetState extends State<CalendarWidget> {
       child: SingleChildScrollView(
         child: ConstrainedBox(
           constraints: const BoxConstraints(
-            minHeight: 300, // Ensure the calendar doesn't shrink below this height
+            minHeight:
+                300, // Ensure the calendar doesn't shrink below this height
           ),
           child: TableCalendar(
             firstDay: DateTime.utc(2023, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _selectedDay,
-            calendarFormat: CalendarFormat.month, // default calendar format to month
+            calendarFormat:
+                CalendarFormat.month, // default calendar format to month
             availableCalendarFormats: const {
               CalendarFormat.month: '', // Only display the month format
             },
             headerStyle: HeaderStyle(
               titleCentered: true,
-              titleTextStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set title text color
+              titleTextStyle: TextStyle(
+                  color: DarkModeHandler
+                      .getCalendarTextColor()), // Set title text color
               leftChevronIcon: Icon(
                 Icons.chevron_left,
-                color: DarkModeHandler.getCalendarTextColor(), // Set left arrow color
+                color: DarkModeHandler
+                    .getCalendarTextColor(), // Set left arrow color
               ),
               rightChevronIcon: Icon(
                 Icons.chevron_right,
-                color: DarkModeHandler.getCalendarTextColor(), // Set right arrow color
+                color: DarkModeHandler
+                    .getCalendarTextColor(), // Set right arrow color
               ),
             ),
             calendarStyle: CalendarStyle(
               outsideDaysVisible: false, // Hide days outside the month
               todayDecoration: const BoxDecoration(
-                color: Color(0xFF0054FF), // Highlight color for the current date
+                color:
+                    Color(0xFF0054FF), // Highlight color for the current date
                 shape: BoxShape.circle,
               ),
-              defaultTextStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set default text color
-              weekendTextStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set weekend text color
-              selectedTextStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set selected text color
-              todayTextStyle: TextStyle(color: Colors.white), // Set today text color
+              defaultTextStyle: TextStyle(
+                  color: DarkModeHandler
+                      .getCalendarTextColor()), // Set default text color
+              weekendTextStyle: TextStyle(
+                  color: DarkModeHandler
+                      .getCalendarTextColor()), // Set weekend text color
+              selectedTextStyle: TextStyle(
+                  color: DarkModeHandler
+                      .getCalendarTextColor()), // Set selected text color
+              todayTextStyle:
+                  TextStyle(color: Colors.white), // Set today text color
             ),
             daysOfWeekStyle: DaysOfWeekStyle(
-              weekdayStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set weekday text color
-              weekendStyle: TextStyle(color: DarkModeHandler.getCalendarTextColor()), // Set weekend text color
+              weekdayStyle: TextStyle(
+                  color: DarkModeHandler
+                      .getCalendarTextColor()), // Set weekday text color
+              weekendStyle: TextStyle(
+                  color: DarkModeHandler
+                      .getCalendarTextColor()), // Set weekend text color
             ),
             onDaySelected: _onDaySelected,
-            rowHeight: 36, // Adjust the row height to reduce the gap between days
+            rowHeight:
+                36, // Adjust the row height to reduce the gap between days
           ),
         ),
       ),

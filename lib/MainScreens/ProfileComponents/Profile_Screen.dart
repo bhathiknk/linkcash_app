@@ -14,7 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'settings_page.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -55,11 +55,12 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
   /// Check connectivity
   Future<void> _checkInitialConnectivity() async {
     var initialConnectivityResults =
-    await _connectivityService.checkInitialConnectivity();
+        await _connectivityService.checkInitialConnectivity();
     setState(() {
-      _initialConnectivityResult = initialConnectivityResults.contains(ConnectivityResult.none)
-          ? ConnectivityResult.none
-          : ConnectivityResult.wifi;
+      _initialConnectivityResult =
+          initialConnectivityResults.contains(ConnectivityResult.none)
+              ? ConnectivityResult.none
+              : ConnectivityResult.wifi;
       _isInitialCheckComplete = true;
     });
   }
@@ -78,7 +79,8 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
 
   /// Fetch the Stripe account ID for the logged-in user
   Future<void> _fetchStripeAccountId() async {
-    final String apiUrl = "http://10.0.2.2:8080/api/users/$userId/stripe-account";
+    final String apiUrl =
+        "http://10.0.2.2:8080/api/users/$userId/stripe-account";
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -341,7 +343,9 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    isDarkMode ? Icons.nightlight_round : Icons.wb_sunny_rounded,
+                    isDarkMode
+                        ? Icons.nightlight_round
+                        : Icons.wb_sunny_rounded,
                     size: 25,
                     color: Colors.yellow,
                   ),

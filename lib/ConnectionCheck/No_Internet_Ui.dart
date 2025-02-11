@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../WidgetsCom/dark_mode_handler.dart'; // Make sure this import points correctly to your DarkModeHandler
 
 class NoInternetUI extends StatelessWidget {
+  const NoInternetUI({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Container(
