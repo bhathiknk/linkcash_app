@@ -26,18 +26,17 @@ class GroupPaymentHistoryItem {
   });
 
   factory GroupPaymentHistoryItem.fromJson(Map<String, dynamic> json) {
-    List<GroupMemberHistoryItem> memberList = [];
-    if (json['members'] != null) {
-      memberList = (json['members'] as List)
-          .map((m) => GroupMemberHistoryItem.fromJson(m))
-          .toList();
-    }
+    final memberData = json['members'] as List<dynamic>? ?? [];
+    final memberList = memberData
+        .map((m) => GroupMemberHistoryItem.fromJson(m as Map<String, dynamic>))
+        .toList();
+
     return GroupPaymentHistoryItem(
-      groupPaymentId: json['groupPaymentId'],
-      title: json['title'],
+      groupPaymentId: json['groupPaymentId'] as int,
+      title: json['title'] ?? '',
       description: json['description'] ?? '',
       totalAmount: (json['totalAmount'] as num).toDouble(),
-      completed: json['completed'],
+      completed: json['completed'] as bool,
       createdAt: DateTime.parse(json['createdAt']),
       paymentUrl: json['paymentUrl'] ?? '',
       members: memberList,
@@ -81,13 +80,32 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   bool _isLoading = true;
-  List<GroupPaymentHistoryItem> _historyItems = [];
+  List<GroupPaymentHistoryItem> _allHistoryItems = [];
+  List<GroupPaymentHistoryItem> _filteredItems = [];
 
   late TabController _tabController;
+
+  // Date filtering
+  late int _selectedYear;
+  late int _selectedMonth;
+
+  // Year range & month list
+  final List<int> _yearList = [];
+  final List<int> _monthList = List<int>.generate(12, (index) => index + 1);
 
   @override
   void initState() {
     super.initState();
+
+    final now = DateTime.now();
+    // Build a year list from 2022.. now.year+1
+    for (int y = 2022; y <= now.year + 1; y++) {
+      _yearList.add(y);
+    }
+    // Default to the current year and month
+    _selectedYear = now.year;
+    _selectedMonth = now.month;
+
     _tabController = TabController(length: 2, vsync: this);
     _fetchGroupPaymentHistory();
   }
@@ -98,11 +116,10 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     super.dispose();
   }
 
-  /// Fetch all group payments for the logged-in user
+  /// Fetch group payment history from backend
   Future<void> _fetchGroupPaymentHistory() async {
     try {
-      // 1) Read the user ID from secure storage
-      String? userId = await _secureStorage.read(key: 'User_ID');
+      final userId = await _secureStorage.read(key: 'User_ID');
       if (userId == null) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -111,17 +128,23 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
         return;
       }
 
-      // 2) Make GET request to the new endpoint
-      final String apiUrl = "http://10.0.2.2:8080/api/group-payments/history/$userId";
+      final apiUrl = "http://10.0.2.2:8080/api/group-payments/history/$userId";
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        final items = data.map((item) => GroupPaymentHistoryItem.fromJson(item)).toList();
+        final data = json.decode(response.body) as List<dynamic>;
+        final items =
+        data.map((item) => GroupPaymentHistoryItem.fromJson(item)).toList();
+
+        // Sort descending by createdAt
+        items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
         setState(() {
-          _historyItems = items.cast<GroupPaymentHistoryItem>();
+          _allHistoryItems = items.cast<GroupPaymentHistoryItem>();
           _isLoading = false;
         });
+
+        _applyDateFilter();
       } else {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -136,10 +159,20 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     }
   }
 
+  /// Filter items based on _selectedYear and _selectedMonth
+  void _applyDateFilter() {
+    setState(() {
+      _filteredItems = _allHistoryItems.where((item) {
+        return item.createdAt.year == _selectedYear &&
+            item.createdAt.month == _selectedMonth;
+      }).toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final unpaidItems = _historyItems.where((h) => !h.completed).toList();
-    final paidItems   = _historyItems.where((h) =>  h.completed).toList();
+    final unpaidItems = _filteredItems.where((h) => !h.completed).toList();
+    final paidItems   = _filteredItems.where((h) =>  h.completed).toList();
 
     return DefaultTabController(
       length: 2,
@@ -147,10 +180,9 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
         backgroundColor: const Color(0xFFE3F2FD),
         appBar: AppBar(
           backgroundColor: Colors.white,
-          title: const Text(
-            "Group Payment History",
-            style: TextStyle(color: Colors.black),
-          ),
+          elevation: 0,            // Remove shadow if you want
+          toolbarHeight: 48,       // Make the app bar smaller
+          // No title here
           bottom: TabBar(
             controller: _tabController,
             labelColor: Colors.blueAccent,
@@ -164,16 +196,109 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : TabBarView(
-          controller: _tabController,
+            : Column(
           children: [
-            // Unpaid tab
-            _buildTabContent(unpaidItems, isPaidTab: false),
-            // Paid tab
-            _buildTabContent(paidItems, isPaidTab: true),
+            // The date filter row
+            _buildDateSelectorRow(),
+            // Tab content
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildTabContent(unpaidItems, isPaidTab: false),
+                  _buildTabContent(paidItems, isPaidTab: true),
+                ],
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDateSelectorRow() {
+    return Container(
+      color: const Color(0xFFE3F2FD),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Row(
+        children: [
+          // Year dropdown
+          Expanded(
+            child: _buildDropdown<int>(
+              label: "Year",
+              items: _yearList,
+              value: _selectedYear,
+              onChanged: (val) {
+                setState(() {
+                  _selectedYear = val!;
+                });
+                _applyDateFilter();
+              },
+              display: (val) => val.toString(),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Month dropdown
+          Expanded(
+            child: _buildDropdown<int>(
+              label: "Month",
+              items: _monthList,
+              value: _selectedMonth,
+              onChanged: (val) {
+                setState(() {
+                  _selectedMonth = val!;
+                });
+                _applyDateFilter();
+              },
+              display: (val) {
+                final monthNames = [
+                  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+                ];
+                return monthNames[val - 1];
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// A smaller, simpler dropdown
+  Widget _buildDropdown<T>({
+    required String label,
+    required List<T> items,
+    required T value,
+    required Function(T?) onChanged,
+    required String Function(T) display,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // label (optional: you can remove or style differently)
+        Text(label,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DropdownButton<T>(
+            isExpanded: true,
+            underline: const SizedBox(),
+            value: value,
+            onChanged: (val) => onChanged(val),
+            items: items.map((e) {
+              return DropdownMenuItem<T>(
+                value: e,
+                child: Text(display(e)),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
     );
   }
 
@@ -194,7 +319,6 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     );
   }
 
-  /// Build a stylized container for each group payment
   Widget _buildHistoryCard(GroupPaymentHistoryItem item) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -225,7 +349,6 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                // If completed, show green check, else show red cancel
                 item.completed
                     ? const Icon(Icons.check_circle, color: Colors.green)
                     : const Icon(Icons.cancel, color: Colors.red),
@@ -258,7 +381,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
             _buildLinkSection(item.paymentUrl),
             const SizedBox(height: 8),
 
-            // Enhanced highlight for members
+            // highlight for members
             _buildMembersSection(item.members),
           ],
         ),
@@ -266,7 +389,28 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     );
   }
 
-  /// Build a row for each member's assigned amount + paid status
+  Widget _buildLinkSection(String paymentUrl) {
+    if (paymentUrl.isEmpty) {
+      return const Text(
+        "No Link Available",
+        style: TextStyle(fontSize: 14, color: Colors.grey),
+      );
+    }
+    return InkWell(
+      onTap: () {
+        // open link in browser, etc.
+      },
+      child: Text(
+        paymentUrl,
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.blue,
+          decoration: TextDecoration.underline,
+        ),
+      ),
+    );
+  }
+
   Widget _buildMemberRow(GroupMemberHistoryItem member) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -292,12 +436,11 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     );
   }
 
-  /// A container with a subtle background to highlight the members list
   Widget _buildMembersSection(List<GroupMemberHistoryItem> members) {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF4FF), // Light blue background
+        color: const Color(0xFFEAF4FF),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -313,29 +456,6 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
           else
             ...members.map((m) => _buildMemberRow(m)).toList(),
         ],
-      ),
-    );
-  }
-
-  /// Build a clickable link or "No Link Available" text
-  Widget _buildLinkSection(String paymentUrl) {
-    if (paymentUrl.isEmpty) {
-      return const Text(
-        "No Link Available",
-        style: TextStyle(fontSize: 14, color: Colors.grey),
-      );
-    }
-    return InkWell(
-      onTap: () {
-        // Optionally open link in a browser, or copy to clipboard, etc.
-      },
-      child: Text(
-        paymentUrl,
-        style: const TextStyle(
-          fontSize: 14,
-          color: Colors.blue,
-          decoration: TextDecoration.underline,
-        ),
       ),
     );
   }
