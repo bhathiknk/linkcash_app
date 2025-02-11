@@ -7,10 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:linkcash_app/MainScreens/Pay_Quick_Page.dart';
 import 'package:pie_chart/pie_chart.dart'; // For the pie chart
-
 import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../ConnectionCheck/connectivity_service.dart';
-
 import '../LogScreen/Asgardio_Login.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/calendar_widget.dart';
@@ -429,7 +427,7 @@ class _MyHomePageState extends State<MyHomePage> {
             right: screenWidth * 0.02,
             child: Padding(
               padding: const EdgeInsets.only(bottom: 20),
-              child: _buildMonzoCard(),
+              child: _buildBalanceCard(),
             ),
           ),
         ],
@@ -437,7 +435,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildMonzoCard() {
+  Widget _buildBalanceCard() {
     final titleColor = DarkModeHandler.getMainBalanceContainerTextColor();
 
     return Card(
@@ -463,7 +461,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 const Icon(Icons.account_balance_outlined, color: Colors.white),
                 const SizedBox(width: 5),
                 Text(
-                  _userId == "Not Available" ? "User ID: N/A" : "User_ID: $_userId",
+                  _userId == "Not Available" ? "User ID: N/A" : "User-ID: $_userId",
                   style: TextStyle(
                     color: titleColor,
                     fontSize: 16,
@@ -580,7 +578,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     Text(
                       "£${_transactionSummary!.totalOneTime.toStringAsFixed(2)}",
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF148E00),
                       ),
@@ -605,7 +603,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     Text(
                       "£${_transactionSummary!.totalRegular.toStringAsFixed(2)}",
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color:Color(0xFF060DF3),
                       ),
@@ -619,7 +617,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
         const SizedBox(height: 20),
         Text(
-          "Overall Summary (Pie Chart)",
+          "Overall Summary Chart",
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
