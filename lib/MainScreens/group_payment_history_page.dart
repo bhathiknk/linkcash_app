@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // For Clipboard
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -129,13 +130,15 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
         return;
       }
 
-      final apiUrl = "http://10.0.2.2:8080/api/group-payments/history/$userId";
+      final apiUrl =
+          "http://10.0.2.2:8080/api/group-payments/history/$userId";
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as List<dynamic>;
-        final items =
-            data.map((item) => GroupPaymentHistoryItem.fromJson(item)).toList();
+        final items = data
+            .map((item) => GroupPaymentHistoryItem.fromJson(item))
+            .toList();
 
         // Sort descending by createdAt
         items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -199,21 +202,21 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : Column(
+          children: [
+            // The date filter row
+            _buildDateSelectorRow(),
+            // Tab content
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
                 children: [
-                  // The date filter row
-                  _buildDateSelectorRow(),
-                  // Tab content
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _buildTabContent(unpaidItems, isPaidTab: false),
-                        _buildTabContent(paidItems, isPaidTab: true),
-                      ],
-                    ),
-                  ),
+                  _buildTabContent(unpaidItems, isPaidTab: false),
+                  _buildTabContent(paidItems, isPaidTab: true),
                 ],
               ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -287,7 +290,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // label (optional: you can remove or style differently)
+        // Label text
         Text(label,
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
         const SizedBox(height: 4),
@@ -332,70 +335,84 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     );
   }
 
+  /// Updated _buildHistoryCard with a professional, clean UI.
   Widget _buildHistoryCard(GroupPaymentHistoryItem item) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.white,
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      elevation: 0,
+      color: Colors.white,
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title + icon
+            // Header: Title and status icon
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Flexible(
+                Expanded(
                   child: Text(
                     item.title,
                     style: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.bold),
-                    overflow: TextOverflow.ellipsis,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
                 ),
-                item.completed
-                    ? const Icon(Icons.check_circle, color: Colors.green)
-                    : const Icon(Icons.cancel, color: Colors.red),
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: item.completed
+                        ? Colors.green.shade100
+                        : Colors.red.shade100,
+                  ),
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    item.completed ? Icons.check_circle : Icons.pending,
+                    color: item.completed ? Colors.green : Colors.red,
+                    size: 20,
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 6),
-
-            // Description
+            const SizedBox(height: 8),
+            // Description (if available)
             if (item.description.isNotEmpty) ...[
               Text(
                 item.description,
-                style: const TextStyle(fontSize: 14, color: Colors.black87),
+                style:
+                const TextStyle(fontSize: 14, color: Colors.black54),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
             ],
-
-            // Amount + Created
-            Text(
-              "Amount: £${item.totalAmount.toStringAsFixed(2)}",
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            // Amount and Created Date Row
+            Row(
+              children: [
+                const SizedBox(width: 4),
+                Text(
+                  "£${item.totalAmount.toStringAsFixed(2)}",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const Spacer(),
+                const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(
+                  "${item.createdAt.day}/${item.createdAt.month}/${item.createdAt.year}",
+                  style:
+                  const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              "Created: ${item.createdAt.toLocal()}",
-              style: const TextStyle(fontSize: 14, color: Colors.black54),
-            ),
-            const SizedBox(height: 6),
-
-            // Payment link
+            const Divider(height: 20, thickness: 1),
+            // Payment Link Section
             _buildLinkSection(item.paymentUrl),
-            const SizedBox(height: 8),
-
-            // highlight for members
+            const SizedBox(height: 12),
+            // Members Section
             _buildMembersSection(item.members),
           ],
         ),
@@ -403,46 +420,83 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     );
   }
 
+  /// Modified _buildLinkSection that shows half of the link with a copy icon.
   Widget _buildLinkSection(String paymentUrl) {
     if (paymentUrl.isEmpty) {
       return const Text(
-        "No Link Available",
+        "No Payment Link Available",
         style: TextStyle(fontSize: 14, color: Colors.grey),
       );
     }
-    return InkWell(
-      onTap: () {
-        // open link in browser, etc.
-      },
-      child: Text(
-        paymentUrl,
-        style: const TextStyle(
-          fontSize: 14,
-          color: Colors.blue,
-          decoration: TextDecoration.underline,
+    // Show only the first half of the link followed by ellipsis.
+    final int halfLength = paymentUrl.length ~/ 2;
+    final String truncatedUrl = paymentUrl.substring(0, halfLength) + '...';
+    return Row(
+      children: [
+        const Icon(Icons.link, color: Colors.blueAccent, size: 16),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            truncatedUrl,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.blueAccent,
+              decoration: TextDecoration.underline,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-      ),
+        IconButton(
+          icon: const Icon(Icons.copy, color: Colors.blueAccent, size: 18),
+          onPressed: () {
+            Clipboard.setData(ClipboardData(text: paymentUrl));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Link copied to clipboard")),
+            );
+          },
+        )
+      ],
     );
   }
 
   Widget _buildMemberRow(GroupMemberHistoryItem member) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Flexible(
+          Expanded(
             child: Text(
-              "${member.memberName} - £${member.assignedAmount.toStringAsFixed(2)}",
-              style: const TextStyle(fontSize: 14),
-              overflow: TextOverflow.ellipsis,
+              member.memberName,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           Text(
-            member.paid ? "Paid" : "Pending",
-            style: TextStyle(
-              color: member.paid ? Colors.green : Colors.red,
-              fontWeight: FontWeight.bold,
+            "£${member.assignedAmount.toStringAsFixed(2)}",
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding:
+            const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color:
+              member.paid ? Colors.green.shade100 : Colors.red.shade100,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              member.paid ? "Paid" : "Pending",
+              style: TextStyle(
+                fontSize: 12,
+                color: member.paid ? Colors.green : Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -452,23 +506,30 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
 
   Widget _buildMembersSection(List<GroupMemberHistoryItem> members) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF4FF),
-        borderRadius: BorderRadius.circular(8),
+        color:  Color(0xFFE3F2FD),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             "Members",
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           if (members.isEmpty)
-            const Text("No members found", style: TextStyle(fontSize: 14))
+            const Text(
+              "No members found",
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            )
           else
-            ...members.map((m) => _buildMemberRow(m)),
+            ...members.map((m) => _buildMemberRow(m)).toList(),
         ],
       ),
     );
