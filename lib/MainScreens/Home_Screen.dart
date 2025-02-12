@@ -4,7 +4,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For secu
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:linkcash_app/MainScreens/payout_history_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pie_chart/pie_chart.dart'; // For the pie chart
@@ -17,10 +16,10 @@ import '../WidgetsCom/calendar_widget.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
 import 'Pay_Quick_Page.dart';
 import 'Group_Payment_Page.dart';
+import 'payout_history_page.dart'; // Where your PayoutHistoryPage is defined
 
 // ==================== DATA CLASSES (DTOs) ====================
 
-// Monthly Summary DTO
 class TransactionMonthlySummaryDTO {
   final String month;       // e.g. "2023-09"
   final double oneTimeTotal;
@@ -39,16 +38,15 @@ class TransactionMonthlySummaryDTO {
       month: json['month'],
       oneTimeTotal: (json['oneTimeTotal'] as num).toDouble(),
       regularTotal: (json['regularTotal'] as num).toDouble(),
-      groupTotal: (json['groupTotal'] as num).toDouble(), // parse from JSON
+      groupTotal: (json['groupTotal'] as num).toDouble(),
     );
   }
 }
 
-// Summary Response DTO
 class TransactionSummaryResponse {
   final double totalOneTime;
   final double totalRegular;
-  final double totalGroup; // NEW
+  final double totalGroup;
   final List<TransactionMonthlySummaryDTO> monthlySummaries;
 
   TransactionSummaryResponse({
@@ -94,13 +92,17 @@ class _MyHomePageState extends State<MyHomePage> {
   // Basic user info
   String _userId = "Loading...";
   String _pendingBalance = "Loading...";
-  String _givenName = "User"; // Default value for givenName
+  String _givenName = "User"; // Default for givenName
+
+  // The last payout amount we display in the card (top-right).
+  // We start with "0.00" and update after fetching real data.
+  String _lastPayout = "0.00";
 
   // Transaction summary
   TransactionSummaryResponse? _transactionSummary;
   bool _isSummaryLoading = true;
 
-  // ==================== Month/Year Filtering Fields ====================
+  // Month/Year filters
   final List<int> _yearList = [];
   final List<int> _monthList = List<int>.generate(12, (i) => i + 1);
   late int _selectedYear;
@@ -110,8 +112,6 @@ class _MyHomePageState extends State<MyHomePage> {
   double _filteredOneTime = 0.0;
   double _filteredRegular = 0.0;
   double _filteredGroup = 0.0;
-
-  // ==================== INIT & DISPOSE ====================
 
   @override
   void initState() {
@@ -126,7 +126,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _initYearList() {
     final now = DateTime.now();
-    // Build a year list from 2022 up to next year
     for (int year = 2022; year <= now.year + 1; year++) {
       _yearList.add(year);
     }
@@ -139,8 +138,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _checkInitialConnectivity() async {
-    var connectivityResults =
-    await _connectivityService.checkInitialConnectivity();
+    var connectivityResults = await _connectivityService.checkInitialConnectivity();
     setState(() {
       _initialConnectivityResult = connectivityResults.contains(ConnectivityResult.none)
           ? ConnectivityResult.none
@@ -150,7 +148,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _loadBalanceVisibility() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
       _isBalanceVisible = prefs.getBool('isBalanceVisible') ?? true;
     });
@@ -162,23 +160,24 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       final userId = await _secureStorage.read(key: 'User_ID');
       if (userId != null) {
-        setState(() {
-          _userId = userId;
-        });
+        setState(() => _userId = userId);
+
+        // 1) Get the balance
         _fetchPendingBalance(userId);
+        // 2) Get transaction summary
         _fetchTransactionSummary(userId);
+        // 3) Get last payout amount
+        _fetchLastPayout(userId);
+
       } else {
-        setState(() {
-          _userId = "Not Available";
-        });
+        setState(() => _userId = "Not Available");
       }
     } catch (e) {
-      setState(() {
-        _userId = "Error";
-      });
+      setState(() => _userId = "Error");
     }
   }
 
+  /// Fetch the "pending balance" from your /api/stripe/balance endpoint
   Future<void> _fetchPendingBalance(String userId) async {
     final String apiUrl = "http://10.0.2.2:8080/api/stripe/balance/$userId";
     try {
@@ -191,14 +190,58 @@ class _MyHomePageState extends State<MyHomePage> {
           _pendingBalance = "£$formattedBalance";
         });
       } else {
-        setState(() {
-          _pendingBalance = "Error";
-        });
+        setState(() => _pendingBalance = "Error");
       }
     } catch (e) {
-      setState(() {
-        _pendingBalance = "Error";
-      });
+      setState(() => _pendingBalance = "Error");
+    }
+  }
+
+  /// Fetch the user's last payout from /api/stripe/payouts/{userId}
+  /// Then set _lastPayout to the newest payout in pounds.
+  Future<void> _fetchLastPayout(String userId) async {
+    try {
+      final url = 'http://10.0.2.2:8080/api/stripe/payouts/$userId';
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // This might be a PayoutHistoryResponse with "payouts" array
+        final payouts = data['payouts'] as List<dynamic>?;
+        // if the structure is different, adjust accordingly
+
+        if (payouts == null || payouts.isEmpty) {
+          setState(() => _lastPayout = "0.00");
+          return;
+        }
+
+        // Sort them by arrivalDate descending
+        payouts.sort((a, b) {
+          final aDate = a['arrivalDate'] ?? 0;
+          final bDate = b['arrivalDate'] ?? 0;
+          // bDate - aDate => descending
+          return bDate.compareTo(aDate);
+        });
+
+        // The first item is the most recent
+        final lastItem = payouts.first;
+        final rawAmount = lastItem['amount']; // pence
+        double doubleAmount = 0;
+        if (rawAmount is int) {
+          doubleAmount = rawAmount / 100.0;
+        } else if (rawAmount is String) {
+          doubleAmount = double.parse(rawAmount) / 100.0;
+        }
+
+        setState(() {
+          _lastPayout = doubleAmount.toStringAsFixed(2);
+        });
+      } else {
+        debugPrint("Failed to fetch last payout: ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("Error fetching last payout: $e");
     }
   }
 
@@ -206,19 +249,16 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       final storedGivenName = await _secureStorage.read(key: 'Given_Name');
       if (storedGivenName != null) {
-        setState(() {
-          _givenName = storedGivenName;
-        });
+        setState(() => _givenName = storedGivenName);
       }
     } catch (e) {
       debugPrint("Error fetching givenName: $e");
     }
   }
 
-  /// Fetch the full summary from backend, then apply the local filter.
+  /// Fetch transaction summary from your /api/transactions/summary/user/{userId}
   Future<void> _fetchTransactionSummary(String userId) async {
-    final String apiUrl =
-        "http://10.0.2.2:8080/api/transactions/summary/user/$userId";
+    final String apiUrl = "http://10.0.2.2:8080/api/transactions/summary/user/$userId";
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -227,34 +267,25 @@ class _MyHomePageState extends State<MyHomePage> {
           _transactionSummary = TransactionSummaryResponse.fromJson(summaryData);
           _isSummaryLoading = false;
         });
-        // Apply filter for the default selected month/year
         _applyMonthYearFilter();
       } else {
         debugPrint("Failed to fetch summary: ${response.body}");
-        setState(() {
-          _isSummaryLoading = false;
-        });
+        setState(() => _isSummaryLoading = false);
       }
     } catch (e) {
       debugPrint("Error fetching summary: $e");
-      setState(() {
-        _isSummaryLoading = false;
-      });
+      setState(() => _isSummaryLoading = false);
     }
   }
 
   // ==================== MONTH/YEAR FILTER LOGIC ====================
 
-  /// Filters the monthly data for _selectedYear & _selectedMonth,
-  /// storing results in _filteredOneTime, _filteredRegular, _filteredGroup.
   void _applyMonthYearFilter() {
     if (_transactionSummary == null) return;
 
-    // Format e.g. "2023-09"
     final selectedKey =
         "${_selectedYear.toString().padLeft(4, '0')}-${_selectedMonth.toString().padLeft(2, '0')}";
 
-    // Find the matching monthly item or default to zeros
     final monthlyList = _transactionSummary!.monthlySummaries;
     final match = monthlyList.firstWhere(
           (m) => m.month == selectedKey,
@@ -273,22 +304,20 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  // ==================== MISC  ====================
+  // ==================== MISC ====================
 
   Future<void> _saveBalanceVisibility(bool isVisible) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isBalanceVisible', isVisible);
   }
 
   void _toggleBalanceVisibility() {
-    setState(() {
-      _isBalanceVisible = !_isBalanceVisible;
-    });
+    setState(() => _isBalanceVisible = !_isBalanceVisible);
     _saveBalanceVisibility(_isBalanceVisible);
   }
 
   Future<void> _logout(BuildContext context) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     Navigator.pushAndRemoveUntil(
       context,
@@ -329,7 +358,6 @@ class _MyHomePageState extends State<MyHomePage> {
               return Stack(
                 children: [
                   _buildHomePageContent(context),
-                  // Circle button pinned to bottom-right corner
                   Positioned(
                     bottom: 20,
                     right: 20,
@@ -350,7 +378,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildTodayCircleButton() {
     final now = DateTime.now();
-    final dayString = now.day.toString(); // e.g. 2, 15, 30
+    final dayString = now.day.toString();
 
     return InkWell(
       onTap: _showCalendarPopup,
@@ -401,15 +429,14 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  // Show an attractive calendar popup
+  // Show a calendar popup
   void _showCalendarPopup() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0), // Rounded corners
-          ),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
           elevation: 10,
           backgroundColor: Colors.white,
           child: Container(
@@ -498,6 +525,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
+          // The top bar with user name & logout
           Padding(
             padding: const EdgeInsets.only(top: 1),
             child: TopBarFb4(
@@ -507,6 +535,7 @@ class _MyHomePageState extends State<MyHomePage> {
               onTapLogout: () => _logout(context),
             ),
           ),
+          // The balance card (with last payout in top-right)
           Positioned(
             top: 60,
             left: screenWidth * 0.02,
@@ -521,91 +550,121 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  /// Shows "Current Balance" and top-right "Last Payout"
   Widget _buildBalanceCard() {
     final titleColor = DarkModeHandler.getMainBalanceContainerTextColor();
 
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15.0),
+      ),
       color: DarkModeHandler.getMainBalanceContainer(),
-      child: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+      child: SizedBox(
+        child: Stack(
           children: [
-            Text(
-              'LinkCash',
-              style: TextStyle(
-                color: titleColor,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
+            // Main content
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'LinkCash',
+                    style: TextStyle(
+                      color: titleColor,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(Icons.account_balance_outlined,
+                          color: Colors.white),
+                      const SizedBox(width: 5),
+                      Text(
+                        _userId == "Not Available"
+                            ? "User ID: N/A"
+                            : "User-ID: $_userId",
+                        style: TextStyle(
+                          color: titleColor,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Show "Current Balance"
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Current Balance',
+                        style: TextStyle(
+                          color: titleColor,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          // Pending balance
+                          Text(
+                            _pendingBalance,
+                            style: TextStyle(
+                              color: titleColor,
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          // Payout icon -> PayoutHistoryPage
+                          IconButton(
+                            icon: const Icon(Icons.receipt_long, color: Colors.white),
+                            onPressed: () {
+                              if (_userId != "Not Available" && _userId != "Error") {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PayoutHistoryPage(userId: _userId),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Invalid or missing user ID."),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                const Icon(Icons.account_balance_outlined, color: Colors.white),
-                const SizedBox(width: 5),
-                Text(
-                  _userId == "Not Available"
-                      ? "User ID: N/A"
-                      : "User-ID: $_userId",
+            // The "Last Payout" label in the top-right corner
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  "Last Payout: £$_lastPayout", // updated from _fetchLastPayout
                   style: TextStyle(
                     color: titleColor,
-                    fontSize: 16,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Row with balance & payout icon
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Balance',
-                  style: TextStyle(
-                    color: titleColor,
-                    fontSize: 16,
-                  ),
-                ),
-                Row(
-                  children: [
-                    // Pending balance
-                    Text(
-                      _pendingBalance,
-                      style: TextStyle(
-                        color: titleColor,
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    // Payout icon
-                    IconButton(
-                      icon: const Icon(Icons.receipt_long, color: Colors.white),
-                      onPressed: () {
-                        // Navigate to the new PayoutHistoryPage
-                        if (_userId != "Not Available" && _userId != "Error") {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PayoutHistoryPage(userId: _userId),
-                            ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Invalid or missing user ID."),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            )
           ],
         ),
       ),
@@ -649,7 +708,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   MaterialPageRoute(builder: (context) => const GroupPaymentPage()),
                 );
               } else if (title == "Add Event") {
-                // Add navigation if needed.
+                // Add navigation if needed
               }
             },
             child: Icon(
@@ -683,9 +742,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  /// Renders the entire transaction summary UI, including
-  /// the row of (Transaction Summary + Month/Year dropdowns),
-  /// the totals card, pie chart, and optional monthly list.
   Widget _buildTransactionSummaryContent() {
     if (_isSummaryLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -712,7 +768,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title + Dropdowns in the same row
+        // Title + dropdowns
         Row(
           children: [
             Text(
@@ -724,20 +780,18 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             const Spacer(),
-            // YEAR Dropdown
+            // Year dropdown
             _buildDropdown<int>(
               value: _selectedYear,
               items: _yearList,
               display: (val) => val.toString(),
               onChanged: (val) {
-                setState(() {
-                  _selectedYear = val!;
-                });
+                setState(() => _selectedYear = val!);
                 _applyMonthYearFilter();
               },
             ),
             const SizedBox(width: 5),
-            // MONTH Dropdown
+            // Month dropdown
             _buildDropdown<int>(
               value: _selectedMonth,
               items: _monthList,
@@ -749,16 +803,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 return monthNames[val - 1];
               },
               onChanged: (val) {
-                setState(() {
-                  _selectedMonth = val!;
-                });
+                setState(() => _selectedMonth = val!);
                 _applyMonthYearFilter();
               },
             ),
           ],
         ),
 
-        // Overall Totals Card - uses *filtered* sums now
+        // Totals card
         Card(
           color: const Color(0xFFE3F2FD),
           elevation: 0,
@@ -789,7 +841,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color:Color(0xFF060DF3),
+                        color: Color(0xFF060DF3),
                       ),
                     ),
                   ],
@@ -862,12 +914,12 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         const SizedBox(height: 10),
 
-        // Pie Chart (filtered data)
+        // Pie Chart
         SizedBox(
           height: 200,
           child: PieChart(
             dataMap: dataMap,
-            colorList:  [
+            colorList: const [
               Color(0xFFB4FFA7), // One-Time
               Color(0xFF8FBBFD), // Regular
               Color(0xFFF3D782), // Group
@@ -888,7 +940,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  /// A basic dropdown builder for year/month.
+  /// Generic dropdown
   Widget _buildDropdown<T>({
     required T value,
     required List<T> items,
@@ -947,7 +999,6 @@ class TopBarFb4 extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 16.0, top: 8.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
@@ -955,7 +1006,6 @@ class TopBarFb4 extends StatelessWidget {
                   style: const TextStyle(
                     color: Colors.grey,
                     fontSize: 14,
-                    fontWeight: FontWeight.normal,
                   ),
                 ),
                 Text(
@@ -971,7 +1021,7 @@ class TopBarFb4 extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: onTapLogout,
+            onPressed: () => onTapLogout(),
           ),
         ],
       ),
