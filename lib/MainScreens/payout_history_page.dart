@@ -2,6 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+/// The top-level response from the backend.
+class PayoutHistoryResponse {
+  final int totalAmount; // sum of all payouts in pence
+  final List<PayoutDTO> payouts;
+
+  PayoutHistoryResponse({
+    required this.totalAmount,
+    required this.payouts,
+  });
+
+  factory PayoutHistoryResponse.fromJson(Map<String, dynamic> json) {
+    // parse totalAmount
+    final rawTotal = json['totalAmount'];
+    int parsedTotal = 0;
+    if (rawTotal is int) {
+      parsedTotal = rawTotal;
+    } else if (rawTotal is String) {
+      parsedTotal = int.parse(rawTotal);
+    }
+
+    // parse payouts array
+    final payoutList = json['payouts'] as List<dynamic>;
+    final payouts = payoutList.map((item) => PayoutDTO.fromJson(item)).toList();
+
+    return PayoutHistoryResponse(
+      totalAmount: parsedTotal,
+      payouts: payouts,
+    );
+  }
+}
+
 class PayoutDTO {
   final String payoutId;
   final int amount; // In pence/cents
@@ -18,32 +49,31 @@ class PayoutDTO {
   });
 
   factory PayoutDTO.fromJson(Map<String, dynamic> json) {
-    // arrivalDate could be epoch or string
+    // Parse arrivalDate, which might be int (epoch) or string
     final rawArrival = json['arrivalDate'];
     DateTime? parsedDate;
     if (rawArrival != null) {
       if (rawArrival is int) {
-        parsedDate = DateTime.fromMillisecondsSinceEpoch(rawArrival * 1000, isUtc: true);
+        parsedDate =
+            DateTime.fromMillisecondsSinceEpoch(rawArrival * 1000, isUtc: true);
       } else if (rawArrival is String) {
-        // Try parsing as epoch int or ISO date
         final epochTry = int.tryParse(rawArrival);
         if (epochTry != null) {
-          parsedDate = DateTime.fromMillisecondsSinceEpoch(epochTry * 1000, isUtc: true);
+          parsedDate = DateTime.fromMillisecondsSinceEpoch(
+              epochTry * 1000, isUtc: true);
         } else {
           parsedDate = DateTime.tryParse(rawArrival);
         }
       }
     }
 
-    // Convert "amount" (could be string or int)
+    // Parse 'amount' (could be int or string)
     final rawAmount = json['amount'];
-    int parsedAmount;
+    int parsedAmount = 0;
     if (rawAmount is int) {
       parsedAmount = rawAmount;
     } else if (rawAmount is String) {
       parsedAmount = int.parse(rawAmount);
-    } else {
-      parsedAmount = 0;
     }
 
     return PayoutDTO(
@@ -66,7 +96,10 @@ class PayoutHistoryPage extends StatefulWidget {
 
 class _PayoutHistoryPageState extends State<PayoutHistoryPage> {
   bool _isLoading = false;
-  List<PayoutDTO> _payouts = [];
+
+  PayoutHistoryResponse? _payoutHistory; // entire response from backend
+  List<PayoutDTO> get _payouts => _payoutHistory?.payouts ?? [];
+  int get _totalAmount => _payoutHistory?.totalAmount ?? 0;
 
   @override
   void initState() {
@@ -81,19 +114,18 @@ class _PayoutHistoryPageState extends State<PayoutHistoryPage> {
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
-        final data = json.decode(response.body) as List<dynamic>;
-        final payouts = data.map((jsonItem) => PayoutDTO.fromJson(jsonItem)).toList();
+        final data = json.decode(response.body);
+        final parsedHistory = PayoutHistoryResponse.fromJson(data);
 
-        // Sort by arrivalDate descending (latest first).
-        // If arrivalDate is null, we treat it as older.
-        payouts.sort((a, b) {
+        // Sort the payouts by arrivalDate descending
+        parsedHistory.payouts.sort((a, b) {
           final aDate = a.arrivalDate?.millisecondsSinceEpoch ?? 0;
           final bDate = b.arrivalDate?.millisecondsSinceEpoch ?? 0;
           return bDate.compareTo(aDate);
         });
 
         setState(() {
-          _payouts = payouts;
+          _payoutHistory = parsedHistory;
           _isLoading = false;
         });
       } else {
@@ -112,34 +144,93 @@ class _PayoutHistoryPageState extends State<PayoutHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final double totalPounds = _totalAmount / 100.0; // e.g. convert pence -> GBP
+
     return Scaffold(
-      // An AppBar with a little style
       appBar: AppBar(
         title: const Text("Payout History"),
         backgroundColor: Colors.white,
         elevation: 2,
       ),
-      backgroundColor: const  Color(0xFFE3F2FD), // A subtle background color
+      backgroundColor: const Color(0xFFE3F2FD),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _payouts.isEmpty
-          ? const Center(child: Text("No payouts found."))
-          : _buildContent(),
+          : _payoutHistory == null
+          ? const Center(child: Text("No payout data found."))
+          : Column(
+        children: [
+          // 1) The top "Total Payout" card:
+          _buildTotalPayoutCard(totalPounds),
+          // 2) The rest of the page content (latest payout + older)
+          Expanded(child: _buildContent()),
+        ],
+      ),
+    );
+  }
+
+  /// A gradient card showing the total payout amount in a nice style.
+  Widget _buildTotalPayoutCard(double totalPounds) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0007CC), Color(0xFF03098A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 4,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Total Payouts",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "£${totalPounds.toStringAsFixed(2)}",
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildContent() {
-    // The first item is the "most recent" payout if sorted descending.
-    final PayoutDTO latestPayout = _payouts.first;
-    final List<PayoutDTO> olderPayouts =
-    _payouts.length > 1 ? _payouts.sublist(1) : [];
+    // If no payouts in the list, show a message
+    if (_payouts.isEmpty) {
+      return const Center(child: Text("No payouts found."));
+    }
+
+    final latestPayout = _payouts.first;
+    final olderPayouts = _payouts.length > 1 ? _payouts.sublist(1) : <PayoutDTO>[];
 
     return SingleChildScrollView(
       child: Column(
         children: [
-          // A top card highlighting the last payout
           _buildLastPayoutCard(latestPayout),
-          // A title row for "All Payouts"
           Padding(
             padding: const EdgeInsets.only(top: 16.0, left: 14, right: 14),
             child: Row(
@@ -155,35 +246,31 @@ class _PayoutHistoryPageState extends State<PayoutHistoryPage> {
               ],
             ),
           ),
-          // A list of older payouts
-          if (olderPayouts.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                "No older payouts found",
-                style: TextStyle(fontSize: 15, color: Colors.grey),
-              ),
-            )
-          else
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: olderPayouts.length,
-              itemBuilder: (context, index) {
-                return _buildPayoutListTile(olderPayouts[index]);
-              },
+          olderPayouts.isEmpty
+              ? const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              "No older payouts found",
+              style: TextStyle(fontSize: 15, color: Colors.grey),
             ),
+          )
+              : ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: olderPayouts.length,
+            itemBuilder: (context, index) {
+              return _buildPayoutListTile(olderPayouts[index]);
+            },
+          ),
         ],
       ),
     );
   }
 
-  /// A special card showing the latest payout in a more prominent style
   Widget _buildLastPayoutCard(PayoutDTO payout) {
     final double convertedAmount = payout.amount / 100.0;
-    final dateStr = payout.arrivalDate != null
-        ? "${payout.arrivalDate!.toLocal()}"
-        : "N/A";
+    final dateStr =
+    payout.arrivalDate != null ? payout.arrivalDate!.toLocal().toString() : "N/A";
 
     return Container(
       width: double.infinity,
@@ -196,11 +283,11 @@ class _PayoutHistoryPageState extends State<PayoutHistoryPage> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: Colors.black26,
             blurRadius: 4,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -216,7 +303,6 @@ class _PayoutHistoryPageState extends State<PayoutHistoryPage> {
             ),
           ),
           const SizedBox(height: 12),
-          // Payout amount
           Text(
             "£${convertedAmount.toStringAsFixed(2)}",
             style: const TextStyle(
@@ -226,7 +312,6 @@ class _PayoutHistoryPageState extends State<PayoutHistoryPage> {
             ),
           ),
           const SizedBox(height: 6),
-          // Payout ID
           Text(
             "Payout ID: ${payout.payoutId}",
             style: const TextStyle(
@@ -235,7 +320,6 @@ class _PayoutHistoryPageState extends State<PayoutHistoryPage> {
             ),
           ),
           const SizedBox(height: 4),
-          // Payout status & date
           Text(
             "Status: ${payout.status}",
             style: const TextStyle(fontSize: 16, color: Colors.white70),
@@ -250,12 +334,10 @@ class _PayoutHistoryPageState extends State<PayoutHistoryPage> {
     );
   }
 
-  /// A list tile for older payouts
   Widget _buildPayoutListTile(PayoutDTO payout) {
     final double convertedAmount = payout.amount / 100.0;
-    final arrivalStr = payout.arrivalDate != null
-        ? payout.arrivalDate!.toLocal().toString()
-        : "N/A";
+    final arrivalStr =
+    payout.arrivalDate != null ? payout.arrivalDate!.toLocal().toString() : "N/A";
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
