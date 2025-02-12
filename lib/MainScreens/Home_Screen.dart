@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For secu
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:linkcash_app/MainScreens/payout_history_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pie_chart/pie_chart.dart'; // For the pie chart
@@ -557,6 +558,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
             const SizedBox(height: 10),
+            // Row with balance & payout icon
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -567,13 +569,40 @@ class _MyHomePageState extends State<MyHomePage> {
                     fontSize: 16,
                   ),
                 ),
-                Text(
-                  _pendingBalance,
-                  style: TextStyle(
-                    color: titleColor,
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: [
+                    // Pending balance
+                    Text(
+                      _pendingBalance,
+                      style: TextStyle(
+                        color: titleColor,
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // Payout icon
+                    IconButton(
+                      icon: const Icon(Icons.receipt_long, color: Colors.white),
+                      onPressed: () {
+                        // Navigate to the new PayoutHistoryPage
+                        if (_userId != "Not Available" && _userId != "Error") {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PayoutHistoryPage(userId: _userId),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Invalid or missing user ID."),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -645,7 +674,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildTransactionSummaryContainer() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -707,7 +736,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 _applyMonthYearFilter();
               },
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 5),
             // MONTH Dropdown
             _buildDropdown<int>(
               value: _selectedMonth,
@@ -728,7 +757,6 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
 
         // Overall Totals Card - uses *filtered* sums now
         Card(
@@ -745,14 +773,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 // One-Time
                 Row(
                   children: [
-                    const Icon(Icons.event_available, color: Color(0xFF148E00)),
+                    const Icon(Icons.event_available, color: Color(0xFF000000)),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
                         "One-Time Total:",
                         style: TextStyle(
                           fontSize: 16,
-                          color: Color(0xFF148E00),
+                          color: Color(0xFF000000),
                         ),
                       ),
                     ),
@@ -761,7 +789,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF148E00),
+                        color:Color(0xFF060DF3),
                       ),
                     ),
                   ],
@@ -771,14 +799,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 // Regular
                 Row(
                   children: [
-                    const Icon(Icons.credit_card, color: Color(0xFF060DF3)),
+                    const Icon(Icons.credit_card, color: Color(0xFF000000)),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
                         "Regular Total:",
                         style: TextStyle(
                           fontSize: 16,
-                          color: Color(0xFF060DF3),
+                          color: Color(0xFF000000),
                         ),
                       ),
                     ),
@@ -797,14 +825,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 // Group
                 Row(
                   children: [
-                    const Icon(Icons.people, color: Colors.deepPurple),
+                    const Icon(Icons.people, color: Colors.black),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
                         "Group Total:",
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.deepPurple,
+                          color: Color(0xFF000000),
                         ),
                       ),
                     ),
@@ -813,7 +841,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
+                        color: Color(0xFF060DF3),
                       ),
                     ),
                   ],
@@ -823,7 +851,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
         Text(
           "Overall Summary Chart",
           style: TextStyle(
@@ -839,10 +867,10 @@ class _MyHomePageState extends State<MyHomePage> {
           height: 200,
           child: PieChart(
             dataMap: dataMap,
-            colorList: const [
-              Color(0xFF80ED6B), // One-Time
-              Color(0xFF4489F8), // Regular
-              Color(0xFFD372FF), // Group
+            colorList:  [
+              Color(0xFFB4FFA7), // One-Time
+              Color(0xFF8FBBFD), // Regular
+              Color(0xFFF3D782), // Group
             ],
             chartType: ChartType.disc,
             legendOptions: const LegendOptions(
@@ -856,120 +884,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
         ),
-        const SizedBox(height: 20),
-
-        // Show a full monthly list (if desired) using the unfiltered data
-        Text(
-          "Monthly Totals (All Months)",
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: DarkModeHandler.getMainContainersTextColor(),
-          ),
-        ),
-        const SizedBox(height: 10),
-        _buildAllMonthlyList(),
       ],
-    );
-  }
-
-  /// Show the entire monthly list from _transactionSummary, unfiltered,
-  /// for reference. If you only want the single selected month, you can remove this method.
-  Widget _buildAllMonthlyList() {
-    final monthlyList = _transactionSummary!.monthlySummaries;
-    if (monthlyList.isEmpty) {
-      return const Center(child: Text("No monthly data."));
-    }
-    return SizedBox(
-      height: 140,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: monthlyList.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          final monthly = monthlyList[index];
-          return Container(
-            width: 160,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE3F2FD),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  monthly.month,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF83B6B9),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // One-Time
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.event_available,
-                        size: 14, color: Color(0xFF148E00)),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        monthly.oneTimeTotal.toStringAsFixed(2),
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Color(0xFF148E00),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                // Regular
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.credit_card,
-                        size: 14, color: Color(0xFF060DF3)),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        monthly.regularTotal.toStringAsFixed(2),
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Color(0xFF060DF3),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                // Group
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.people, size: 14, color: Colors.deepPurple),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        monthly.groupTotal.toStringAsFixed(2),
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.deepPurple,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      ),
     );
   }
 
