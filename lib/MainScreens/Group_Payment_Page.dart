@@ -375,6 +375,7 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
               keyboardType: TextInputType.text,
               onChanged: (_) => setState(() {}),
             ),
+
             const SizedBox(height: 15),
             _buildLabel("Enter Total Amount"),
             _buildTextField(

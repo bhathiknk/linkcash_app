@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../MainScreens/Create_Link_Screen.dart';
 import '../MainScreens/Link_Screen.dart';
 import '../MainScreens/Home_Screen.dart';
 import '../MainScreens/Notification_Screen.dart';
@@ -157,7 +158,7 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
         if (isVerified) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => LinkPage()),
+            MaterialPageRoute(builder: (context) => CreateLinkPage()),
           );
         } else {
           _showVerificationPopup(context); // Show the popup if not verified

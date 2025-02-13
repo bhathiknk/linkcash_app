@@ -173,7 +173,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
     return AppBar(
       backgroundColor: DarkModeHandler.getAppBarColor(),
       title: const Text(
-        "Create Link",
+        "Create Regular Link",
         style: TextStyle(fontSize: 20, color: Colors.black),
       ),
     );

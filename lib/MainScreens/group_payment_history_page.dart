@@ -439,9 +439,8 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
           child: Text(
             truncatedUrl,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 15,
               color: Colors.blueAccent,
-              decoration: TextDecoration.underline,
             ),
             overflow: TextOverflow.ellipsis,
           ),
