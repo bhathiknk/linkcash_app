@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'Pay_Quick_Page.dart'; // Contains PaymentLinkItem model and fromJson constructor
 
@@ -46,17 +47,20 @@ class PayQuickPaymentHistoryPage extends StatefulWidget {
 
 class _PayQuickPaymentHistoryPageState extends State<PayQuickPaymentHistoryPage>
     with SingleTickerProviderStateMixin {
+  // Secure storage for reading the user ID
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+
   bool _isLoading = true;
   late TabController _tabController;
 
-  List<PaymentLinkItem> _unpaidItems = [];
   List<PaymentLinkItem> _paidItems = [];
+  List<PaymentLinkItem> _unpaidItems = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    // Fetch both unpaid and paid items from your backend.
+    // Fetch both unpaid and paid items from your backend, passing userId.
     _fetchPayQuickHistory();
   }
 
@@ -66,26 +70,37 @@ class _PayQuickPaymentHistoryPageState extends State<PayQuickPaymentHistoryPage>
     super.dispose();
   }
 
-  /// Fetch data for both unpaid and paid items.
+  /// Fetch data for both unpaid and paid items, passing userId to /list.
   Future<void> _fetchPayQuickHistory() async {
     try {
-      // Call for unpaid links
-      final responseUnpaid = await http.get(Uri.parse(
-          "http://10.0.2.2:8080/api/one-time-payment-links/list?used=false"));
-      // Call for paid links
-      final responsePaid = await http.get(Uri.parse(
-          "http://10.0.2.2:8080/api/one-time-payment-links/list?used=true"));
+      // 1) Read userId from secure storage
+      final userId = await _secureStorage.read(key: 'User_ID');
+      if (userId == null) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No user ID found. Please log in.")),
+        );
+        return;
+      }
+
+      // 2) Build URIs with userId + used flags
+      final unpaidUri = Uri.parse(
+          "http://10.0.2.2:8080/api/one-time-payment-links/list?used=false&userId=$userId");
+      final paidUri = Uri.parse(
+          "http://10.0.2.2:8080/api/one-time-payment-links/list?used=true&userId=$userId");
+
+      // 3) Fetch both unpaid & paid
+      final responseUnpaid = await http.get(unpaidUri);
+      final responsePaid = await http.get(paidUri);
 
       if (responseUnpaid.statusCode == 200 && responsePaid.statusCode == 200) {
         final dataUnpaid = jsonDecode(responseUnpaid.body) as List<dynamic>;
         final dataPaid = jsonDecode(responsePaid.body) as List<dynamic>;
 
-        List<PaymentLinkItem> unpaidList = dataUnpaid
-            .map((item) => PaymentLinkItem.fromJson(item))
-            .toList();
-        List<PaymentLinkItem> paidList = dataPaid
-            .map((item) => PaymentLinkItem.fromJson(item))
-            .toList();
+        List<PaymentLinkItem> unpaidList =
+        dataUnpaid.map((item) => PaymentLinkItem.fromJson(item)).toList();
+        List<PaymentLinkItem> paidList =
+        dataPaid.map((item) => PaymentLinkItem.fromJson(item)).toList();
 
         setState(() {
           _unpaidItems = unpaidList;
@@ -100,8 +115,9 @@ class _PayQuickPaymentHistoryPageState extends State<PayQuickPaymentHistoryPage>
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error fetching history: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error fetching history: $e")),
+      );
     }
   }
 
@@ -156,8 +172,7 @@ class _PayQuickPaymentHistoryPageState extends State<PayQuickPaymentHistoryPage>
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
-        children:
-        items.map((item) => _buildHistoryCard(item, isPaidTab)).toList(),
+        children: items.map((item) => _buildHistoryCard(item, isPaidTab)).toList(),
       ),
     );
   }
@@ -231,8 +246,7 @@ class _PayQuickPaymentHistoryPageState extends State<PayQuickPaymentHistoryPage>
           // Extract the linkId from the paymentUrl.
           String linkId = _extractLinkId(item.paymentUrl);
           // Fetch full details from backend.
-          PaymentLinkFullDetails? details =
-          await _fetchFullPaymentDetails(linkId);
+          PaymentLinkFullDetails? details = await _fetchFullPaymentDetails(linkId);
           if (details != null) {
             _showFullDetailsPopup(details);
           }
@@ -252,7 +266,6 @@ class _PayQuickPaymentHistoryPageState extends State<PayQuickPaymentHistoryPage>
         style: TextStyle(fontSize: 14, color: Colors.grey),
       );
     }
-    // Show only the first half of the link followed by ellipsis.
     final int halfLength = paymentUrl.length ~/ 2;
     final String truncatedUrl = paymentUrl.substring(0, halfLength) + '...';
     return Row(
@@ -296,25 +309,26 @@ class _PayQuickPaymentHistoryPageState extends State<PayQuickPaymentHistoryPage>
   /// Fetch full payment details for a given linkId.
   Future<PaymentLinkFullDetails?> _fetchFullPaymentDetails(String linkId) async {
     try {
-      final response = await http.get(Uri.parse(
-          "http://10.0.2.2:8080/api/one-time-payment-links/details/$linkId"));
+      final response = await http.get(
+        Uri.parse("http://10.0.2.2:8080/api/one-time-payment-links/details/$linkId"),
+      );
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
         return PaymentLinkFullDetails.fromJson(jsonData);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(
-                "Failed to fetch details. Status code: ${response.statusCode}")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to fetch details. Status code: ${response.statusCode}")),
+        );
         return null;
       }
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
       return null;
     }
   }
 
-  /// Show a popup dialog with full payment details styled as a legal document.
   /// Show a popup dialog with full payment details styled as a professional legal document.
   void _showFullDetailsPopup(PaymentLinkFullDetails details) {
     showDialog(
@@ -346,10 +360,10 @@ class _PayQuickPaymentHistoryPageState extends State<PayQuickPaymentHistoryPage>
                     color: Colors.blue.shade900,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Center(
+                  child: const Center(
                     child: Text(
                       "Payment Details",
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -366,32 +380,23 @@ class _PayQuickPaymentHistoryPageState extends State<PayQuickPaymentHistoryPage>
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-
                     ),
-
                     child: SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildDocumentRow(Icons.title, "Title", details.title),
                           const Divider(color: Colors.grey, height: 16),
-                          _buildDocumentRow(
-                              Icons.description, "Description", details.description),
+                          _buildDocumentRow(Icons.description, "Description", details.description),
                           const Divider(color: Colors.grey, height: 16),
-                          _buildDocumentRow(Icons.money, "Amount",
-                              "£${details.amount.toStringAsFixed(2)}"),
+                          _buildDocumentRow(Icons.money, "Amount", "£${details.amount.toStringAsFixed(2)}"),
                           const Divider(color: Colors.grey, height: 16),
                           _buildDocumentRow(Icons.link, "Payment URL", details.paymentUrl),
                           const Divider(color: Colors.grey, height: 16),
-                          _buildDocumentRow(Icons.date_range, "Used At",
-                              details.usedAt.isNotEmpty ? details.usedAt : "N/A"),
+                          _buildDocumentRow(Icons.date_range, "Used At", details.usedAt.isNotEmpty ? details.usedAt : "N/A"),
                           const Divider(color: Colors.grey, height: 16),
-                          _buildDocumentRow(
-                              Icons.receipt,
-                              "Transaction ID",
-                              details.stripeTransactionId.isNotEmpty
-                                  ? details.stripeTransactionId
-                                  : "N/A"),
+                          _buildDocumentRow(Icons.receipt, "Transaction ID",
+                              details.stripeTransactionId.isNotEmpty ? details.stripeTransactionId : "N/A"),
                         ],
                       ),
                     ),
@@ -413,8 +418,7 @@ class _PayQuickPaymentHistoryPageState extends State<PayQuickPaymentHistoryPage>
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 20),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                       ),
                       icon: const Icon(Icons.print),
                       label: const Text(
@@ -424,17 +428,14 @@ class _PayQuickPaymentHistoryPageState extends State<PayQuickPaymentHistoryPage>
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
+                      onPressed: () => Navigator.of(context).pop(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey.shade300,
                         foregroundColor: Colors.black87,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 20),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                       ),
                       child: const Text(
                         "Close",
@@ -477,10 +478,7 @@ class _PayQuickPaymentHistoryPageState extends State<PayQuickPaymentHistoryPage>
               const SizedBox(height: 4),
               Text(
                 value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                ),
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
             ],
           ),
@@ -497,5 +495,4 @@ class _PayQuickPaymentHistoryPageState extends State<PayQuickPaymentHistoryPage>
       const SnackBar(content: Text("Print functionality coming soon!")),
     );
   }
-
 }
