@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'Link_View_Screen.dart';
 
 // Model class that mirrors the PaymentDetails structure
 class PaymentDetailsItem {
@@ -69,7 +70,7 @@ class _RegularPaymentHistoryPageState extends State<RegularPaymentHistoryPage>
     super.dispose();
   }
 
-  // Main function to fetch each expire type in parallel (or sequentially).
+  // Main function to fetch each expire type in parallel
   Future<void> _fetchAllExpireTypes() async {
     try {
       final userId = await _secureStorage.read(key: 'User_ID');
@@ -82,7 +83,7 @@ class _RegularPaymentHistoryPageState extends State<RegularPaymentHistoryPage>
         return;
       }
 
-      // fetch each type
+      // Fetch each type
       await Future.wait([
         _fetchExpireTypeData('Unlimited', userId),
         _fetchExpireTypeData('One Week', userId),
@@ -199,49 +200,61 @@ class _RegularPaymentHistoryPageState extends State<RegularPaymentHistoryPage>
   }
 
   Widget _buildHistoryCard(PaymentDetailsItem item) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      color: Colors.white,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(item.title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                )),
-            const SizedBox(height: 4),
-            if (item.description.isNotEmpty)
-              Text(item.description,
-                  style: const TextStyle(fontSize: 14, color: Colors.black54)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Text("Amount: ",
-                    style:
-                    TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                Text("£${item.amount.toStringAsFixed(2)}",
-                    style:
-                    const TextStyle(fontSize: 14, color: Colors.black87)),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Text("Expire After: ",
-                    style:
-                    TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                Text(item.expireAfter,
-                    style:
-                    const TextStyle(fontSize: 14, color: Colors.black87)),
-              ],
-            ),
-          ],
+    return GestureDetector(
+      onTap: () {
+        // Navigate to LinkViewPage when a card is clicked
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                LinkViewPage(paymentDetailId: item.paymentDetailId),
+          ),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        color: Colors.white,
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(item.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  )),
+              const SizedBox(height: 4),
+              if (item.description.isNotEmpty)
+                Text(item.description,
+                    style: const TextStyle(fontSize: 14, color: Colors.black54)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Text("Amount: ",
+                      style:
+                      TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  Text("£${item.amount.toStringAsFixed(2)}",
+                      style:
+                      const TextStyle(fontSize: 14, color: Colors.black87)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Text("Expire After: ",
+                      style:
+                      TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  Text(item.expireAfter,
+                      style:
+                      const TextStyle(fontSize: 14, color: Colors.black87)),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
