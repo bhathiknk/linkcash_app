@@ -70,7 +70,7 @@ class _RegularPaymentHistoryPageState extends State<RegularPaymentHistoryPage>
     super.dispose();
   }
 
-  // Main function to fetch each expire type in parallel
+  // Fetch all payment details by expire type
   Future<void> _fetchAllExpireTypes() async {
     try {
       final userId = await _secureStorage.read(key: 'User_ID');
@@ -83,7 +83,6 @@ class _RegularPaymentHistoryPageState extends State<RegularPaymentHistoryPage>
         return;
       }
 
-      // Fetch each type
       await Future.wait([
         _fetchExpireTypeData('Unlimited', userId),
         _fetchExpireTypeData('One Week', userId),
@@ -103,7 +102,6 @@ class _RegularPaymentHistoryPageState extends State<RegularPaymentHistoryPage>
     }
   }
 
-  // Generic method to fetch data for a specific expireType
   Future<void> _fetchExpireTypeData(String expireType, String userId) async {
     final encodedExpireType = Uri.encodeComponent(expireType);
     final url =
@@ -132,7 +130,6 @@ class _RegularPaymentHistoryPageState extends State<RegularPaymentHistoryPage>
         }
       });
     } else {
-      // If one call fails, we can set an error, but we can still display partial data for other tabs
       setState(() {
         _hasError = true;
         _errorMessage =
@@ -144,11 +141,20 @@ class _RegularPaymentHistoryPageState extends State<RegularPaymentHistoryPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFE3F2FD), // Light background
       appBar: AppBar(
-        title: const Text("Regular Payment History"),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        title: const Text(
+          "Regular Payment History",
+          style: TextStyle(color: Colors.black),
+        ),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
+          labelColor: Colors.blueAccent,
+          unselectedLabelColor: Colors.grey,
+          indicatorColor: Colors.blueAccent,
           tabs: const [
             Tab(text: "Unlimited"),
             Tab(text: "One Week"),
@@ -160,7 +166,12 @@ class _RegularPaymentHistoryPageState extends State<RegularPaymentHistoryPage>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _hasError
-          ? _buildErrorWidget()
+          ? Center(
+        child: Text(
+          _errorMessage,
+          style: const TextStyle(fontSize: 16, color: Colors.red),
+        ),
+      )
           : TabBarView(
         controller: _tabController,
         children: [
@@ -173,16 +184,6 @@ class _RegularPaymentHistoryPageState extends State<RegularPaymentHistoryPage>
     );
   }
 
-  Widget _buildErrorWidget() {
-    return Center(
-      child: Text(
-        _errorMessage,
-        style: const TextStyle(fontSize: 16, color: Colors.red),
-      ),
-    );
-  }
-
-  // Display a list of PaymentDetailsItem in a ListView
   Widget _buildTabContent(List<PaymentDetailsItem> items, String expireType) {
     if (items.isEmpty) {
       return Center(
@@ -190,7 +191,7 @@ class _RegularPaymentHistoryPageState extends State<RegularPaymentHistoryPage>
       );
     }
     return ListView.builder(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
@@ -200,9 +201,10 @@ class _RegularPaymentHistoryPageState extends State<RegularPaymentHistoryPage>
   }
 
   Widget _buildHistoryCard(PaymentDetailsItem item) {
+    // Tappable card to go to LinkViewPage
     return GestureDetector(
       onTap: () {
-        // Navigate to LinkViewPage when a card is clicked
+        // Navigate to LinkViewPage
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -214,43 +216,45 @@ class _RegularPaymentHistoryPageState extends State<RegularPaymentHistoryPage>
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 8),
         color: Colors.white,
-        elevation: 2,
+        elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         child: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(item.title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  )),
-              const SizedBox(height: 4),
-              if (item.description.isNotEmpty)
-                Text(item.description,
-                    style: const TextStyle(fontSize: 14, color: Colors.black54)),
+              Text(
+                item.title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
               const SizedBox(height: 8),
               Row(
                 children: [
                   const Text("Amount: ",
-                      style:
-                      TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                  Text("£${item.amount.toStringAsFixed(2)}",
-                      style:
-                      const TextStyle(fontSize: 14, color: Colors.black87)),
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 14)),
+                  Text(
+                    "£${item.amount.toStringAsFixed(2)}",
+                    style:
+                    const TextStyle(fontSize: 14, color: Colors.black87),
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
               Row(
                 children: [
                   const Text("Expire After: ",
-                      style:
-                      TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                  Text(item.expireAfter,
-                      style:
-                      const TextStyle(fontSize: 14, color: Colors.black87)),
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 14)),
+                  Text(
+                    item.expireAfter,
+                    style:
+                    const TextStyle(fontSize: 14, color: Colors.black87),
+                  ),
                 ],
               ),
             ],
