@@ -9,6 +9,7 @@ import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
 import '../WidgetsCom/gradient_button_fb4.dart';
 import 'Link_View_Screen.dart';
+import 'Regular_Payment_History_Page.dart';
 
 class CreateLinkPage extends StatefulWidget {
   const CreateLinkPage({super.key});
@@ -237,6 +238,8 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
               _buildDropdownButton(),
               const SizedBox(height: 20),
               _buildSaveLinkButton(context),
+              const SizedBox(height: 20),
+              _buildHistorPageButton(context),
             ],
           ),
         ),
@@ -284,6 +287,24 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
       child: GradientButtonFb4(
         text: 'Create Link',
         onPressed: () => _saveLink(context),
+      ),
+    );
+  }
+
+  Widget _buildHistorPageButton(BuildContext context) {
+    return Center(
+      child: GradientButtonFb4(
+        text: 'History',
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const RegularPaymentHistoryPage(),
+            ),
+          );
+        },
+        backgroundColor: Colors.white,
+        textColor: Colors.blueAccent,
       ),
     );
   }
