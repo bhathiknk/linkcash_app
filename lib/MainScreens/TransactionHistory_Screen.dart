@@ -1,218 +1,459 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For secure storage
+import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../WidgetsCom/bottom_navigation_bar.dart';
-import '../WidgetsCom/dark_mode_handler.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class TransactionHistoryPage extends StatefulWidget {
-  const TransactionHistoryPage({super.key});
+  const TransactionHistoryPage({Key? key}) : super(key: key);
 
   @override
-  State<TransactionHistoryPage> createState() => _TransactionHistoryPageState();
+  _TransactionHistoryPageState createState() => _TransactionHistoryPageState();
 }
 
 class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-  int currentIndex = 4; // Set initial index to TransactionPage
-  List<Map<String, dynamic>> transactions = [];
-  bool isLoading = true;
-  String? userId;
+  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
+
+  bool _isLoading = false;
+  String _errorMessage = '';
+
+  // Filter fields
+  DateTime? _startDate;
+  DateTime? _endDate;
+  String _transactionType = "ALL"; // "ALL", "oneTime", "regular", "group"
+  String _sortBy = "createdAtDesc"; // "createdAtAsc" or "createdAtDesc"
+
+  // Data from the server
+  double _totalSpent = 0.0;
+  int _totalCount = 0;
+  List<Map<String, dynamic>> _chartData = [];
+  List<Map<String, dynamic>> _transactions = []; // filteredTransactions
 
   @override
   void initState() {
     super.initState();
-    _loadUserIdAndFetchTransactions();
+    _fetchAnalytics();
   }
 
-  Future<void> _loadUserIdAndFetchTransactions() async {
-    try {
-      // Retrieve the UserId from secure storage
-      final storedUserId = await _secureStorage.read(key: 'User_ID');
-      if (storedUserId != null) {
-        setState(() {
-          userId = storedUserId;
-        });
-        await _fetchTransactions();
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-        // If no UserId, show an error or redirect to login
-        print("No UserId found. Redirect to login.");
-      }
-    } catch (e) {
-      print("Error loading UserId: $e");
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _fetchTransactions() async {
-    if (userId == null) return;
-
-    final String apiUrl =
-        "http://10.0.2.2:8080/api/payments/transactions/user/$userId";
-    try {
-      final response = await http.get(Uri.parse(apiUrl));
-      if (response.statusCode == 200) {
-        setState(() {
-          transactions =
-              List<Map<String, dynamic>>.from(json.decode(response.body));
-          transactions.sort((a, b) => DateTime.parse(b['createdAt'])
-              .compareTo(DateTime.parse(a['createdAt'])));
-          isLoading = false;
-        });
-      } else {
-        print("Failed to fetch transactions: ${response.body}");
-        setState(() {
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      print("Error fetching transactions: $e");
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  void _onBottomNavTap(int index) {
+  Future<void> _fetchAnalytics() async {
     setState(() {
-      currentIndex = index;
+      _isLoading = true;
+      _errorMessage = '';
     });
+
+    // Retrieve user ID from secure storage.
+    String? storedUserId = await secureStorage.read(key: 'User_ID');
+    if (storedUserId == null) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = "Error: User is not logged in!";
+      });
+      return;
+    }
+
+    int userId;
+    try {
+      userId = int.parse(storedUserId);
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = "Error: Invalid User ID stored!";
+      });
+      return;
+    }
+
+    final filterBody = {
+      "startDate": _startDate != null ? DateFormat("yyyy-MM-dd").format(_startDate!) : null,
+      "endDate": _endDate != null ? DateFormat("yyyy-MM-dd").format(_endDate!) : null,
+      "transactionType": _transactionType,
+      "sortBy": _sortBy,
+    };
+
+    final url = "http://10.0.2.2:8080/api/analytics/user/$userId/transactions";
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(filterBody),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          _totalSpent = double.tryParse(data['totalSpent'].toString()) ?? 0.0;
+          _totalCount = data['totalCount'] as int? ?? 0;
+
+          _chartData = (data['chartData'] as List<dynamic>? ?? [])
+              .map((item) => {
+            "label": item['label'] ?? '',
+            "value": double.tryParse(item['value'].toString()) ?? 0.0,
+          })
+              .toList();
+
+          _transactions = (data['filteredTransactions'] as List<dynamic>? ?? [])
+              .map((tx) => {
+            "transactionType": tx['transactionType'],
+            "stripeTransactionId": tx['stripeTransactionId'],
+            "amount": tx['amount'],
+            "createdAt": tx['createdAt'],
+          })
+              .toList();
+        });
+      } else {
+        setState(() {
+          _errorMessage = "Failed to fetch analytics. Status: ${response.statusCode}";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = "Error fetching analytics: $e";
+      });
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  /// Helper to format DateTime strings.
+  String _formatDateTime(String? raw) {
+    if (raw == null || raw.isEmpty) return "N/A";
+    try {
+      final dt = DateTime.parse(raw);
+      return DateFormat("yyyy-MM-dd HH:mm").format(dt);
+    } catch (_) {
+      return raw;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: DarkModeHandler.getAppBarColor(),
-        title: const Text(
-          'Transaction History',
-          style: TextStyle(color: Colors.black),
-        ),
-        centerTitle: true,
+        title: const Text("Transaction History & Analytics"),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
       ),
-      backgroundColor: DarkModeHandler.getBackgroundColor(),
-      body: isLoading
+      backgroundColor: const Color(0xFFE3F2FD),
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : transactions.isEmpty
-              ? Center(
-                  child: Text(
-                    "No transactions found!",
-                    style: TextStyle(
-                      color: DarkModeHandler.getMainContainersTextColor(),
-                      fontSize: 18,
-                    ),
-                  ),
-                )
-              : SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: _buildTransactionList(),
-                  ),
-                ),
-      bottomNavigationBar: BottomNavigationBarWithFab(
-        currentIndex: currentIndex,
-        onTap: _onBottomNavTap,
+          : _errorMessage.isNotEmpty
+          ? Center(child: Text(_errorMessage, style: const TextStyle(color: Colors.red)))
+          : _buildMainContent(),
+    );
+  }
+
+  Widget _buildMainContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          _buildFilterSection(),
+          const SizedBox(height: 16),
+          _buildAnalyticsSummary(),
+          const SizedBox(height: 16),
+          _buildChartSection(),
+          const SizedBox(height: 16),
+          _buildTransactionList(),
+        ],
       ),
     );
   }
 
-  Widget _buildTransactionList() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: transactions.map((transaction) {
-        return Padding(
-          // Reduced vertical margin from 8.0 to 4.0.
-          padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: Card(
-            // Remove all shadows by setting elevation to 0.
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.0),
+  Widget _buildFilterSection() {
+    return Card(
+      color: Colors.white,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            const Text("Filters", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 8),
+            // Start Date
+            Row(
+              children: [
+                const Text("Start Date:"),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(_startDate != null
+                      ? DateFormat("yyyy-MM-dd").format(_startDate!)
+                      : "Not selected"),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.calendar_today, color: Colors.blueAccent),
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _startDate ?? DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      setState(() => _startDate = picked);
+                    }
+                  },
+                )
+              ],
             ),
+            // End Date
+            Row(
+              children: [
+                const Text("End Date:"),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(_endDate != null
+                      ? DateFormat("yyyy-MM-dd").format(_endDate!)
+                      : "Not selected"),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.calendar_today, color: Colors.blueAccent),
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _endDate ?? DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      setState(() => _endDate = picked);
+                    }
+                  },
+                )
+              ],
+            ),
+            // Transaction Type
+            Row(
+              children: [
+                const Text("Type:"),
+                const SizedBox(width: 8),
+                DropdownButton<String>(
+                  value: _transactionType,
+                  items: const [
+                    DropdownMenuItem(value: "ALL", child: Text("ALL")),
+                    DropdownMenuItem(value: "oneTime", child: Text("OneTime")),
+                    DropdownMenuItem(value: "group", child: Text("Group")),
+                    DropdownMenuItem(value: "regular", child: Text("Regular")),
+                  ],
+                  onChanged: (val) {
+                    setState(() => _transactionType = val!);
+                  },
+                ),
+              ],
+            ),
+            // Sort By
+            Row(
+              children: [
+                const Text("Sort By:"),
+                const SizedBox(width: 8),
+                DropdownButton<String>(
+                  value: _sortBy,
+                  items: const [
+                    DropdownMenuItem(value: "createdAtDesc", child: Text("Newest First")),
+                    DropdownMenuItem(value: "createdAtAsc", child: Text("Oldest First")),
+                  ],
+                  onChanged: (val) {
+                    setState(() => _sortBy = val!);
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                elevation: 0, // No shadow
+              ),
+              onPressed: _fetchAnalytics,
+              child: const Text("Apply Filters",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsSummary() {
+    return Card(
+      color: Colors.white,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            const Text("Analytics Summary",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Text("Total Spent: ",
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+                Text("£$_totalSpent", style: const TextStyle(color: Colors.blueAccent)),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Text("Total Count: ",
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+                Text("$_totalCount", style: const TextStyle(color: Colors.blueAccent)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChartSection() {
+    return Card(
+      color: Colors.white,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            const Text("Transaction Breakdown",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 200,
+              child: PieChart(
+                PieChartData(
+                  sections: _buildPieChartSections(),
+                  sectionsSpace: 2,
+                  centerSpaceRadius: 40,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<PieChartSectionData> _buildPieChartSections() {
+    final colors = [
+      Colors.blueAccent,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.red,
+    ];
+
+    List<PieChartSectionData> sections = [];
+    for (int i = 0; i < _chartData.length; i++) {
+      final item = _chartData[i];
+      final double value = item['value'];
+      final String label = item['label'];
+
+      sections.add(
+        PieChartSectionData(
+          color: colors[i % colors.length],
+          value: value,
+          title: label,
+          titleStyle: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
             color: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+          ),
+          radius: 60,
+        ),
+      );
+    }
+    return sections;
+  }
+
+  Widget _buildTransactionList() {
+    return Card(
+      color: Colors.white,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            const Text("Filtered Transactions",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                )),
+            const SizedBox(height: 8),
+            if (_transactions.isEmpty)
+              const Text("No transactions found.")
+            else
+              ..._transactions.map((tx) {
+                final type = tx["transactionType"] ?? '';
+                final stripeId = tx["stripeTransactionId"] ?? '';
+                final amount = tx["amount"].toString();
+                final createdAt = tx["createdAt"] ?? '';
+
+                return ListTile(
+                  title: Row(
                     children: [
-                      // Updated icon for transaction history.
-                      CircleAvatar(
-                        backgroundColor: Colors.grey[200],
-                        child: const Icon(
-                          Icons.receipt_long,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          transaction['title'] ?? "No Title",
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
+                      Expanded(child: Text("Txn ID: $stripeId")),
+                      IconButton(
+                        icon: const Icon(Icons.copy, color: Colors.blueAccent),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: stripeId));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Txn ID copied")),
+                          );
+                        },
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    "Transaction ID: ${transaction['stripeTransactionId']}",
-                    style: TextStyle(
-                      color: Colors.grey[700],
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        const TextSpan(
-                          text: "Amount: ",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        TextSpan(
-                          text: transaction['amount'].toStringAsFixed(2),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: double.tryParse(
-                                        transaction['amount'].toString())! >=
-                                    0
-                                ? Colors.green
-                                : Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Date: ${transaction['createdAt']}",
-                    style: TextStyle(
-                      color: Colors.grey[700],
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                  subtitle: Text("$type - £$amount - $createdAt"),
+                );
+              }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget buildBodyContent() {
+    // Not used, as _buildMainContent() is our main builder.
+    return Container();
+  }
+
+  /// Reusable row with an icon, label, and value.
+  Widget _buildLabeledRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: Colors.blueAccent),
+        const SizedBox(width: 8),
+        Text(
+          "$label: ",
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: Colors.black87,
           ),
-        );
-      }).toList(),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
+          ),
+        ),
+      ],
     );
   }
 }

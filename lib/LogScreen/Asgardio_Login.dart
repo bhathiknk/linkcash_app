@@ -249,10 +249,11 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
                       onPressed: _login,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
+                        elevation: 0,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 40, vertical: 15),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       child: const Text(
@@ -279,10 +280,11 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
                 onPressed: _signUp,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
+                  elevation: 0,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
                 child: const Text(
