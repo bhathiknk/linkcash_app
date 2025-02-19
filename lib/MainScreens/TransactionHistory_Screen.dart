@@ -22,10 +22,10 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   // Filter fields
   DateTime? _startDate;
   DateTime? _endDate;
-  String _transactionType = "ALL"; // "ALL", "oneTime", "regular", "group"
+  String _transactionType = "ALL"; // "ALL", "oneTime", "group", "regular"
   String _sortBy = "createdAtDesc"; // "createdAtAsc" or "createdAtDesc"
 
-  // Data from the server
+  // Analytics data
   double _totalSpent = 0.0;
   int _totalCount = 0;
   List<Map<String, dynamic>> _chartData = [];
@@ -86,19 +86,23 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           _totalSpent = double.tryParse(data['totalSpent'].toString()) ?? 0.0;
           _totalCount = data['totalCount'] as int? ?? 0;
 
-          _chartData = (data['chartData'] as List<dynamic>? ?? [])
-              .map((item) => {
-            "label": item['label'] ?? '',
-            "value": double.tryParse(item['value'].toString()) ?? 0.0,
-          })
-              .toList();
+          // Chart data mapping
+          _chartData = (data['chartData'] as List<dynamic>? ?? []).map((item) {
+            return {
+              "label": item['label'] ?? '',
+              "value": double.tryParse(item['value'].toString()) ?? 0.0,
+            };
+          }).toList();
 
+          // Mapping filtered transactions including title, memberName, and transactionType.
           _transactions = (data['filteredTransactions'] as List<dynamic>? ?? [])
               .map((tx) => {
             "transactionType": tx['transactionType'],
             "stripeTransactionId": tx['stripeTransactionId'],
             "amount": tx['amount'],
             "createdAt": tx['createdAt'],
+            "title": tx['title'] ?? "",
+            "memberName": tx['memberName'] ?? ""
           })
               .toList();
         });
@@ -266,10 +270,8 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueAccent,
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                elevation: 0, // No shadow
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                elevation: 0,
               ),
               onPressed: _fetchAnalytics,
               child: const Text("Apply Filters",
@@ -290,21 +292,18 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            const Text("Analytics Summary",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text("Analytics Summary", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 8),
             Row(
               children: [
-                const Text("Total Spent: ",
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text("Total Spent: ", style: TextStyle(fontWeight: FontWeight.w600)),
                 Text("£$_totalSpent", style: const TextStyle(color: Colors.blueAccent)),
               ],
             ),
             const SizedBox(height: 4),
             Row(
               children: [
-                const Text("Total Count: ",
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text("Total Count: ", style: TextStyle(fontWeight: FontWeight.w600)),
                 Text("$_totalCount", style: const TextStyle(color: Colors.blueAccent)),
               ],
             ),
@@ -323,8 +322,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            const Text("Transaction Breakdown",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text("Transaction Breakdown", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 16),
             SizedBox(
               height: 200,
@@ -362,11 +360,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           color: colors[i % colors.length],
           value: value,
           title: label,
-          titleStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          titleStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
           radius: 60,
         ),
       );
@@ -383,11 +377,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            const Text("Filtered Transactions",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                )),
+            const Text("Filtered Transactions", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 8),
             if (_transactions.isEmpty)
               const Text("No transactions found.")
@@ -397,35 +387,54 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                 final stripeId = tx["stripeTransactionId"] ?? '';
                 final amount = tx["amount"].toString();
                 final createdAt = tx["createdAt"] ?? '';
+                final title = tx["title"] ?? '';
+                final memberName = tx["memberName"] ?? '';
 
-                return ListTile(
-                  title: Row(
-                    children: [
-                      Expanded(child: Text("Txn ID: $stripeId")),
-                      IconButton(
-                        icon: const Icon(Icons.copy, color: Colors.blueAccent),
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(text: stripeId));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Txn ID copied")),
-                          );
-                        },
-                      ),
-                    ],
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  color: const Color(0xFFE3F2FD),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                "Txn ID: $stripeId",
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.copy, color: Colors.blueAccent),
+                              onPressed: () {
+                                Clipboard.setData(ClipboardData(text: stripeId));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Txn ID copied")),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text("Payment Type: $type", style: const TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 4),
+                        Text("What's for: $title", style: const TextStyle(fontWeight: FontWeight.w600)),
+                        if (type.toLowerCase() == "group" && memberName.isNotEmpty)
+                          Text("Paid member: $memberName", style: const TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 4),
+                        Text("Amount: £$amount | Date: $createdAt", style: const TextStyle(color: Colors.black87)),
+                      ],
+                    ),
                   ),
-                  subtitle: Text("$type - £$amount - $createdAt"),
                 );
               }).toList(),
           ],
         ),
       ),
     );
-  }
-
-  @override
-  Widget buildBodyContent() {
-    // Not used, as _buildMainContent() is our main builder.
-    return Container();
   }
 
   /// Reusable row with an icon, label, and value.
@@ -441,11 +450,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         const SizedBox(width: 8),
         Text(
           "$label: ",
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-            color: Colors.black87,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.black87),
         ),
         Expanded(
           child: Text(
