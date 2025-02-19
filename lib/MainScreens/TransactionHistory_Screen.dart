@@ -6,6 +6,11 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:fl_chart/fl_chart.dart';
 
+// PDF packages
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+
 class TransactionHistoryPage extends StatefulWidget {
   const TransactionHistoryPage({Key? key}) : super(key: key);
 
@@ -31,7 +36,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   List<Map<String, dynamic>> _chartData = [];
   List<Map<String, dynamic>> _transactions = []; // original filteredTransactions from server
 
-  // Search state
+  // Controls filter visibility and search
   bool _showFilters = false;
   final TextEditingController _searchController = TextEditingController();
 
@@ -171,7 +176,15 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          _buildFilterToggleButton(),
+          // Top row with filter toggle and download button.
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildFilterToggleButton(),
+              _buildDownloadButton(),
+            ],
+          ),
+          const SizedBox(height: 16),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             transitionBuilder: (child, animation) {
@@ -196,32 +209,46 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
 
   /// Button to toggle filter section visibility.
   Widget _buildFilterToggleButton() {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blueAccent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        ),
-        icon: Icon(
-          _showFilters ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-          color: Colors.white,
-        ),
-        label: Text(
-          _showFilters ? "Hide Filters" : "Show Filters",
-          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-        onPressed: () {
-          setState(() {
-            _showFilters = !_showFilters;
-            if (!_showFilters) {
-              _searchController.clear();
-            }
-          });
-        },
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blueAccent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       ),
+      icon: Icon(
+        _showFilters ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+        color: Colors.white,
+      ),
+      label: Text(
+        _showFilters ? "Hide Filters" : "Show Filters",
+        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+      ),
+      onPressed: () {
+        setState(() {
+          _showFilters = !_showFilters;
+          if (!_showFilters) {
+            _searchController.clear();
+          }
+        });
+      },
+    );
+  }
+
+  /// Button to download PDF.
+  Widget _buildDownloadButton() {
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blueAccent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      ),
+      icon: const Icon(Icons.download, color: Colors.white),
+      label: const Text(
+        "Download PDF",
+        style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+      ), onPressed: () {  },
     );
   }
 
@@ -229,7 +256,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   Widget _buildFilterSection() {
     return Card(
       color: Colors.white,
-      elevation: 0,
+      elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -408,15 +435,27 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           children: [
             const Text("Transaction Breakdown", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 16),
-            SizedBox(
-              height: 200,
-              child: PieChart(
-                PieChartData(
-                  sections: _buildPieChartSections(),
-                  sectionsSpace: 2,
-                  centerSpaceRadius: 40,
+            Stack(
+              children: [
+                SizedBox(
+                  height: 200,
+                  child: PieChart(
+                    PieChartData(
+                      sections: _buildPieChartSections(),
+                      sectionsSpace: 2,
+                      centerSpaceRadius: 40,
+                    ),
+                  ),
                 ),
-              ),
+                Positioned.fill(
+                  child: Center(
+                    child: Text(
+                      "£$_totalSpent",
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -443,8 +482,9 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         PieChartSectionData(
           color: colors[i % colors.length],
           value: value,
-          title: label,
-          titleStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+          // Show both label and total amount in pounds within each section.
+          title: "$label\n£${value.toStringAsFixed(2)}",
+          titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
           radius: 60,
         ),
       );
@@ -512,12 +552,12 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                         icon: const Icon(Icons.clear, color: Colors.blueAccent, size: 16),
                         onPressed: () {
                           _searchController.clear();
-                          setState(() {}); // Update UI to show full list
+                          setState(() {});
                         },
                       ),
                     ),
                     onChanged: (val) {
-                      setState(() {}); // Update UI as user types
+                      setState(() {});
                     },
                   ),
                 ),
@@ -539,7 +579,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 6),
                   color: const Color(0xFFE3F2FD),
-                  elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   child: Padding(
                     padding: const EdgeInsets.all(8),

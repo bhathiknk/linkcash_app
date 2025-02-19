@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // For Clipboard
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 /// Model for basic group payment history items (from /api/group-payments/history/{userId})
 class GroupPaymentHistoryItem {
@@ -10,7 +10,7 @@ class GroupPaymentHistoryItem {
   final String title;
   final String description;
   final double totalAmount;
-  final bool completed; // "isCompleted" from backend
+  final bool completed; // indicates whether all members have paid
   final DateTime createdAt;
   final String paymentUrl;
   final List<GroupMemberHistoryItem> members;
@@ -69,8 +69,7 @@ class GroupMemberHistoryItem {
   }
 }
 
-/// Model for the full details of a single group payment
-/// (from /api/group-payments/full-details/{groupPaymentId})
+/// Model for full details (used in popup)
 class GroupPaymentFullDetails {
   final int groupPaymentId;
   final String title;
@@ -140,8 +139,7 @@ class GroupPaymentHistoryPage extends StatefulWidget {
   const GroupPaymentHistoryPage({super.key});
 
   @override
-  _GroupPaymentHistoryPageState createState() =>
-      _GroupPaymentHistoryPageState();
+  _GroupPaymentHistoryPageState createState() => _GroupPaymentHistoryPageState();
 }
 
 class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
@@ -175,7 +173,8 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     _selectedYear = now.year;
     _selectedMonth = now.month;
 
-    _tabController = TabController(length: 2, vsync: this);
+    // Now using three tabs: Paid, Incomplete, Unpaid
+    _tabController = TabController(length: 3, vsync: this);
     _fetchGroupPaymentHistory();
   }
 
@@ -185,7 +184,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     super.dispose();
   }
 
-  /// Fetch group payment history from backend
+  /// Fetch group payment history from backend.
   Future<void> _fetchGroupPaymentHistory() async {
     try {
       final userId = await _secureStorage.read(key: 'User_ID');
@@ -197,8 +196,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
         return;
       }
 
-      final apiUrl =
-          "http://10.0.2.2:8080/api/group-payments/history/$userId";
+      final apiUrl = "http://10.0.2.2:8080/api/group-payments/history/$userId";
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
@@ -207,7 +205,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
             .map((item) => GroupPaymentHistoryItem.fromJson(item))
             .toList();
 
-        // Sort descending by createdAt
+        // Sort descending by createdAt.
         items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
         setState(() {
@@ -219,8 +217,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
       } else {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text("Failed to load history: ${response.statusCode}")),
+          SnackBar(content: Text("Failed to load history: ${response.statusCode}")),
         );
       }
     } catch (e) {
@@ -231,7 +228,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     }
   }
 
-  /// Filter items based on _selectedYear and _selectedMonth
+  /// Filter items based on _selectedYear and _selectedMonth.
   void _applyDateFilter() {
     setState(() {
       _filteredItems = _allHistoryItems.where((item) {
@@ -243,17 +240,33 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
 
   @override
   Widget build(BuildContext context) {
-    final unpaidItems = _filteredItems.where((h) => !h.completed).toList();
-    final paidItems = _filteredItems.where((h) => h.completed).toList();
+    // Separate into three categories:
+    // Paid: all members paid (item.completed == true)
+    // Unpaid: no member paid (every member's paid == false)
+    // Incomplete: not all paid and at least one paid.
+    List<GroupPaymentHistoryItem> paidItems = _filteredItems
+        .where((h) => h.completed == true)
+        .toList();
+
+    List<GroupPaymentHistoryItem> unpaidItems = _filteredItems
+        .where((h) => h.members.every((m) => m.paid == false))
+        .toList();
+
+    List<GroupPaymentHistoryItem> incompleteItems = _filteredItems
+        .where((h) =>
+    !h.completed &&
+        h.members.any((m) => m.paid == true) &&
+        h.members.any((m) => m.paid == false))
+        .toList();
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         backgroundColor: const Color(0xFFE3F2FD),
         appBar: AppBar(
           backgroundColor: Colors.white,
-          elevation: 0, // Remove shadow if you want
-          toolbarHeight: 48, // Make the app bar smaller
+          elevation: 0,
+          toolbarHeight: 48,
           bottom: TabBar(
             controller: _tabController,
             labelColor: Colors.blueAccent,
@@ -261,6 +274,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
             indicatorColor: Colors.blueAccent,
             tabs: const [
               Tab(text: "Paid"),
+              Tab(text: "Incomplete"),
               Tab(text: "Unpaid"),
             ],
           ),
@@ -269,14 +283,13 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
             ? const Center(child: CircularProgressIndicator())
             : Column(
           children: [
-            // Date filter row
             _buildDateSelectorRow(),
-            // Tab content
             Expanded(
               child: TabBarView(
                 controller: _tabController,
                 children: [
                   _buildTabContent(paidItems, isPaidTab: true),
+                  _buildTabContent(incompleteItems, isPaidTab: false),
                   _buildTabContent(unpaidItems, isPaidTab: false),
                 ],
               ),
@@ -293,7 +306,6 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: Row(
         children: [
-          // Year dropdown
           Expanded(
             child: _buildDropdown<int>(
               label: "Year",
@@ -309,7 +321,6 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
             ),
           ),
           const SizedBox(width: 16),
-          // Month dropdown
           Expanded(
             child: _buildDropdown<int>(
               label: "Month",
@@ -335,7 +346,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     );
   }
 
-  /// A smaller, simpler dropdown
+  /// A smaller, simpler dropdown widget.
   Widget _buildDropdown<T>({
     required String label,
     required List<T> items,
@@ -346,9 +357,10 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label text
-        Text(label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        ),
         const SizedBox(height: 4),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -373,12 +385,12 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     );
   }
 
-  Widget _buildTabContent(List<GroupPaymentHistoryItem> items,
-      {required bool isPaidTab}) {
+  /// Build the tab content – a scrollable list of history cards.
+  Widget _buildTabContent(List<GroupPaymentHistoryItem> items, {required bool isPaidTab}) {
     if (items.isEmpty) {
       return Center(
         child: Text(
-          isPaidTab ? "No paid group payments." : "No unpaid group payments.",
+          isPaidTab ? "No paid group payments." : "No group payments found.",
           style: const TextStyle(fontSize: 16),
         ),
       );
@@ -391,9 +403,8 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     );
   }
 
-  /// Build each card in the history list
+  /// Build each group payment history card.
   Widget _buildHistoryCard(GroupPaymentHistoryItem item) {
-    // We remove the condition on "isPaid"; all cards are tappable
     return InkWell(
       onTap: () => _onCardTap(item.groupPaymentId),
       child: Card(
@@ -406,7 +417,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header: Title and status icon
+              // Header: Title and status icon.
               Row(
                 children: [
                   Expanded(
@@ -424,19 +435,29 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
                       shape: BoxShape.circle,
                       color: item.completed
                           ? Colors.green.shade100
-                          : Colors.red.shade100,
+                          : item.members.every((m) => m.paid == false)
+                          ? Colors.red.shade100
+                          : Colors.orange.shade100,
                     ),
                     padding: const EdgeInsets.all(4),
                     child: Icon(
-                      item.completed ? Icons.check_circle : Icons.pending,
-                      color: item.completed ? Colors.green : Colors.red,
+                      item.completed
+                          ? Icons.check_circle
+                          : item.members.every((m) => m.paid == false)
+                          ? Icons.cancel
+                          : Icons.error_outline,
+                      color: item.completed
+                          ? Colors.green
+                          : item.members.every((m) => m.paid == false)
+                          ? Colors.red
+                          : Colors.orange,
                       size: 20,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
-              // Description (if available)
+              // Description.
               if (item.description.isNotEmpty) ...[
                 Text(
                   item.description,
@@ -444,7 +465,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
                 ),
                 const SizedBox(height: 8),
               ],
-              // Amount and Created Date Row
+              // Amount and Created Date row.
               Row(
                 children: [
                   const SizedBox(width: 4),
@@ -466,10 +487,10 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
                 ],
               ),
               const Divider(height: 20, thickness: 1),
-              // Payment Link Section
+              // Payment link section.
               _buildLinkSection(item.paymentUrl),
               const SizedBox(height: 12),
-              // Members Section
+              // Members section.
               _buildMembersSection(item.members),
             ],
           ),
@@ -478,7 +499,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     );
   }
 
-  /// Payment Link (truncate + copy)
+  /// Payment link section with copy functionality.
   Widget _buildLinkSection(String paymentUrl) {
     if (paymentUrl.isEmpty) {
       return const Text(
@@ -515,7 +536,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     );
   }
 
-  /// Show each member's name and assigned amount in the card
+  /// Members section showing each member's status.
   Widget _buildMembersSection(List<GroupMemberHistoryItem> members) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -590,7 +611,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     );
   }
 
-  /// Called when user taps on ANY item (paid or unpaid)
+  /// Called when a card is tapped – fetches full details.
   Future<void> _onCardTap(int groupPaymentId) async {
     final url = "http://10.0.2.2:8080/api/group-payments/full-details/$groupPaymentId";
     try {
@@ -611,7 +632,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
     }
   }
 
-  /// Popup showing full details including stripeTransactionId
+  /// Displays a dialog with full group payment details.
   void _showDetailPopup(GroupPaymentFullDetails detail) {
     showDialog(
       context: context,
@@ -754,8 +775,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
           Text("Paid: ${member.isPaid ? 'Yes' : 'No'}"),
           Text("Paid At: ${member.paidAt ?? 'N/A'}"),
           Text(
-            "Stripe Txn: "
-                "${member.stripeTransactionId.isNotEmpty ? member.stripeTransactionId : 'N/A'}",
+            "Stripe Txn: ${member.stripeTransactionId.isNotEmpty ? member.stripeTransactionId : 'N/A'}",
           ),
         ],
       ),
