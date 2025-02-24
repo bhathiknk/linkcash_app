@@ -6,7 +6,7 @@ class NotificationItem {
   final int notificationId;
   final String message;
   final bool isRead;
-  final String createdAt;   // or DateTime, parse if you prefer
+  final String createdAt;
 
   NotificationItem({
     required this.notificationId,
@@ -38,6 +38,7 @@ class _NotificationPageState extends State<NotificationPage> {
   List<NotificationItem> _unread = [];
   List<NotificationItem> _read = [];
   bool _isLoading = false;
+  int _selectedTabIndex = 0; // 0 for Unread, 1 for Read
 
   @override
   void initState() {
@@ -48,16 +49,13 @@ class _NotificationPageState extends State<NotificationPage> {
   Future<void> _fetchNotifications() async {
     setState(() => _isLoading = true);
     try {
-      // 1) Fetch all notifications
       final allUrl = 'http://10.0.2.2:8080/api/notifications/${widget.userId}';
       final respAll = await http.get(Uri.parse(allUrl));
       if (respAll.statusCode == 200) {
         final listAll = jsonDecode(respAll.body) as List<dynamic>;
-        List<NotificationItem> allNotifs = listAll
-            .map((item) => NotificationItem.fromJson(item))
-            .toList();
+        List<NotificationItem> allNotifs =
+        listAll.map((item) => NotificationItem.fromJson(item)).toList();
 
-        // 2) Split into unread & read
         List<NotificationItem> unread = [];
         List<NotificationItem> read = [];
         for (var n in allNotifs) {
@@ -83,15 +81,13 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Future<void> _markAsRead(int notificationId) async {
-    final url = 'http://10.0.2.2:8080/api/notifications/mark-read/$notificationId';
+    final url =
+        'http://10.0.2.2:8080/api/notifications/mark-read/$notificationId';
     try {
       final resp = await http.post(Uri.parse(url));
       if (resp.statusCode == 200) {
-        // update local state
         setState(() {
           _unread.removeWhere((n) => n.notificationId == notificationId);
-          // Optional: put it in the read list
-          // you might want to re-fetch or store the message if needed
         });
       } else {
         debugPrint("Error marking read: ${resp.body}");
@@ -102,11 +98,11 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Future<void> _markAllAsRead() async {
-    final url = 'http://10.0.2.2:8080/api/notifications/${widget.userId}/mark-all-read';
+    final url =
+        'http://10.0.2.2:8080/api/notifications/${widget.userId}/mark-all-read';
     try {
       final resp = await http.post(Uri.parse(url));
       if (resp.statusCode == 200) {
-        // Clear the unread array
         setState(() {
           _read.addAll(_unread);
           _unread.clear();
@@ -119,53 +115,126 @@ class _NotificationPageState extends State<NotificationPage> {
     }
   }
 
+  Widget _buildNotificationTile(NotificationItem notif) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white, // Set background color for notifications
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: Icon(
+          Icons.notifications_active,
+          color: Colors.blue.shade800,
+          size: 30,
+        ),
+        title: Text(
+          notif.message,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.blue.shade900,
+          ),
+        ),
+        subtitle: Text(
+          "Created at: ${notif.createdAt}",
+          style: TextStyle(color: Colors.black54),
+        ),
+        trailing: notif.isRead
+            ? Icon(Icons.check_circle, color: Colors.green)
+            : IconButton(
+          icon: const Icon(Icons.done, color: Colors.green),
+          onPressed: () => _markAsRead(notif.notificationId),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationList(List<NotificationItem> notifications) {
+    if (notifications.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.notifications_off, size: 80, color: Colors.grey.shade500),
+            const SizedBox(height: 10),
+            Text(
+              "No notifications found.",
+              style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _fetchNotifications,
+      child: ListView.builder(
+        padding: const EdgeInsets.only(bottom: 70),
+        itemCount: notifications.length,
+        itemBuilder: (context, index) =>
+            _buildNotificationTile(notifications[index]),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFE3F2FD), // Set full page background color
       appBar: AppBar(
         title: const Text("Notifications"),
         actions: [
-          TextButton(
+          IconButton(
+            icon: const Icon(Icons.mark_email_read, color: Colors.blue),
             onPressed: _unread.isEmpty ? null : _markAllAsRead,
-            child: Text(
-              "Mark All Read",
-              style: TextStyle(color: _unread.isEmpty ? Colors.grey : Colors.white),
+            tooltip: "Mark All as Read",
+          ),
+        ],
+        backgroundColor: Colors.white,
+      ),
+      body: Column(
+        children: [
+          Container(
+            color: Colors.blue.shade100,
+            child: Row(
+              children: [
+                _buildTabButton("Unread", 0),
+                _buildTabButton("Read", 1),
+              ],
             ),
+          ),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _selectedTabIndex == 0
+                ? _buildNotificationList(_unread)
+                : _buildNotificationList(_read),
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-        onRefresh: _fetchNotifications,
-        child: ListView(
-          children: [
-            if (_unread.isNotEmpty)
-              ListTile(
-                title: const Text("Unread Notifications", style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ..._unread.map((notif) => ListTile(
-              title: Text(notif.message),
-              subtitle: Text("Created at: ${notif.createdAt}"),
-              trailing: IconButton(
-                icon: const Icon(Icons.done, color: Colors.blue),
-                onPressed: () => _markAsRead(notif.notificationId),
-              ),
-            )),
-            if (_read.isNotEmpty)
-              ListTile(
-                title: const Text("Read Notifications", style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ..._read.map((notif) => ListTile(
-              title: Text(notif.message),
-              subtitle: Text("Created at: ${notif.createdAt}"),
-              trailing: const Icon(Icons.check_circle, color: Colors.grey),
-            )),
-            if (_unread.isEmpty && _read.isEmpty)
-              const ListTile(
-                title: Text("No notifications found."),
-              ),
-          ],
+    );
+  }
+
+  Widget _buildTabButton(String title, int index) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedTabIndex = index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: _selectedTabIndex == index
+                ? Colors.blue.shade800
+                : Colors.blue.shade200,
+          ),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              color: _selectedTabIndex == index ? Colors.white : Colors.black54,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
       ),
     );

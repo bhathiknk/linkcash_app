@@ -35,7 +35,6 @@ dependencies:
   pdf: ^3.11.3
   printing: ^5.14.2
   stomp_dart_client: ^0.4.4
-  flutter_local_notifications: ^18.0.1
 
 
 
