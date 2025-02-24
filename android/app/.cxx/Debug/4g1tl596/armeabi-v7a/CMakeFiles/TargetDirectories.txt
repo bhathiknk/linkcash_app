@@ -1,0 +1,2 @@
+C:/Projects/Final year Project/linkcash_app/android/app/.cxx/Debug/4g1tl596/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Projects/Final year Project/linkcash_app/android/app/.cxx/Debug/4g1tl596/armeabi-v7a/CMakeFiles/rebuild_cache.dir
