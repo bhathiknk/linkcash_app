@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "658601584979",
+    "project_id": "linkcash-app",
+    "storage_bucket": "linkcash-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:658601584979:android:2c55436aa0bbba1ab059a6",
+        "android_client_info": {
+          "package_name": "com.linkcash.linkcash_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVAKRpgcRlRvaZzhYOg0VeY5kL1MIugYI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,3 +1,9 @@
+plugins {
+    // 1) Add the Google Services Gradle plugin here
+    //    We'll apply it in the app module, not at the root.
+    id("com.google.gms.google-services") version "4.3.15" apply false
+}
+
 allprojects {
     repositories {
         google()
@@ -6,9 +12,11 @@ allprojects {
 }
 
 rootProject.buildDir = '../build'
+
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
+
 subprojects {
     project.evaluationDependsOn(':app')
 }

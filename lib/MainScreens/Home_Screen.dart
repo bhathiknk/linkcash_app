@@ -11,6 +11,7 @@ import 'package:pie_chart/pie_chart.dart'; // For the pie chart
 import 'package:stomp_dart_client/stomp.dart';
 import 'package:stomp_dart_client/stomp_config.dart';
 import 'package:stomp_dart_client/stomp_frame.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'; // <--- ADDED
 
 import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../ConnectionCheck/connectivity_service.dart';
@@ -178,6 +179,10 @@ class _MyHomePageState extends State<MyHomePage> {
         _fetchLastPayout(userId);
         // 4) Setup notifications
         _initNotifications(userId);
+
+        // 5) Setup FCM (NEW)
+        await _initFCM(userId);
+
       } else {
         setState(() => _userId = "Not Available");
       }
@@ -356,6 +361,41 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _disconnectStomp() {
     _stompClient?.deactivate();
+  }
+
+  // ==================== FCM LOGIC (NEW) ====================
+  Future<void> _initFCM(String userId) async {
+    // 1) Request permission (iOS)
+    NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    print('User granted permission: ${settings.authorizationStatus}');
+
+    // 2) Get token
+    String? token = await FirebaseMessaging.instance.getToken();
+    print("FCM Token: $token");
+
+    // 3) Send to your backend
+    if (token != null) {
+      final uri = Uri.parse("http://10.0.2.2:8080/api/notifications/fcm-token");
+      final resp = await http.post(uri, body: {
+        'userId': userId,
+        'token': token,
+      });
+      if (resp.statusCode == 200) {
+        print("FCM token saved on server");
+      } else {
+        print("Error saving FCM token: ${resp.body}");
+      }
+    }
+
+    // 4) Foreground listener
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      // If app is open, show a dialog or local notification
+      print("FCM Foreground: ${message.notification?.title} - ${message.notification?.body}");
+    });
   }
 
   // ==================== MISC ==================
@@ -880,79 +920,93 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
         Card(
-          color: const Color(0xFFE3F2FD),
-          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.event_available, color: Color(0xFF000000)),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        "One-Time Total:",
-                        style: TextStyle(fontSize: 16, color: Color(0xFF000000)),
+          clipBehavior: Clip.antiAlias,
+          elevation: 0,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF0054FF),
+                  Color(0xFF002370),
+
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.event_available, color: Colors.white),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          "One-Time Total:",
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
                       ),
-                    ),
-                    Text(
-                      "£${_filteredOneTime.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF060DF3),
+                      Text(
+                        "£${_filteredOneTime.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    const Icon(Icons.credit_card, color: Color(0xFF000000)),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        "Regular Total:",
-                        style: TextStyle(fontSize: 16, color: Color(0xFF000000)),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(Icons.credit_card, color: Colors.white),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          "Regular Total:",
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
                       ),
-                    ),
-                    Text(
-                      "£${_filteredRegular.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF060DF3),
+                      Text(
+                        "£${_filteredRegular.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    const Icon(Icons.people, color: Colors.black),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        "Group Total:",
-                        style: TextStyle(fontSize: 16, color: Color(0xFF000000)),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(Icons.people, color: Colors.white),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          "Group Total:",
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
                       ),
-                    ),
-                    Text(
-                      "£${_filteredGroup.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF060DF3),
+                      Text(
+                        "£${_filteredGroup.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
