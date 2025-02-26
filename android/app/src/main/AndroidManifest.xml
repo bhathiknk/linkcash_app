@@ -6,7 +6,10 @@
     <application
         android:label="LinkCash"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:theme="@style/StripeAppTheme"
+        >
+
 
         <!-- Main activity that launches the app -->
         <activity

@@ -4,9 +4,14 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+// 1) Import the Stripe package
+import 'package:flutter_stripe/flutter_stripe.dart';
+
 import 'WidgetsCom/dark_mode_handler.dart';
 import 'MainScreens/Welcome.dart';
 
+// Background handler for FCM messages
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print('Handling a background message: ${message.messageId}');
 }
@@ -14,11 +19,18 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 2) Load environment variables (already in your code)
   await dotenv.load(fileName: ".env");
   await DarkModeHandler.initialize();
-
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // 3) Configure Stripe using .env values
+  //    Make sure STRIPE_PUBLISHABLE_KEY is set in .env
+  Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
+
+  // This final step applies the settings so Stripe is fully initialized
+  await Stripe.instance.applySettings();
 
   runApp(const MyApp());
 }

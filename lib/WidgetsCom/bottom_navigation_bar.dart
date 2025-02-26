@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../MainScreens/Create_Link_Screen.dart';
 import '../MainScreens/Home_Screen.dart';
-import '../MainScreens/Notification_Screen.dart';
+import '../MainScreens/NotificationPage.dart';
+import '../MainScreens/QRPayPage.dart';
 import '../MainScreens/ProfileComponents/Profile_Screen.dart';
 import '../MainScreens/TransactionHistory_Screen.dart'; // Import the new transaction history page
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -150,17 +151,18 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => NotificationPage()),
+          MaterialPageRoute(builder: (context) => NotificationPage(userId: '',)),
         );
         break;
       case 2:
-        if (isVerified) {
+        if (userId != null) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => CreateLinkPage()),
+            MaterialPageRoute(
+                builder: (context) => QRPayPage(userId: int.parse(userId!))),
           );
         } else {
-          _showVerificationPopup(context); // Show the popup if not verified
+          print("User ID not found");
         }
         break;
       case 3:
