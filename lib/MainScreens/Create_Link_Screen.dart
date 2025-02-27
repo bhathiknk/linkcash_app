@@ -10,6 +10,7 @@ import '../WidgetsCom/dark_mode_handler.dart';
 import '../WidgetsCom/gradient_button_fb4.dart';
 import 'Link_View_Screen.dart';
 import 'Regular_Payment_History_Page.dart';
+import '../config.dart';
 
 class CreateLinkPage extends StatefulWidget {
   const CreateLinkPage({super.key});
@@ -107,7 +108,7 @@ class _CreateLinkPageState extends State<CreateLinkPage> {
     }
 
     // Always use the regular API URL (one-time payment branch removed)
-    final String apiUrl = "http://10.0.2.2:8080/api/payment-details/save";
+    final String apiUrl = '$baseUrl/api/payment-details/save';
 
     // Prepare the payload, including the expireAfter field from the dropdown
     final Map<String, dynamic> payload = {

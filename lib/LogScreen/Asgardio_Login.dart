@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http; // For API calls
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert'; // For JSON decoding
 import '../MainScreens/Home_Screen.dart';
+import '../config.dart';
 
 class AsgardeoLoginPage extends StatefulWidget {
   const AsgardeoLoginPage({super.key});
@@ -98,8 +99,7 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
   // Fetch User_ID from Backend
   Future<int?> _fetchUserIdFromBackend(
       String asgardeoUserId, String email, String givenName) async {
-    final String apiUrl =
-        "http://10.0.2.2:8080/api/users/signup"; // Adjust API path if necessary
+    final String apiUrl = '$baseUrl/api/users/signup'; // Adjust API path if necessary
 
     try {
       final response = await http.post(
@@ -177,7 +177,7 @@ class _AsgardeoLoginPageState extends State<AsgardeoLoginPage> {
   // Send Data to Backend
   Future<void> _sendDataToBackend(
       String asgardeoUserId, String email, String givenName) async {
-    final String apiUrl = "http://10.0.2.2:8080/api/users/signup";
+    final String apiUrl = '$baseUrl/api/users/signup';
 
     try {
       final response = await http.post(
