@@ -1,3 +1,4 @@
+import 'dart:ui'; // for ImageFilter
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For secure storage
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For secure storage
@@ -6,31 +7,31 @@ import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:pie_chart/pie_chart.dart'; // For the pie chart
-
+import 'package:pie_chart/pie_chart.dart';
 import 'package:stomp_dart_client/stomp.dart';
 import 'package:stomp_dart_client/stomp_config.dart';
 import 'package:stomp_dart_client/stomp_frame.dart';
 
+// Import your custom classes, e.g. connectivity service, NoInternetUI, etc.
 import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../ConnectionCheck/connectivity_service.dart';
+
 import '../LogScreen/Asgardio_Login.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
-import '../WidgetsCom/calendar_widget.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
+import 'NotificationPage.dart';
 import 'Create_Link_Screen.dart';
 import 'Pay_Quick_Page.dart';
 import 'Group_Payment_Page.dart';
 import 'payout_history_page.dart';
-import 'NotificationPage.dart';
+import '../WidgetsCom/calendar_widget.dart';
 
 // ==================== DATA CLASSES (DTOs) ====================
-
 class TransactionMonthlySummaryDTO {
   final String month;       // e.g. "2023-09"
   final double oneTimeTotal;
   final double regularTotal;
-  final double groupTotal;  // NEW
+  final double groupTotal;
 
   TransactionMonthlySummaryDTO({
     required this.month,
@@ -98,9 +99,7 @@ class _MyHomePageState extends State<MyHomePage> {
   // Basic user info
   String _userId = "Loading...";
   String _pendingBalance = "Loading...";
-  String _givenName = "User"; // Default for givenName
-
-  // The last payout amount
+  String _givenName = "User";
   String _lastPayout = "0.00";
 
   // Transaction summary
@@ -118,9 +117,12 @@ class _MyHomePageState extends State<MyHomePage> {
   double _filteredRegular = 0.0;
   double _filteredGroup = 0.0;
 
-  // ==================== NOTIFICATIONS ====================
-  int _notificationCount = 0;             // Unread notifications count
-  StompClient? _stompClient;              // STOMP WebSocket client
+  // Notifications
+  int _notificationCount = 0;
+  StompClient? _stompClient;
+
+  // Whether the nav bar's popup is visible => we can blur if needed
+  bool _isPopupVisible = false;
 
   @override
   void initState() {
@@ -187,18 +189,24 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  /// Fetch the "pending balance" from your /api/stripe/balance endpoint
   Future<void> _fetchPendingBalance(String userId) async {
     final String apiUrl = "http://10.0.2.2:8080/api/stripe/balance/$userId";
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        final pendingAmount = responseData['pending'][0]['amount'] ?? 0;
-        final formattedBalance = (pendingAmount / 100).toStringAsFixed(2);
-        setState(() {
-          _pendingBalance = "£$formattedBalance";
-        });
+        final pendingList = responseData['pending'] as List<dynamic>?;
+        if (pendingList != null && pendingList.isNotEmpty) {
+          final pendingAmount = pendingList[0]['amount'] ?? 0;
+          final formattedBalance = (pendingAmount / 100).toStringAsFixed(2);
+          setState(() {
+            _pendingBalance = "£$formattedBalance";
+          });
+        } else {
+          setState(() {
+            _pendingBalance = "£0.00";
+          });
+        }
       } else {
         setState(() => _pendingBalance = "Error");
       }
@@ -207,7 +215,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  /// Fetch the user's last payout from /api/stripe/payouts/{userId}
   Future<void> _fetchLastPayout(String userId) async {
     try {
       final url = 'http://10.0.2.2:8080/api/stripe/payouts/$userId';
@@ -215,16 +222,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         final payouts = data['payouts'] as List<dynamic>?;
         if (payouts == null || payouts.isEmpty) {
           setState(() => _lastPayout = "0.00");
           return;
         }
-        // Sort them by arrivalDate descending
         payouts.sort((a, b) => (b['arrivalDate'] ?? 0).compareTo(a['arrivalDate'] ?? 0));
         final lastItem = payouts.first;
-        final rawAmount = lastItem['amount']; // pence
+        final rawAmount = lastItem['amount'];
         double doubleAmount = 0;
         if (rawAmount is int) {
           doubleAmount = rawAmount / 100.0;
@@ -253,7 +258,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  /// Fetch transaction summary from your /api/transactions/summary/user/{userId}
   Future<void> _fetchTransactionSummary(String userId) async {
     final String apiUrl = "http://10.0.2.2:8080/api/transactions/summary/user/$userId";
     try {
@@ -279,7 +283,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _applyMonthYearFilter() {
     if (_transactionSummary == null) return;
-
     final selectedKey =
         "${_selectedYear.toString().padLeft(4, '0')}-${_selectedMonth.toString().padLeft(2, '0')}";
 
@@ -302,10 +305,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // ==================== NOTIFICATION LOGIC ====================
+
   Future<void> _initNotifications(String userId) async {
-    // 1) Fetch unread count from your server
     await _fetchUnreadNotificationCount(userId);
-    // 2) Connect to WebSocket
     _initStompClient(userId);
   }
 
@@ -316,7 +318,7 @@ class _MyHomePageState extends State<MyHomePage> {
       if (resp.statusCode == 200) {
         final list = jsonDecode(resp.body) as List<dynamic>;
         setState(() {
-          _notificationCount = list.length; // number of unread
+          _notificationCount = list.length;
         });
       }
     } catch (e) {
@@ -327,23 +329,20 @@ class _MyHomePageState extends State<MyHomePage> {
   void _initStompClient(String userId) {
     _stompClient = StompClient(
       config: StompConfig.SockJS(
-        url: 'http://10.0.2.2:8080/ws',  // your server's WS endpoint
+        url: 'http://10.0.2.2:8080/ws',
         onConnect: (StompFrame frame) {
-          debugPrint("STOMP connected, subscribing to notifications/$userId");
-          // Subscribe to /topic/notifications/{userId}
+          debugPrint("STOMP connected => /topic/notifications/$userId");
           _stompClient!.subscribe(
             destination: '/topic/notifications/$userId',
             callback: (StompFrame frame) {
               if (frame.body != null) {
                 final data = jsonDecode(frame.body!);
-                debugPrint("New notification from WebSocket: $data");
-                // Increase unread count by 1
+                debugPrint("New notification: $data");
                 setState(() {
                   _notificationCount += 1;
                 });
-                // Optionally show a local in-app message/snackbar
                 ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("New notification: ${data['message']}"))
+                  SnackBar(content: Text("New notification: ${data['message']}")),
                 );
               }
             },
@@ -376,10 +375,9 @@ class _MyHomePageState extends State<MyHomePage> {
     await prefs.clear();
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => AsgardeoLoginPage()),
+      MaterialPageRoute(builder: (context) => const AsgardeoLoginPage()),
           (Route<dynamic> route) => false,
     );
-
     Fluttertoast.showToast(
       msg: "Logged out successfully!",
       toastLength: Toast.LENGTH_SHORT,
@@ -390,22 +388,12 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  // Navigate to NotificationPage
   void _openNotificationPage() async {
-    // Mark all as read when the user opens the page, or let them read individually
-    // For example, you might do:
-    // await http.post(Uri.parse("http://10.0.2.2:8080/api/notifications/$_userId/mark-all-read"));
-    // setState(() => _notificationCount = 0);
-
-    // Or let user do it inside NotificationPage
     if (_userId != "Not Available" && _userId != "Error") {
       await Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => NotificationPage(userId: _userId),
-        ),
+        MaterialPageRoute(builder: (context) => NotificationPage(userId: _userId)),
       );
-      // After returning, re-fetch the unread count
       await _fetchUnreadNotificationCount(_userId);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -414,43 +402,46 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  // ==================== UI BUILD ====================
+  // ==================== BUILD ====================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // We won't use bottomNavigationBar here; we'll place it in a Stack
       appBar: AppBar(backgroundColor: Colors.white, elevation: 0, toolbarHeight: 5),
       backgroundColor: const Color(0xFFE3F2FD),
-      body: StreamBuilder<List<ConnectivityResult>>(
-        stream: _connectivityService.connectivityStream,
-        builder: (context, snapshot) {
-          if (!_isInitialCheckComplete) {
-            return const Center(child: CircularProgressIndicator());
-          } else {
-            final results = snapshot.data ?? [];
-            final result = results.contains(ConnectivityResult.none)
-                ? ConnectivityResult.none
-                : ConnectivityResult.wifi;
-            if (result == ConnectivityResult.none) {
-              return const NoInternetUI();
-            } else {
-              return Stack(
-                children: [
-                  _buildHomePageContent(context),
-                  Positioned(
-                    bottom: 20,
-                    right: 20,
-                    child: _buildTodayCircleButton(),
-                  ),
-                ],
-              );
-            }
-          }
-        },
-      ),
-      bottomNavigationBar: BottomNavigationBarWithFab(
-        currentIndex: 0,
-        onTap: (index) {},
+      body: Stack(
+        // Ensure we allow overflow
+        clipBehavior: Clip.none,
+        children: [
+          // (1) Main content
+          _buildHomePageContent(context),
+
+          // (2) Optional blur behind popup (if you want it)
+          if (_isPopupVisible)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () {
+                  // Hide popup if user taps outside
+                  setState(() => _isPopupVisible = false);
+                },
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: Container(color: Colors.black.withOpacity(0.2)),
+                ),
+              ),
+            ),
+
+          // (3) The bottom nav bar (with popup)
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: BottomNavigationBarWithFab(
+              currentIndex: 0,
+              onTap: (index) {},
+            ),
+          ),
+
+        ],
       ),
     );
   }
@@ -555,7 +546,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildHomePageContent(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-
     return SingleChildScrollView(
       child: Container(
         color: const Color(0xFFE3F2FD),
@@ -574,7 +564,8 @@ class _MyHomePageState extends State<MyHomePage> {
               child: _buildTransactionSummaryContainer(),
             ),
             const SizedBox(height: 15),
-            const SizedBox(height: 10),
+            // Add extra bottom padding so content doesn't get hidden behind bottom bar
+            const SizedBox(height: 80),
           ],
         ),
       ),
@@ -609,9 +600,9 @@ class _MyHomePageState extends State<MyHomePage> {
             child: TopBarFb4(
               title: 'Welcome Back',
               upperTitle: _givenName,
-              onTapMenu: _openNotificationPage,  // <--- Navigate to notifications
+              onTapMenu: _openNotificationPage,
               onTapLogout: () => _logout(context),
-              notificationCount: _notificationCount, // <--- Pass unread count
+              notificationCount: _notificationCount,
             ),
           ),
           // The balance card
@@ -631,7 +622,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildBalanceCard() {
     final titleColor = DarkModeHandler.getMainBalanceContainerTextColor();
-
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15.0),
@@ -657,8 +647,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      const Icon(Icons.account_balance_outlined,
-                          color: Colors.white),
+                      const Icon(Icons.account_balance_outlined, color: Colors.white),
                       const SizedBox(width: 5),
                       Text(
                         _userId == "Not Available"
@@ -750,7 +739,7 @@ class _MyHomePageState extends State<MyHomePage> {
       children: [
         _buildActionButton('Onetime Pay', Icons.payments),
         _buildActionButton('Group Pay', Icons.group),
-        _buildActionButton('Regular Pay',  Icons.repeat),
+        _buildActionButton('Regular Pay', Icons.repeat),
       ],
     );
   }
@@ -854,7 +843,6 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             const Spacer(),
-            // Year dropdown
             _buildDropdown<int>(
               value: _selectedYear,
               items: _yearList,
@@ -865,7 +853,6 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ),
             const SizedBox(width: 5),
-            // Month dropdown
             _buildDropdown<int>(
               value: _selectedMonth,
               items: _monthList,
@@ -884,7 +871,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
         Card(
-          color:  Color(0xFF06349A),
+          color: const Color(0xFF83B6B9),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -896,7 +883,7 @@ class _MyHomePageState extends State<MyHomePage> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.event_available, color: Colors.white),
+                    const Icon(Icons.event_available, color: Colors.black),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
@@ -917,7 +904,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    const Icon(Icons.credit_card, color: Colors.white),
+                    const Icon(Icons.credit_card, color: Colors.black),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
@@ -938,7 +925,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    const Icon(Icons.people, color: Colors.white),
+                    const Icon(Icons.people, color: Colors.black),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
@@ -1031,7 +1018,7 @@ class TopBarFb4 extends StatelessWidget {
   final Function() onTapMenu;
   final Function() onTapLogout;
 
-  // NEW: the unread notification count
+  // Unread notification count
   final int notificationCount;
 
   const TopBarFb4({
@@ -1039,19 +1026,18 @@ class TopBarFb4 extends StatelessWidget {
     required this.upperTitle,
     required this.onTapMenu,
     required this.onTapLogout,
-    this.notificationCount = 0, // default 0
+    this.notificationCount = 0,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    // We do not alter the layout; we just wrap the notification icon in a stack to show a badge
     return SizedBox(
       width: MediaQuery.of(context).size.width,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Notification Icon (left side, matching your original code's position)
+          // Notification Icon
           IconButton(
             icon: Stack(
               children: [
@@ -1084,7 +1070,6 @@ class TopBarFb4 extends StatelessWidget {
             ),
             onPressed: onTapMenu,
           ),
-
           // Title text
           Padding(
             padding: const EdgeInsets.only(right: 16.0, top: 8.0),
@@ -1109,7 +1094,6 @@ class TopBarFb4 extends StatelessWidget {
               ],
             ),
           ),
-
           // Logout Icon
           IconButton(
             icon: const Icon(Icons.logout),

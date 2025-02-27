@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import '../MainScreens/Create_Link_Screen.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+// Import your existing pages:
 import '../MainScreens/Home_Screen.dart';
 import '../MainScreens/NotificationPage.dart';
-import '../MainScreens/QRPayPage.dart';
 import '../MainScreens/ProfileComponents/Profile_Screen.dart';
-import '../MainScreens/TransactionHistory_Screen.dart'; // Import the new transaction history page
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../MainScreens/QRPayReceivePage.dart';
+import '../MainScreens/QRPaySendPage.dart';
+import '../MainScreens/TransactionHistory_Screen.dart';
 
 class BottomNavigationBarWithFab extends StatefulWidget {
   final int currentIndex;
@@ -20,150 +20,49 @@ class BottomNavigationBarWithFab extends StatefulWidget {
   });
 
   @override
-  _BottomNavBarFb1State createState() => _BottomNavBarFb1State();
+  _BottomNavBarState createState() => _BottomNavBarState();
 }
 
-class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
+class _BottomNavBarState extends State<BottomNavigationBarWithFab> {
   final primaryColor = const Color(0xFF83B6B9);
   final backgroundColor = const Color(0xffffffff);
-  bool isVerified = false;
+  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
+
   String? userId;
-  String? stripeAccountId;
 
   @override
   void initState() {
     super.initState();
-    _retrieveUserId(); // Start the process of fetching the Stripe account and verification status
+    _retrieveUserId();
   }
 
-  /// Retrieve User ID from secure storage
   Future<void> _retrieveUserId() async {
-    final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
     String? retrievedUserId = await secureStorage.read(key: 'User_ID');
-    setState(() {
-      userId = retrievedUserId;
-    });
-    if (userId != null) {
-      _fetchStripeAccountId(); // Fetch Stripe account ID after retrieving User ID
+    if (retrievedUserId != null && mounted) {
+      setState(() {
+        userId = retrievedUserId;
+      });
     }
   }
 
-  /// Fetch the Stripe account ID for the logged-in user
-  Future<void> _fetchStripeAccountId() async {
-    final String apiUrl =
-        "http://10.0.2.2:8080/api/users/$userId/stripe-account";
-
-    try {
-      final response = await http.get(Uri.parse(apiUrl));
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        setState(() {
-          stripeAccountId = responseData['stripeAccountId'];
-        });
-        _fetchVerificationStatus(); // Fetch verification status after getting account ID
-      } else {
-        print("Failed to fetch Stripe Account ID: ${response.body}");
-      }
-    } catch (e) {
-      print("Error fetching Stripe Account ID: $e");
-    }
-  }
-
-  /// Fetch the Stripe account verification status
-  Future<void> _fetchVerificationStatus() async {
-    if (stripeAccountId == null) return;
-
-    final String apiUrl =
-        "http://10.0.2.2:8080/api/stripe/$stripeAccountId/verification-status";
-
-    try {
-      final response = await http.get(Uri.parse(apiUrl));
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        setState(() {
-          isVerified = responseData['verificationStatus'] == "Verified";
-        });
-      } else {
-        print("Failed to fetch verification status: ${response.body}");
-      }
-    } catch (e) {
-      print("Error fetching verification status: $e");
-    }
-  }
-
-  /// Show a popup message if the user is not verified
-  void _showVerificationPopup(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white, // Set background color to white
-          title: const Text(
-            "Account Not Verified",
-            style: TextStyle(color: Colors.black), // Set text color
-          ),
-          content: const Text(
-            "Please verify your Stripe account to access the Link Page.",
-            style: TextStyle(color: Colors.black), // Set text color
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the popup
-              },
-              child: const Text(
-                "Cancel",
-                style: TextStyle(color: Colors.black), // Set text color
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the popup
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ProfilePage()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF0054FF), // Button background color
-              ),
-              child: const Text("Go to Profile",
-                  style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  /// Handle navigation on icon tap
   void _navigateToPage(int index) {
     switch (index) {
       case 0:
         Navigator.push(
           context,
-          MaterialPageRoute(
-              builder: (context) => MyHomePage(
-                    givenName: '',
-                  )),
+          MaterialPageRoute(builder: (context) => MyHomePage(givenName: '')),
         );
         break;
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => NotificationPage(userId: '',)),
+          MaterialPageRoute(
+              builder: (context) => const NotificationPage(userId: '')),
         );
         break;
       case 2:
-        if (userId != null) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => QRPayPage(userId: int.parse(userId!))),
-          );
-        } else {
-          print("User ID not found");
-        }
+      // Show modal bottom sheet for QR actions
+        _showQrOptions();
         break;
       case 3:
         Navigator.push(
@@ -182,16 +81,100 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
     }
   }
 
+  void _showQrOptions() {
+    if (userId == null) {
+      debugPrint(" User ID not found! Cannot show QR options.");
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext ctx) {
+        return Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Color(0xFFE3F2FD),
+            borderRadius: BorderRadius.circular(16),
+
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Choose an action",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _QrOptionTile(
+                    icon: Icons.download_rounded,
+                    label: "Receive",
+                    onTap: () {
+                      Navigator.pop(ctx); // dismiss bottom sheet
+                      _navigateToReceivePage();
+                    },
+                  ),
+                  _QrOptionTile(
+                    icon: Icons.send_rounded,
+                    label: "Send",
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _navigateToSendPage();
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _navigateToReceivePage() {
+    if (userId == null) {
+      debugPrint(" User ID not found! Cannot navigate to Receive.");
+      return;
+    }
+    debugPrint("✅ Navigating to QRReceivePage with User ID: $userId");
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => QRReceivePage(userId: int.parse(userId!)),
+      ),
+    );
+  }
+
+  void _navigateToSendPage() {
+    if (userId == null) {
+      debugPrint(" User ID not found! Cannot navigate to Send.");
+      return;
+    }
+    debugPrint("✅ Navigating to QRSendPayPage with User ID: $userId");
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => QRSendPayPage(userId: int.parse(userId!)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: SizedBox(
-        height: 75, // Set the desired height for the BottomAppBar
+        height: 75,
         child: BottomAppBar(
           color: backgroundColor,
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 8.0), // Adjust horizontal padding if needed
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -204,14 +187,11 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
                   },
                 ),
                 IconBottomBar(
-                  icon:
-                      Icons.receipt_long, // Updated to transaction history icon
-                  selected: widget.currentIndex ==
-                      4, // Update to handle transaction history icon
+                  icon: Icons.receipt_long,
+                  selected: widget.currentIndex == 4,
                   onPressed: () {
                     widget.onTap(4);
-                    _navigateToPage(
-                        4); // Navigate to the transaction history page
+                    _navigateToPage(4);
                   },
                 ),
                 IconBottomBar2(
@@ -247,36 +227,49 @@ class _BottomNavBarFb1State extends State<BottomNavigationBarWithFab> {
   }
 }
 
-class IconBottomBar extends StatelessWidget {
-  const IconBottomBar({
-    super.key,
-    required this.icon,
-    required this.selected,
-    required this.onPressed,
-  });
-
+class _QrOptionTile extends StatelessWidget {
   final IconData icon;
-  final bool selected;
-  final Function() onPressed;
+  final String label;
+  final VoidCallback onTap;
 
-  final primaryColor = const Color(0xFF0054FF);
+  const _QrOptionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Align(
-        alignment: Alignment.topCenter,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            IconButton(
-              onPressed: onPressed,
-              icon: Icon(
+            CircleAvatar(
+              backgroundColor: Color(0xFF0054FF),
+              radius: 28,
+              child: Icon(
                 icon,
-                size: 23,
-                color: selected ? primaryColor : Colors.black54,
+                size: 30,
+                color: Colors.white,
               ),
             ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            )
           ],
         ),
       ),
@@ -284,17 +277,17 @@ class IconBottomBar extends StatelessWidget {
   }
 }
 
-class IconBottomBar2 extends StatelessWidget {
-  const IconBottomBar2({
+class IconBottomBar extends StatelessWidget {
+  final IconData icon;
+  final bool selected;
+  final Function() onPressed;
+
+  const IconBottomBar({
     super.key,
     required this.icon,
     required this.selected,
     required this.onPressed,
   });
-
-  final IconData icon;
-  final bool selected;
-  final Function() onPressed;
 
   final primaryColor = const Color(0xFF0054FF);
 
@@ -303,21 +296,48 @@ class IconBottomBar2 extends StatelessWidget {
     return Expanded(
       child: Align(
         alignment: Alignment.topCenter,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircleAvatar(
-              backgroundColor: primaryColor,
-              child: IconButton(
-                onPressed: onPressed,
-                icon: Icon(
-                  icon,
-                  size: 23,
-                  color: Colors.white,
-                ),
-              ),
+        child: IconButton(
+          onPressed: onPressed,
+          icon: Icon(
+            icon,
+            size: 23,
+            color: selected ? primaryColor : Colors.black54,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class IconBottomBar2 extends StatelessWidget {
+  final IconData icon;
+  final bool selected;
+  final Function() onPressed;
+
+  const IconBottomBar2({
+    super.key,
+    required this.icon,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  final primaryColor = const Color(0xFF0054FF);
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: CircleAvatar(
+          backgroundColor: primaryColor,
+          child: IconButton(
+            onPressed: onPressed,
+            icon: Icon(
+              icon,
+              size: 23,
+              color: Colors.white,
             ),
-          ],
+          ),
         ),
       ),
     );
