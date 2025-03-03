@@ -11,6 +11,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
+import '../../config.dart';
 import 'settings_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -80,7 +81,7 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
   /// Fetch the Stripe account ID for the logged-in user
   Future<void> _fetchStripeAccountId() async {
     final String apiUrl =
-        "http://10.0.2.2:8080/api/users/$userId/stripe-account";
+        "$baseUrl/api/users/$userId/stripe-account";
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -107,7 +108,7 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
   Future<void> _fetchVerificationStatus() async {
     if (stripeAccountId == null) return;
     final String apiUrl =
-        "http://10.0.2.2:8080/api/stripe/$stripeAccountId/verification-status";
+        "$baseUrl/api/stripe/$stripeAccountId/verification-status";
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {

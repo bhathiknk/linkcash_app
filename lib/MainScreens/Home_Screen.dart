@@ -11,8 +11,6 @@ import 'package:pie_chart/pie_chart.dart';
 import 'package:stomp_dart_client/stomp.dart';
 import 'package:stomp_dart_client/stomp_config.dart';
 import 'package:stomp_dart_client/stomp_frame.dart';
-
-// Import your custom classes, e.g. connectivity service, NoInternetUI, etc.
 import '../ConnectionCheck/No_Internet_Ui.dart';
 import '../ConnectionCheck/connectivity_service.dart';
 
@@ -25,6 +23,7 @@ import 'Pay_Quick_Page.dart';
 import 'Group_Payment_Page.dart';
 import 'payout_history_page.dart';
 import '../WidgetsCom/calendar_widget.dart';
+import '../config.dart';
 
 // ==================== DATA CLASSES (DTOs) ====================
 class TransactionMonthlySummaryDTO {
@@ -190,7 +189,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _fetchPendingBalance(String userId) async {
-    final String apiUrl = "http://10.0.2.2:8080/api/stripe/balance/$userId";
+    final String apiUrl = '$baseUrl/api/stripe/balance/$userId';
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -217,7 +216,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _fetchLastPayout(String userId) async {
     try {
-      final url = 'http://10.0.2.2:8080/api/stripe/payouts/$userId';
+      final url = '$baseUrl/api/stripe/payouts/$userId';
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
@@ -259,7 +258,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _fetchTransactionSummary(String userId) async {
-    final String apiUrl = "http://10.0.2.2:8080/api/transactions/summary/user/$userId";
+    final String apiUrl = "$baseUrl/api/transactions/summary/user/$userId";
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -312,7 +311,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _fetchUnreadNotificationCount(String userId) async {
-    final url = 'http://10.0.2.2:8080/api/notifications/$userId/unread';
+    final url = '$baseUrl/api/notifications/$userId/unread';
     try {
       final resp = await http.get(Uri.parse(url));
       if (resp.statusCode == 200) {
@@ -329,7 +328,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _initStompClient(String userId) {
     _stompClient = StompClient(
       config: StompConfig.SockJS(
-        url: 'http://10.0.2.2:8080/ws',
+        url: '$baseUrl/ws',
         onConnect: (StompFrame frame) {
           debugPrint("STOMP connected => /topic/notifications/$userId");
           _stompClient!.subscribe(

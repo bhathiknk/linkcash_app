@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../config.dart';
 
 class NotificationItem {
   final int notificationId;
@@ -49,7 +50,7 @@ class _NotificationPageState extends State<NotificationPage> {
   Future<void> _fetchNotifications() async {
     setState(() => _isLoading = true);
     try {
-      final allUrl = 'http://10.0.2.2:8080/api/notifications/${widget.userId}';
+      final allUrl = '$baseUrl/api/notifications/${widget.userId}';
       final respAll = await http.get(Uri.parse(allUrl));
       if (respAll.statusCode == 200) {
         final listAll = jsonDecode(respAll.body) as List<dynamic>;
@@ -82,7 +83,7 @@ class _NotificationPageState extends State<NotificationPage> {
 
   Future<void> _markAsRead(int notificationId) async {
     final url =
-        'http://10.0.2.2:8080/api/notifications/mark-read/$notificationId';
+        '$baseUrl/api/notifications/mark-read/$notificationId';
     try {
       final resp = await http.post(Uri.parse(url));
       if (resp.statusCode == 200) {
@@ -99,7 +100,7 @@ class _NotificationPageState extends State<NotificationPage> {
 
   Future<void> _markAllAsRead() async {
     final url =
-        'http://10.0.2.2:8080/api/notifications/${widget.userId}/mark-all-read';
+        '$baseUrl/api/notifications/${widget.userId}/mark-all-read';
     try {
       final resp = await http.post(Uri.parse(url));
       if (resp.statusCode == 200) {

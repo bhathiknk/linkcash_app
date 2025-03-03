@@ -10,7 +10,8 @@ import '../ConnectionCheck/connectivity_service.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
 import '../WidgetsCom/gradient_button_fb4.dart';
-import 'Pay_Quick_Payment_History.dart'; // <--- Import the new history page
+import 'Pay_Quick_Payment_History.dart';
+import '../config.dart';
 
 /// A simple model class to represent a payment link item.
 class PaymentLinkItem {
@@ -108,7 +109,7 @@ class _PayQuickPageState extends State<PayQuickPage> {
     }
 
     double amount = double.tryParse(amountText) ?? 0.0;
-    final String apiUrl = "http://10.0.2.2:8080/api/one-time-payments/create";
+    final String apiUrl = "$baseUrl/api/one-time-payments/create";
     final Map<String, dynamic> payload = {
       "userId": int.parse(userId),
       "title": title,

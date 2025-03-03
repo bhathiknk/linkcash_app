@@ -27,7 +27,7 @@ Future<void> main() async {
 
   // 3) Configure Stripe using .env values
   //    Make sure STRIPE_PUBLISHABLE_KEY is set in .env
-  Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
+  Stripe.publishableKey ='pk_test_51QMX8zCrXpZkt7Cpt7EYqVbgNP6Lm8N1iJ389ej6Wm0UHN5jEGzo0BHZWDGzc5bw3s7GaLGhOIifHgRPpZj3dhvQ00ZSJwQUA6';
 
   // This final step applies the settings so Stripe is fully initialized
   await Stripe.instance.applySettings();

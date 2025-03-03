@@ -3,6 +3,7 @@ import 'package:flutter/services.dart'; // For Clipboard
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart'; // For date/time formatting
+import '../config.dart';
 
 class LinkViewPage extends StatefulWidget {
   final int paymentDetailId;
@@ -37,7 +38,7 @@ class _LinkViewPageState extends State<LinkViewPage> {
   /// Fetch payment details from server
   Future<void> fetchPaymentDetails() async {
     final String apiUrl =
-        "http://10.0.2.2:8080/api/payment-details/view/${widget.paymentDetailId}";
+        "$baseUrl/api/payment-details/view/${widget.paymentDetailId}";
 
     try {
       final response = await http.get(Uri.parse(apiUrl));

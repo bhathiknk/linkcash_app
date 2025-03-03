@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_stripe/flutter_stripe.dart';
 // 1) Import mobile_scanner
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../config.dart';
 
 class QRSendPayPage extends StatefulWidget {
   final int userId;
@@ -15,7 +16,6 @@ class QRSendPayPage extends StatefulWidget {
 }
 
 class _QRSendPayPageState extends State<QRSendPayPage> {
-  final String baseUrl = 'http://10.0.2.2:8080/api/qr';
 
   String? scannedCode;
   String? message;

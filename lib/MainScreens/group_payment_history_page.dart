@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import '../config.dart';
 
 /// Model for basic group payment history items (from /api/group-payments/history/{userId})
 class GroupPaymentHistoryItem {
@@ -197,7 +197,7 @@ class _GroupPaymentHistoryPageState extends State<GroupPaymentHistoryPage>
         return;
       }
 
-      final apiUrl = "http://10.0.2.2:8080/api/group-payments/history/$userId";
+      final apiUrl = '$baseUrl/api/group-payments/history/$userId';
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {

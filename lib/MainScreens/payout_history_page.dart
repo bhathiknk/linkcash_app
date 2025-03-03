@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../config.dart';
 
 /// The top-level response from the backend.
 class PayoutHistoryResponse {
@@ -110,7 +111,7 @@ class _PayoutHistoryPageState extends State<PayoutHistoryPage> {
   Future<void> _fetchPayoutHistory() async {
     setState(() => _isLoading = true);
 
-    final url = 'http://10.0.2.2:8080/api/stripe/payouts/${widget.userId}';
+    final url = '$baseUrl/api/stripe/payouts/${widget.userId}';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {

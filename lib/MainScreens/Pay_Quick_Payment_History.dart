@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
-import 'Pay_Quick_Page.dart'; // Contains PaymentLinkItem model and fromJson constructor
+import 'Pay_Quick_Page.dart';
+import '../config.dart';
 
 // New model to parse full payment details response from backend.
 class PaymentLinkFullDetails {
@@ -85,9 +86,9 @@ class _PayQuickPaymentHistoryPageState extends State<PayQuickPaymentHistoryPage>
 
       // 2) Build URIs with userId + used flags
       final unpaidUri = Uri.parse(
-          "http://10.0.2.2:8080/api/one-time-payment-links/list?used=false&userId=$userId");
+          "$baseUrl/api/one-time-payment-links/list?used=false&userId=$userId");
       final paidUri = Uri.parse(
-          "http://10.0.2.2:8080/api/one-time-payment-links/list?used=true&userId=$userId");
+          "$baseUrl/api/one-time-payment-links/list?used=true&userId=$userId");
 
       // 3) Fetch both unpaid & paid
       final responseUnpaid = await http.get(unpaidUri);
@@ -310,7 +311,7 @@ class _PayQuickPaymentHistoryPageState extends State<PayQuickPaymentHistoryPage>
   Future<PaymentLinkFullDetails?> _fetchFullPaymentDetails(String linkId) async {
     try {
       final response = await http.get(
-        Uri.parse("http://10.0.2.2:8080/api/one-time-payment-links/details/$linkId"),
+        Uri.parse("$baseUrl/api/one-time-payment-links/details/$linkId"),
       );
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);

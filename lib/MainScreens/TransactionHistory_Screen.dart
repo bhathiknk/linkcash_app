@@ -5,11 +5,10 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:fl_chart/fl_chart.dart';
-
-// PDF packages
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import '../config.dart';
 
 class TransactionHistoryPage extends StatefulWidget {
   const TransactionHistoryPage({Key? key}) : super(key: key);
@@ -80,7 +79,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       "sortBy": _sortBy,
     };
 
-    final url = "http://10.0.2.2:8080/api/analytics/user/$userId/transactions";
+    final url = "$baseUrl/api/analytics/user/$userId/transactions";
     try {
       final response = await http.post(
         Uri.parse(url),

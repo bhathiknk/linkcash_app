@@ -8,6 +8,7 @@ import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
 import '../WidgetsCom/gradient_button_fb4.dart';
 import 'group_payment_history_page.dart'; // Import the history page
+import '../config.dart';
 
 /// Model for a group member.
 class GroupMember {
@@ -269,7 +270,7 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
     try {
       // Replace with your actual backend endpoint URL.
       final response = await http.post(
-        Uri.parse("http://10.0.2.2:8080/api/group-payments/create"),
+        Uri.parse('$baseUrl/api/group-payments/create'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(payload),
       );

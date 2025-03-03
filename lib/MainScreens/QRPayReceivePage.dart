@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:qr_flutter/qr_flutter.dart';
+import '../config.dart';
 
 
 class QRReceivePage extends StatefulWidget {
@@ -18,7 +19,6 @@ class _QRReceivePageState extends State<QRReceivePage> {
   final TextEditingController whatsForController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
 
-  final String baseUrl = 'http://10.0.2.2:8080/api/qr';
 
   String? message;
   String? generatedQrCode;

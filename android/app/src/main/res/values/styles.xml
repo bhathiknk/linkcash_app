@@ -1,21 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <!-- The primary app theme used by <application> -->
     <style name="StripeAppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Customize your primary or dark colors, if you wish -->
         <item name="android:statusBarColor">?attr/colorPrimaryDark</item>
         <item name="android:navigationBarColor">@android:color/black</item>
     </style>
 
-    <!-- Theme for the launch screen while the Flutter engine is starting -->
-    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+    <style name="LaunchTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="android:windowBackground">@drawable/launch_background</item>
     </style>
 
-    <!-- Optional: "NormalTheme" if you want a separate theme after launch -->
-    <style name="NormalTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Add color overrides here if you like -->
-    </style>
-
+    <style name="NormalTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar"/>
 </resources>

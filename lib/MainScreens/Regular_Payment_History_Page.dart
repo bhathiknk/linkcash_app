@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'Link_View_Screen.dart';
+import '../config.dart';
 
 // Model class that mirrors the PaymentDetails structure
 class PaymentDetailsItem {
@@ -105,7 +106,7 @@ class _RegularPaymentHistoryPageState extends State<RegularPaymentHistoryPage>
   Future<void> _fetchExpireTypeData(String expireType, String userId) async {
     final encodedExpireType = Uri.encodeComponent(expireType);
     final url =
-        "http://10.0.2.2:8080/api/payment-details/user/$userId/expire-type/$encodedExpireType";
+        "$baseUrl/api/payment-details/user/$userId/expire-type/$encodedExpireType";
 
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
