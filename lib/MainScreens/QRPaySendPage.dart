@@ -1,10 +1,11 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_stripe/flutter_stripe.dart';
-// 1) Import mobile_scanner
-import 'package:mobile_scanner/mobile_scanner.dart';
-import '../config.dart';
+
+import '../config.dart'; // Adjust if needed
 
 class QRSendPayPage extends StatefulWidget {
   final int userId;
@@ -16,25 +17,22 @@ class QRSendPayPage extends StatefulWidget {
 }
 
 class _QRSendPayPageState extends State<QRSendPayPage> {
-
   String? scannedCode;
   String? message;
   double? requestAmount;
   String? requestWhatsFor;
-  bool showPaymentSection = false; // show the pay button & details after scanning
+  bool showPaymentSection = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Send Payment'),
-      ),
+      appBar: AppBar(title: const Text('Send Payment')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // If we haven't scanned yet, show "Scan QR" button
             if (!showPaymentSection) ...[
+              // If we have NOT scanned a QR code yet:
               const Spacer(),
               Center(
                 child: ElevatedButton(
@@ -52,7 +50,7 @@ class _QRSendPayPageState extends State<QRSendPayPage> {
                   ),
                 ),
             ] else ...[
-              // We have scanned => show the request info + "Pay" button
+              // If we HAVE scanned a code and fetched request info:
               Text(
                 "What's For: $requestWhatsFor",
                 style: const TextStyle(fontSize: 18),
@@ -84,36 +82,35 @@ class _QRSendPayPageState extends State<QRSendPayPage> {
     );
   }
 
-  /// 1) Scan the QR code with camera
+  /// 1) Open camera, scan the QR => returns 'code'
   Future<void> _scanQr() async {
-    // Navigate to a separate scanner page that uses mobile_scanner
     final code = await Navigator.push<String>(
       context,
-      MaterialPageRoute(builder: (context) => const _MobileScannerPage()),
+      MaterialPageRoute(builder: (_) => const QRScannerPage()),
     );
 
+    // If user scanned a valid QR
     if (code != null && code.isNotEmpty) {
       setState(() {
         scannedCode = code;
       });
-      // 2) Fetch request info from backend
+      // 2) Fetch request info from backend (e.g. 'whatsFor', 'amount')
       await _fetchRequestInfo(code);
     }
   }
 
-  /// 2) GET /api/qr/info/{qrCode} => we get { amount, whatsFor, status }
+  /// 2) GET /api/qr/info/{qrCode}
   Future<void> _fetchRequestInfo(String code) async {
-    final url = Uri.parse('$baseUrl/info/$code');
+    final url = Uri.parse('$baseUrl/api/qr/info/$code');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final amt = (data['amount'] as num).toDouble();
-        final wf = data['whatsFor'].toString();
+
         setState(() {
-          requestAmount = amt;
-          requestWhatsFor = wf;
-          showPaymentSection = true;
+          requestAmount = (data['amount'] as num).toDouble();
+          requestWhatsFor = data['whatsFor'].toString();
+          showPaymentSection = true; // Show the pay button & info
           message = null;
         });
       } else {
@@ -128,27 +125,29 @@ class _QRSendPayPageState extends State<QRSendPayPage> {
     }
   }
 
-  /// 3) POST /api/qr/paybycode => returns clientSecret => show Payment Sheet
+  /// 3) POST /api/qr/paybycode => returns clientSecret => Stripe PaymentSheet
   Future<void> _initiatePayment() async {
     if (scannedCode == null) return;
-    final url = Uri.parse('$baseUrl/paybycode');
+    final url = Uri.parse('$baseUrl/api/qr/paybycode');
+
     try {
       final body = jsonEncode({
         "payerUserId": widget.userId,
         "qrCode": scannedCode,
       });
+
       final resp = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
         body: body,
       );
+
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
+
         if (data.containsKey("clientSecret")) {
           final clientSecret = data["clientSecret"];
-          setState(() {
-            message = "Payment initiated. Opening Payment Sheet...";
-          });
+          // 4) Show Payment Sheet
           await _confirmPayment(clientSecret);
         } else {
           setState(() {
@@ -167,7 +166,7 @@ class _QRSendPayPageState extends State<QRSendPayPage> {
     }
   }
 
-  /// 4) Confirm Payment with Stripe Payment Sheet
+  /// 4) Present Payment Sheet with the returned clientSecret
   Future<void> _confirmPayment(String clientSecret) async {
     try {
       await Stripe.instance.initPaymentSheet(
@@ -176,6 +175,7 @@ class _QRSendPayPageState extends State<QRSendPayPage> {
           merchantDisplayName: 'LinkCash Payments',
         ),
       );
+
       await Stripe.instance.presentPaymentSheet();
 
       setState(() {
@@ -193,65 +193,120 @@ class _QRSendPayPageState extends State<QRSendPayPage> {
   }
 }
 
-// ============ A separate page for scanning the QR code ============
-// 2) Using mobile_scanner v6.x
-class _MobileScannerPage extends StatefulWidget {
-  const _MobileScannerPage({Key? key}) : super(key: key);
+// =================== QR SCANNER PAGE WITH UI ENHANCEMENTS ===================
+class QRScannerPage extends StatefulWidget {
+  const QRScannerPage({Key? key}) : super(key: key);
 
   @override
-  State<_MobileScannerPage> createState() => _MobileScannerPageState();
+  State<QRScannerPage> createState() => _QRScannerPageState();
 }
 
-class _MobileScannerPageState extends State<_MobileScannerPage> {
-  // Optionally control the scanner (e.g. toggle torch)
-  final MobileScannerController _cameraController = MobileScannerController();
+class _QRScannerPageState extends State<QRScannerPage> {
+  late CameraController _cameraController;
+  late Future<void> _initializeControllerFuture;
+  final BarcodeScanner _barcodeScanner = BarcodeScanner();
+  bool _isProcessing = false;
 
-  bool _scannedAlready = false; // so we only pop once
+  @override
+  void initState() {
+    super.initState();
+    _initializeControllerFuture = _initializeCamera();
+  }
+
+  /// Initialize the back camera
+  Future<void> _initializeCamera() async {
+    final cameras = await availableCameras();
+    final backCamera = cameras.firstWhere(
+          (cam) => cam.lensDirection == CameraLensDirection.back,
+      orElse: () => cameras.first,
+    );
+
+    _cameraController = CameraController(
+      backCamera,
+      ResolutionPreset.medium,
+      enableAudio: false,
+    );
+
+    await _cameraController.initialize();
+    _cameraController.startImageStream(_processCameraImage);
+  }
+
+  /// Process each camera frame with Google ML Kit
+  Future<void> _processCameraImage(CameraImage image) async {
+    if (_isProcessing) return;
+    _isProcessing = true;
+
+    try {
+      final metadata = InputImageMetadata(
+        size: Size(image.width.toDouble(), image.height.toDouble()),
+        rotation: InputImageRotation.rotation0deg,
+        format: InputImageFormat.yuv420,
+        bytesPerRow: image.planes[0].bytesPerRow,
+      );
+
+      final inputImage = InputImage.fromBytes(
+        bytes: image.planes[0].bytes,
+        metadata: metadata,
+      );
+
+      final barcodes = await _barcodeScanner.processImage(inputImage);
+
+      if (barcodes.isNotEmpty) {
+        // We only care about the first barcode
+        final String code = barcodes.first.rawValue ?? 'Unknown';
+        // Stop scanning
+        _cameraController.stopImageStream();
+        _barcodeScanner.close();
+
+        // Return the scanned code to the previous page
+        Navigator.pop(context, code);
+      }
+    } catch (e) {
+      debugPrint('Error scanning QR: $e');
+    } finally {
+      _isProcessing = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _cameraController.dispose();
+    _barcodeScanner.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Scan QR Code"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.cameraswitch),
-            onPressed: () => _cameraController.switchCamera(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.flash_on),
-            onPressed: () => _cameraController.toggleTorch(),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Scan QR Code')),
       body: Stack(
         children: [
-          // MobileScanner no longer has 'allowDuplicates' or 'onDetect' with two parameters
-          MobileScanner(
-            controller: _cameraController,
-            // The new onDetect signature => onDetect: (BarcodeCapture capture)
-            onDetect: (capture) {
-              if (_scannedAlready) return;
-              final barcodes = capture.barcodes;
-
-              for (final barcode in barcodes) {
-                final String? code = barcode.rawValue;
-                if (code != null && code.isNotEmpty) {
-                  _scannedAlready = true;
-                  Navigator.pop(context, code);
-                  break;
-                }
-              }
+          FutureBuilder<void>(
+            future: _initializeControllerFuture,
+            builder: (context, snapshot) {
+              return snapshot.connectionState == ConnectionState.done
+                  ? CameraPreview(_cameraController)
+                  : const Center(child: CircularProgressIndicator());
             },
           ),
-          // Optionally, add an overlay or instructions
+          // Overlay with Square for QR Code alignment
+          Center(
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.green, width: 4),
+              ),
+            ),
+          ),
+          // Instruction text at the bottom
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              color: Colors.black45,
+              color: Colors.black54,
               padding: const EdgeInsets.all(16),
               child: const Text(
-                "Point the camera at a QR code",
+                "Align QR code within the square",
                 style: TextStyle(color: Colors.white),
               ),
             ),

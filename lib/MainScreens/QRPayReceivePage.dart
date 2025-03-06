@@ -80,7 +80,7 @@ class _QRReceivePageState extends State<QRReceivePage> {
   }
 
   Future<void> _createPaymentRequest() async {
-    final url = Uri.parse('$baseUrl/request');
+    final url = Uri.parse('$baseUrl/api/qr/request');
     final whatsFor = whatsForController.text.trim();
     final amountStr = amountController.text.trim();
 
