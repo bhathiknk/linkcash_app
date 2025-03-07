@@ -5,7 +5,6 @@ import 'dart:convert';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../config.dart';
 
-
 class QRReceivePage extends StatefulWidget {
   final int userId;
 
@@ -19,7 +18,6 @@ class _QRReceivePageState extends State<QRReceivePage> {
   final TextEditingController whatsForController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
 
-
   String? message;
   String? generatedQrCode;
   bool showPopup = false;
@@ -29,7 +27,7 @@ class _QRReceivePageState extends State<QRReceivePage> {
     // If showPopup is true, we block going back by overriding WillPopScope
     return WillPopScope(
       onWillPop: () async {
-        // If the popup is open, we do not allow back
+        // If the popup is open, do not allow back
         return !showPopup;
       },
       child: Scaffold(
@@ -65,7 +63,10 @@ class _QRReceivePageState extends State<QRReceivePage> {
               if (message != null) ...[
                 Text(
                   message!,
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
                 ),
               ],
 
@@ -132,10 +133,9 @@ class _QRReceivePageState extends State<QRReceivePage> {
     }
   }
 
-  // A "dialog" that covers the screen so user cannot go back unless they press "Close"
+  // A full-screen "dialog" that prevents going back until "Close" is pressed
   Widget _buildQrCodeDialog() {
     return Container(
-      // This container covers the entire screen
       color: Colors.black54,
       child: Center(
         child: Card(
@@ -150,14 +150,12 @@ class _QRReceivePageState extends State<QRReceivePage> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                // Show the actual QR code
                 QrImageView(
                   data: generatedQrCode!,
                   version: QrVersions.auto,
                   size: 200.0,
                 ),
                 const SizedBox(height: 16),
-                // "Close" button
                 ElevatedButton(
                   onPressed: () {
                     // Reset everything

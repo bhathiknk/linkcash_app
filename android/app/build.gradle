@@ -20,7 +20,7 @@ def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '
 
 android {
     namespace "com.linkcash.linkcash_app"
-    compileSdk 34 // Updated to latest stable version
+    compileSdk 35 // Updated to latest stable version
 
     ndkVersion flutter.ndkVersion
 
@@ -40,7 +40,7 @@ android {
     defaultConfig {
         applicationId "com.linkcash.linkcash_app"
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
 
