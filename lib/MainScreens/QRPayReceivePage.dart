@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 import 'package:qr_flutter/qr_flutter.dart';
 import '../config.dart';
 
@@ -22,45 +21,77 @@ class _QRReceivePageState extends State<QRReceivePage> {
   String? generatedQrCode;
   bool showPopup = false;
 
+  // Define UI Colors
+  final Color primaryBlue = const Color(0xFF0054FF);
+  final Color solidBackground = const Color(0xFFE3F2FD);
+
   @override
   Widget build(BuildContext context) {
-    // If showPopup is true, we block going back by overriding WillPopScope
     return WillPopScope(
-      onWillPop: () async {
-        // If the popup is open, do not allow back
-        return !showPopup;
-      },
+      onWillPop: () async => !showPopup,
       child: Scaffold(
+        backgroundColor: solidBackground,
         appBar: AppBar(
           title: const Text('Receive Payment'),
+          backgroundColor: Colors.white,
+          foregroundColor: primaryBlue,
+          elevation: 0,
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // What's For
+              // "What's For" text field with white background and rounded corners
               TextField(
                 controller: whatsForController,
-                decoration: const InputDecoration(labelText: "What's For"),
+                decoration: InputDecoration(
+                  labelText: "What's For",
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding:
+                  const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
-
-              // Amount
+              // "Amount" text field with white background and rounded corners
               TextField(
                 controller: amountController,
-                decoration: const InputDecoration(labelText: "Amount (GBP)"),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: "Amount (GBP)",
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding:
+                  const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                ),
+                keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
               ),
               const SizedBox(height: 16),
-
-              // Create QR Code button
+              // Create QR Code button styled in blue
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryBlue,
+                  foregroundColor: Colors.white,
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                  textStyle: const TextStyle(fontSize: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
                 onPressed: _createPaymentRequest,
                 child: const Text("Create QR Code"),
               ),
-
               const SizedBox(height: 16),
-              if (message != null) ...[
+              if (message != null)
                 Text(
                   message!,
                   style: const TextStyle(
@@ -68,11 +99,8 @@ class _QRReceivePageState extends State<QRReceivePage> {
                     color: Colors.red,
                   ),
                 ),
-              ],
-
-              // If popup is open, show it as a full-screen Dialog
-              if (showPopup && generatedQrCode != null)
-                _buildQrCodeDialog(),
+              // QR Code dialog popup without a grey overlay background
+              if (showPopup && generatedQrCode != null) _buildQrCodeDialog(),
             ],
           ),
         ),
@@ -119,7 +147,7 @@ class _QRReceivePageState extends State<QRReceivePage> {
         final qrCode = data['qrCode'];
         setState(() {
           generatedQrCode = qrCode;
-          showPopup = true; // show the popup
+          showPopup = true; // Show the popup
         });
       } else {
         setState(() {
@@ -133,32 +161,77 @@ class _QRReceivePageState extends State<QRReceivePage> {
     }
   }
 
-  // A full-screen "dialog" that prevents going back until "Close" is pressed
+  // Full-screen dialog displaying the generated QR Code with enhanced design,
+  // but without the grey (black54) overlay background.
   Widget _buildQrCodeDialog() {
-    return Container(
-      color: Colors.black54,
-      child: Center(
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              primaryBlue.withOpacity(0.8),
+              Colors.white,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(10.0),
+        ),
         child: Card(
-          margin: const EdgeInsets.symmetric(horizontal: 20),
+          margin: EdgeInsets.zero,
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   "QR Code Generated",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: primaryBlue,
+                  ),
                 ),
                 const SizedBox(height: 16),
-                QrImageView(
-                  data: generatedQrCode!,
-                  version: QrVersions.auto,
-                  size: 200.0,
+                // QR code container with shadow for added depth
+                Container(
+                  padding: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryBlue.withOpacity(0.4),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: QrImageView(
+                    data: generatedQrCode!,
+                    version: QrVersions.auto,
+                    size: 200.0,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 30, vertical: 16),
+                    textStyle: const TextStyle(fontSize: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
                   onPressed: () {
-                    // Reset everything
+                    // Reset everything when closing
                     setState(() {
                       showPopup = false;
                       generatedQrCode = null;

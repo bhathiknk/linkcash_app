@@ -12,7 +12,7 @@ class QRScannerPage extends StatefulWidget {
 }
 
 class _QRScannerPageState extends State<QRScannerPage> {
-  late CameraController _cameraController;
+  CameraController? _cameraController;
   final BarcodeScanner _barcodeScanner = BarcodeScanner();
   bool _isProcessing = false;
   bool _isScanning = true;
@@ -38,11 +38,16 @@ class _QRScannerPageState extends State<QRScannerPage> {
       imageFormatGroup: ImageFormatGroup.nv21, // Ensures correct format
     );
 
-    await _cameraController.initialize();
+    try {
+      await _cameraController!.initialize();
+    } catch (e) {
+      debugPrint("Error initializing camera: $e");
+    }
+
     if (mounted) {
       setState(() {});
     }
-    _cameraController.startImageStream(_processCameraImage);
+    _cameraController?.startImageStream(_processCameraImage);
   }
 
   /// Process each camera frame to detect QR codes
@@ -56,44 +61,25 @@ class _QRScannerPageState extends State<QRScannerPage> {
 
       if (barcodes.isNotEmpty) {
         final String? code = barcodes.first.rawValue;
-
         if (code != null && code.isNotEmpty) {
           _isScanning = false;
-          _cameraController.stopImageStream();
+          // Ensure the camera is still initialized before stopping the stream
+          if (mounted && _cameraController != null && _cameraController!.value.isInitialized) {
+            await _cameraController!.stopImageStream();
+          }
           await _barcodeScanner.close();
 
-          // Show scanned data in a dialog
-          _showScannedDataDialog(code);
+          // Optional short delay for smoother transition
+          await Future.delayed(const Duration(milliseconds: 300));
+          // Directly return the scanned code without a popup
+          Navigator.pop(context, code);
         }
       }
     } catch (e) {
-      debugPrint('Error scanning QR: $e');
+      debugPrint("Error scanning QR: $e");
     } finally {
       _isProcessing = false;
     }
-  }
-
-  /// Show scanned QR code data in a dialog
-  void _showScannedDataDialog(String scannedData) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Scanned QR Code"),
-          content: Text(scannedData, style: const TextStyle(fontSize: 18)),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Close the dialog
-                Navigator.pop(context, scannedData); // Return scanned data
-              },
-              child: const Text("OK"),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   /// Convert CameraImage to InputImage correctly
@@ -116,7 +102,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
 
   @override
   void dispose() {
-    _cameraController.dispose();
+    _cameraController?.dispose();
     _barcodeScanner.close();
     super.dispose();
   }
@@ -125,25 +111,44 @@ class _QRScannerPageState extends State<QRScannerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Scan QR Code')),
-      body: Stack(
+      body: _cameraController != null && _cameraController!.value.isInitialized
+          ? Stack(
         children: [
-          if (_cameraController.value.isInitialized)
-            CameraPreview(_cameraController)
-          else
-            const Center(child: CircularProgressIndicator()),
-          Align(
-            alignment: Alignment.bottomCenter,
+          CameraPreview(_cameraController!),
+          // Overlay for a scanning box
+          Center(
             child: Container(
-              color: Colors.black54,
-              padding: const EdgeInsets.all(16),
-              child: const Text(
-                "Align QR code within the square",
-                style: TextStyle(color: Colors.white),
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white70, width: 3),
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.black26,
+              ),
+            ),
+          ),
+          // Bottom instructions
+          Positioned(
+            bottom: 30,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  "Align QR code within the box",
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
               ),
             ),
           ),
         ],
-      ),
+      )
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 }

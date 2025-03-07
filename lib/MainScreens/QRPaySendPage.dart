@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'QRScannerPage.dart';
@@ -21,58 +21,158 @@ class _QRSendPayPageState extends State<QRSendPayPage> {
   String? requestWhatsFor;
   bool showPaymentSection = false;
 
+  // Provided colors
+  final Color primaryBlue = const Color(0xFF0054FF);
+  final Color solidBackground = const Color(0xFFE3F2FD);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Send Payment')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            if (!showPaymentSection) ...[
-              const Spacer(),
-              Center(
-                child: ElevatedButton(
-                  onPressed: _scanQr,
-                  child: const Text("Scan QR"),
-                ),
+      extendBodyBehindAppBar: true,
+      backgroundColor: solidBackground,
+      appBar: AppBar(
+        title: const Text('Send Payment'),
+        backgroundColor: Colors.white,
+        foregroundColor: primaryBlue,
+        elevation: 0,
+      ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: solidBackground,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, kToolbarHeight + 32, 16, 16),
+          // AnimatedSwitcher for attractive fade transition between scan and payment sections
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            child: showPaymentSection ? _buildPaymentSection() : _buildScanSection(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScanSection() {
+    return Center(
+      key: const ValueKey('scanSection'),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            "Ready to make a payment?",
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: primaryBlue,
+            ),
+          ),
+          const SizedBox(height: 30),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryBlue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+              textStyle: const TextStyle(fontSize: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
               ),
-              const Spacer(),
-              if (message != null)
-                Text(
-                  message!,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red,
-                  ),
-                ),
-            ] else ...[
-              Text(
-                "What's For: $requestWhatsFor",
-                style: const TextStyle(fontSize: 18),
+            ),
+            onPressed: _scanQr,
+            child: const Text("Scan QR"),
+          ),
+          if (message != null) ...[
+            const SizedBox(height: 20),
+            Text(
+              message!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+                fontSize: 16,
               ),
-              const SizedBox(height: 10),
-              Text(
-                "Amount: £${requestAmount?.toStringAsFixed(2)}",
-                style: const TextStyle(fontSize: 18),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _initiatePayment,
-                child: const Text("Pay"),
-              ),
-              if (message != null) ...[
-                const SizedBox(height: 10),
-                Text(
-                  message!,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red,
-                  ),
-                ),
-              ],
-            ],
+            ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentSection() {
+    return Center(
+      key: const ValueKey('paymentSection'),
+      child: Container(
+        width: 350, // Fixed width for payment card
+        child: Card(
+          color: Colors.white,
+          elevation: 6,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Payment Details",
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: primaryBlue,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    const Text("What's For: ",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    Expanded(
+                      child: Text(
+                        requestWhatsFor ?? "",
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    const Text("Amount: ",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(
+                      "£${requestAmount?.toStringAsFixed(2) ?? '0.00'}",
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 16),
+                    textStyle: const TextStyle(fontSize: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  onPressed: _initiatePayment,
+                  child: const Text("Pay"),
+                ),
+                if (message != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    message!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -89,13 +189,12 @@ class _QRSendPayPageState extends State<QRSendPayPage> {
       setState(() {
         scannedCode = code;
       });
-
       // Automatically fetch request info after scanning
       await _fetchRequestInfo(code);
     }
   }
 
-  /// Fetch QR request details
+  /// Fetch QR request details from backend
   Future<void> _fetchRequestInfo(String code) async {
     final url = Uri.parse('$baseUrl/api/qr/info/$code');
 
@@ -103,7 +202,6 @@ class _QRSendPayPageState extends State<QRSendPayPage> {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         setState(() {
           requestAmount = (data['amount'] as num).toDouble();
           requestWhatsFor = data['whatsFor'].toString();
@@ -122,8 +220,7 @@ class _QRSendPayPageState extends State<QRSendPayPage> {
     }
   }
 
-
-/// Initiate Payment via Stripe using QR Code
+  /// Initiate Payment via Stripe using QR Code
   Future<void> _initiatePayment() async {
     if (scannedCode == null) return;
     final url = Uri.parse('$baseUrl/api/qr/paybycode');
@@ -142,7 +239,6 @@ class _QRSendPayPageState extends State<QRSendPayPage> {
 
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
-
         if (data.containsKey("clientSecret")) {
           final clientSecret = data["clientSecret"];
           // Show Payment Sheet
@@ -167,19 +263,17 @@ class _QRSendPayPageState extends State<QRSendPayPage> {
   /// Confirm Payment with Stripe Payment Sheet
   Future<void> _confirmPayment(String clientSecret) async {
     try {
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
+      await stripe.Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: stripe.SetupPaymentSheetParameters(
           paymentIntentClientSecret: clientSecret,
           merchantDisplayName: 'LinkCash Payments',
         ),
       );
-
-      await Stripe.instance.presentPaymentSheet();
-
+      await stripe.Stripe.instance.presentPaymentSheet();
       setState(() {
         message = "Payment completed successfully!";
       });
-    } on StripeException catch (e) {
+    } on stripe.StripeException catch (e) {
       setState(() {
         message = "Payment failed: ${e.error.localizedMessage}";
       });
