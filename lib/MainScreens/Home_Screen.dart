@@ -736,9 +736,9 @@ class _MyHomePageState extends State<MyHomePage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildActionButton('Onetime Pay', Icons.payments),
-        _buildActionButton('Group Pay', Icons.group),
-        _buildActionButton('Regular Pay', Icons.repeat),
+        _buildActionButton('Get Onetime', Icons.payments),
+        _buildActionButton(' Get Group', Icons.group),
+        _buildActionButton('Get Regular', Icons.repeat),
       ],
     );
   }

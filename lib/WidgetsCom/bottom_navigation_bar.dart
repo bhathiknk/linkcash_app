@@ -3,11 +3,13 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // Import your existing pages:
 import '../MainScreens/Home_Screen.dart';
-import '../MainScreens/NotificationPage.dart';
 import '../MainScreens/ProfileComponents/Profile_Screen.dart';
+import '../MainScreens/TransactionHistory_Screen.dart';
 import '../MainScreens/QRPayReceivePage.dart';
 import '../MainScreens/QRPaySendPage.dart';
-import '../MainScreens/TransactionHistory_Screen.dart';
+
+// Import your new ShopPage:
+import '../MainScreens/ShopPage.dart';
 
 class BottomNavigationBarWithFab extends StatefulWidget {
   final int currentIndex;
@@ -54,10 +56,10 @@ class _BottomNavBarState extends State<BottomNavigationBarWithFab> {
         );
         break;
       case 1:
+      // Navigate to ShopPage
         Navigator.push(
           context,
-          MaterialPageRoute(
-              builder: (context) => const NotificationPage(userId: '')),
+          MaterialPageRoute(builder: (context) => const ShopPage()),
         );
         break;
       case 2:
@@ -83,7 +85,7 @@ class _BottomNavBarState extends State<BottomNavigationBarWithFab> {
 
   void _showQrOptions() {
     if (userId == null) {
-      debugPrint(" User ID not found! Cannot show QR options.");
+      debugPrint("User ID not found! Cannot show QR options.");
       return;
     }
 
@@ -95,9 +97,8 @@ class _BottomNavBarState extends State<BottomNavigationBarWithFab> {
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Color(0xFFE3F2FD),
+            color: const Color(0xFFE3F2FD),
             borderRadius: BorderRadius.circular(16),
-
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -140,7 +141,7 @@ class _BottomNavBarState extends State<BottomNavigationBarWithFab> {
 
   void _navigateToReceivePage() {
     if (userId == null) {
-      debugPrint(" User ID not found! Cannot navigate to Receive.");
+      debugPrint("User ID not found! Cannot navigate to Receive.");
       return;
     }
     debugPrint("✅ Navigating to QRReceivePage with User ID: $userId");
@@ -154,7 +155,7 @@ class _BottomNavBarState extends State<BottomNavigationBarWithFab> {
 
   void _navigateToSendPage() {
     if (userId == null) {
-      debugPrint(" User ID not found! Cannot navigate to Send.");
+      debugPrint("User ID not found! Cannot navigate to Send.");
       return;
     }
     debugPrint("✅ Navigating to QRSendPayPage with User ID: $userId");
@@ -203,7 +204,8 @@ class _BottomNavBarState extends State<BottomNavigationBarWithFab> {
                   },
                 ),
                 IconBottomBar(
-                  icon: Icons.notifications_rounded,
+                  // Changed from Icons.notifications_rounded to Icons.store_rounded
+                  icon: Icons.store_rounded,
                   selected: widget.currentIndex == 1,
                   onPressed: () {
                     widget.onTap(1);
@@ -254,7 +256,7 @@ class _QrOptionTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             CircleAvatar(
-              backgroundColor: Color(0xFF0054FF),
+              backgroundColor: const Color(0xFF0054FF),
               radius: 28,
               child: Icon(
                 icon,
