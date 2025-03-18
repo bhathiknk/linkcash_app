@@ -41,6 +41,7 @@ dependencies:
   qr_flutter: ^4.1.0
   google_mlkit_barcode_scanning: ^0.13.0
   camera: ^0.11.1
+  slide_countdown: ^2.0.2
 
 
 

@@ -10,7 +10,6 @@ import 'BillHistoryPage.dart';
 import 'BillLogPage.dart';
 import 'CreateBillPage.dart';
 
-
 class ShopPage extends StatefulWidget {
   const ShopPage({Key? key}) : super(key: key);
 
@@ -37,8 +36,10 @@ class _ShopPageState extends State<ShopPage> {
     _checkShopRegistration();
   }
 
+  // Checks if user already has a shop
   Future<void> _checkShopRegistration() async {
     setState(() => _isLoading = true);
+
     final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
     String? userId = await secureStorage.read(key: 'User_ID');
 
@@ -61,7 +62,15 @@ class _ShopPageState extends State<ShopPage> {
           _shopData = data;
           _isLoading = false;
         });
+
+        // === Store the shopId in secure storage ===
+        final shopIdFromData = data["shopId"];
+        if (shopIdFromData != null) {
+          await secureStorage.write(key: 'SHOP_ID', value: shopIdFromData.toString());
+        }
+
       } else {
+        // No shop => prompt registration
         setState(() {
           _hasShop = false;
           _isLoading = false;
@@ -76,6 +85,7 @@ class _ShopPageState extends State<ShopPage> {
     }
   }
 
+  // Popup dialog to register a new shop
   void _showRegistrationDialog() {
     showDialog(
       context: context,
@@ -126,8 +136,10 @@ class _ShopPageState extends State<ShopPage> {
     );
   }
 
+  // Registers a new shop
   Future<void> _registerShop() async {
     setState(() => _isLoading = true);
+
     final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
     String? userId = await secureStorage.read(key: 'User_ID');
 
@@ -160,6 +172,13 @@ class _ShopPageState extends State<ShopPage> {
           _shopData = data;
           _isLoading = false;
         });
+
+        // === Store the new shopId in secure storage ===
+        final shopIdFromData = data["shopId"];
+        if (shopIdFromData != null) {
+          await secureStorage.write(key: 'SHOP_ID', value: shopIdFromData.toString());
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Shop registered successfully!")),
         );
@@ -177,6 +196,7 @@ class _ShopPageState extends State<ShopPage> {
     }
   }
 
+  // Dashboard if the shop is found
   Widget _buildShopDashboard() {
     final String? qrCodeData = _shopData?['shopQrCode'] as String?;
 
@@ -194,6 +214,7 @@ class _ShopPageState extends State<ShopPage> {
               ),
             ),
             const SizedBox(height: 20),
+            // Shop QR code
             if (qrCodeData != null && qrCodeData.isNotEmpty)
               QrImageView(
                 data: qrCodeData,
@@ -203,7 +224,10 @@ class _ShopPageState extends State<ShopPage> {
               )
             else
               const Text("No QR Code available."),
+
             const SizedBox(height: 20),
+
+            // Shop Info
             if (_shopData != null)
               Card(
                 color: whiteColor.withOpacity(0.9),
@@ -246,7 +270,10 @@ class _ShopPageState extends State<ShopPage> {
                   ),
                 ),
               ),
+
             const SizedBox(height: 20),
+
+            // Create Bill button
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: brightBlueColor,
@@ -263,8 +290,12 @@ class _ShopPageState extends State<ShopPage> {
               },
               child: const Text("Create Bill"),
             ),
+
             const SizedBox(height: 20),
+
+            // Action buttons
             _buildActionButtons(),
+
             const SizedBox(height: 20),
           ],
         ),
@@ -334,9 +365,7 @@ class _ShopPageState extends State<ShopPage> {
           ? const Center(child: CircularProgressIndicator())
           : _hasShop
           ? _buildShopDashboard()
-          : const Center(
-        child: Text("No shop found. Please register."),
-      ),
+          : const Center(child: Text("No shop found. Please register.")),
     );
   }
 }
