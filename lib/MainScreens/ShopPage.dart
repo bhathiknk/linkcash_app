@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../config.dart';
+import 'AddItemsPage.dart';
+import 'BillHistoryPage.dart';
+import 'BillLogPage.dart';
+import 'CreateBillPage.dart';
 
 
 class ShopPage extends StatefulWidget {
@@ -14,18 +19,15 @@ class ShopPage extends StatefulWidget {
 }
 
 class _ShopPageState extends State<ShopPage> {
-  // Colors
-  final Color whiteColor = const Color(0xFFFFFFFF);
-  final Color lightTealColor = const Color(0xFF83B6B9);
-  final Color lightBlueColor = const Color(0xFFE3F2FD);
+  final Color backgroundColor = const Color(0xFFE3F2FD);
+  final Color appBarColor = Colors.white;
   final Color brightBlueColor = const Color(0xFF0054FF);
+  final Color whiteColor = const Color(0xFFFFFFFF);
 
-  // State
   bool _isLoading = false;
   bool _hasShop = false;
   Map<String, dynamic>? _shopData;
 
-  // Registration form controllers
   final TextEditingController _shopNameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
 
@@ -35,10 +37,8 @@ class _ShopPageState extends State<ShopPage> {
     _checkShopRegistration();
   }
 
-  /// 1) Check if user has a shop
   Future<void> _checkShopRegistration() async {
     setState(() => _isLoading = true);
-
     final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
     String? userId = await secureStorage.read(key: 'User_ID');
 
@@ -55,7 +55,6 @@ class _ShopPageState extends State<ShopPage> {
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
-        // Shop exists
         final data = jsonDecode(response.body);
         setState(() {
           _hasShop = true;
@@ -63,12 +62,10 @@ class _ShopPageState extends State<ShopPage> {
           _isLoading = false;
         });
       } else {
-        // No shop or error => user not registered
         setState(() {
           _hasShop = false;
           _isLoading = false;
         });
-        // Show the popup to register
         Future.delayed(Duration.zero, () => _showRegistrationDialog());
       }
     } catch (e) {
@@ -79,11 +76,10 @@ class _ShopPageState extends State<ShopPage> {
     }
   }
 
-  /// 2) Popup dialog that asks user to register shop
   void _showRegistrationDialog() {
     showDialog(
       context: context,
-      barrierDismissible: false, // user must register or close manually
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("Register Your Shop"),
@@ -92,18 +88,16 @@ class _ShopPageState extends State<ShopPage> {
               children: [
                 TextField(
                   controller: _shopNameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: "Shop Name",
-                    fillColor: lightBlueColor,
                     filled: true,
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _addressController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: "Shop Address",
-                    fillColor: lightBlueColor,
                     filled: true,
                   ),
                 ),
@@ -112,7 +106,7 @@ class _ShopPageState extends State<ShopPage> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context), // user can close if they want
+              onPressed: () => Navigator.pop(context),
               child: const Text("Cancel"),
             ),
             ElevatedButton(
@@ -121,7 +115,7 @@ class _ShopPageState extends State<ShopPage> {
                 foregroundColor: whiteColor,
               ),
               onPressed: () async {
-                Navigator.pop(context); // close dialog
+                Navigator.pop(context);
                 await _registerShop();
               },
               child: const Text("Register"),
@@ -132,10 +126,8 @@ class _ShopPageState extends State<ShopPage> {
     );
   }
 
-  /// 3) Register the shop using the fields from the popup
   Future<void> _registerShop() async {
     setState(() => _isLoading = true);
-
     final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
     String? userId = await secureStorage.read(key: 'User_ID');
 
@@ -162,7 +154,6 @@ class _ShopPageState extends State<ShopPage> {
       );
 
       if (response.statusCode == 200) {
-        // Successfully created
         final data = jsonDecode(response.body);
         setState(() {
           _hasShop = true;
@@ -186,64 +177,158 @@ class _ShopPageState extends State<ShopPage> {
     }
   }
 
-  /// 4) Main Shop Dashboard if user has a shop
   Widget _buildShopDashboard() {
+    final String? qrCodeData = _shopData?['shopQrCode'] as String?;
+
     return SingleChildScrollView(
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          Text(
-            "Welcome to Your Shop!",
-            style: TextStyle(
-              color: brightBlueColor,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 10),
-          if (_shopData != null) ...[
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        child: Column(
+          children: [
             Text(
-              "Shop Name: ${_shopData!['shopName']}",
-              style: const TextStyle(fontSize: 16),
-            ),
-            Text(
-              "Address: ${_shopData!['address']}",
-              style: const TextStyle(fontSize: 16),
-            ),
-            Text(
-              "Shop QR Code: ${_shopData!['shopQrCode'] ?? 'N/A'}",
-              style: const TextStyle(fontSize: 16),
+              "Welcome to Your Shop!",
+              style: TextStyle(
+                color: brightBlueColor,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 20),
-            Divider(color: brightBlueColor),
+            if (qrCodeData != null && qrCodeData.isNotEmpty)
+              QrImageView(
+                data: qrCodeData,
+                version: QrVersions.auto,
+                size: 200,
+                backgroundColor: Colors.white,
+              )
+            else
+              const Text("No QR Code available."),
+            const SizedBox(height: 20),
+            if (_shopData != null)
+              Card(
+                color: whiteColor.withOpacity(0.9),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      ListTile(
+                        leading: Icon(Icons.store, color: brightBlueColor, size: 20),
+                        title: const Text(
+                          "Shop Name",
+                          style: TextStyle(fontSize: 14, color: Colors.black54),
+                        ),
+                        subtitle: Text(
+                          _shopData!['shopName'] ?? "N/A",
+                          style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      Divider(color: brightBlueColor.withOpacity(0.3), thickness: 1.2),
+                      ListTile(
+                        leading: Icon(Icons.location_on, color: brightBlueColor, size: 20),
+                        title: const Text(
+                          "Address",
+                          style: TextStyle(fontSize: 14, color: Colors.black54),
+                        ),
+                        subtitle: Text(
+                          _shopData!['address'] ?? "N/A",
+                          style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: brightBlueColor,
+                foregroundColor: whiteColor,
+              ),
+              onPressed: () {
+                final int shopId = _shopData?['shopId'] ?? 0;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CreateBillPage(shopId: shopId),
+                  ),
+                );
+              },
+              child: const Text("Create Bill"),
+            ),
+            const SizedBox(height: 20),
+            _buildActionButtons(),
+            const SizedBox(height: 20),
           ],
-          const SizedBox(height: 20),
-          ElevatedButton(
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildActionButton('Add Items', Icons.add_shopping_cart, AddItemsPage()),
+        _buildActionButton('Show Bills', Icons.receipt_long, BillLogPage()),
+        _buildActionButton('Bill History', Icons.history, BillHistoryPage()),
+      ],
+    );
+  }
+
+  Widget _buildActionButton(String title, IconData icon, Widget page) {
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+        SizedBox(
+          width: 65,
+          height: 65,
+          child: ElevatedButton(
             style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               backgroundColor: brightBlueColor,
-              foregroundColor: whiteColor,
+              padding: EdgeInsets.zero,
             ),
             onPressed: () {
-              // Navigate to "Create Bill" page or implement your logic
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Create Bill clicked (not implemented)")),
-              );
+              Navigator.push(context, MaterialPageRoute(builder: (context) => page));
             },
-            child: const Text("Create Bill"),
+            child: Icon(icon, size: 30, color: Colors.white),
           ),
-          const SizedBox(height: 10),
-        ],
-      ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 13, color: Colors.black87),
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: whiteColor,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: lightTealColor,
-        title: const Text("Shop Page"),
+        backgroundColor: appBarColor,
+        centerTitle: true,
+        elevation: 0,
+        iconTheme: IconThemeData(color: brightBlueColor),
+        title: Text(
+          "Shop Page",
+          style: TextStyle(
+            color: brightBlueColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -252,8 +337,6 @@ class _ShopPageState extends State<ShopPage> {
           : const Center(
         child: Text("No shop found. Please register."),
       ),
-      // We show a fallback message if user didn't register and closed the popup
-      // or no data was found. The popup will appear automatically once on load.
     );
   }
 }
