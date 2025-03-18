@@ -3,7 +3,7 @@ import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'QRScannerPage.dart';
-import '../config.dart';
+import '../../config.dart';
 
 class QRSendPayPage extends StatefulWidget {
   final int userId;

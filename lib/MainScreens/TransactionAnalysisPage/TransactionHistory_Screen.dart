@@ -8,7 +8,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import '../config.dart';
+import '../../config.dart';
 
 class TransactionHistoryPage extends StatefulWidget {
   const TransactionHistoryPage({Key? key}) : super(key: key);

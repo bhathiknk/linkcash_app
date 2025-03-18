@@ -3,7 +3,7 @@ import 'package:flutter/services.dart'; // For Clipboard
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart'; // For date/time formatting
-import '../config.dart';
+import '../../config.dart';
 
 class LinkViewPage extends StatefulWidget {
   final int paymentDetailId;

@@ -3,7 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'Link_View_Screen.dart';
-import '../config.dart';
+import '../../config.dart';
 
 // Model class that mirrors the PaymentDetails structure
 class PaymentDetailsItem {

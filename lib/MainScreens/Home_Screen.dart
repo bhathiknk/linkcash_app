@@ -17,11 +17,11 @@ import '../ConnectionCheck/connectivity_service.dart';
 import '../LogScreen/Asgardio_Login.dart';
 import '../WidgetsCom/bottom_navigation_bar.dart';
 import '../WidgetsCom/dark_mode_handler.dart';
-import 'NotificationPage.dart';
-import 'Create_Link_Screen.dart';
-import 'Pay_Quick_Page.dart';
-import 'Group_Payment_Page.dart';
-import 'payout_history_page.dart';
+import 'GroupPaymentPages/Group_Payment_Page.dart';
+import 'NotificationPage/NotificationPage.dart';
+import 'OneTimePaymentPages/Pay_Quick_Page.dart';
+import 'RegularPaymentPages/Create_Link_Screen.dart';
+import 'StripePayoutPage/payout_history_page.dart';
 import '../WidgetsCom/calendar_widget.dart';
 import '../config.dart';
 
@@ -737,7 +737,7 @@ class _MyHomePageState extends State<MyHomePage> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _buildActionButton('Get Onetime', Icons.payments),
-        _buildActionButton(' Get Group', Icons.group),
+        _buildActionButton('Get Group', Icons.group),
         _buildActionButton('Get Regular', Icons.repeat),
       ],
     );
@@ -758,17 +758,17 @@ class _MyHomePageState extends State<MyHomePage> {
               padding: EdgeInsets.zero,
             ),
             onPressed: () {
-              if (title == "Onetime Pay") {
+              if (title == "Get Onetime") {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const PayQuickPage()),
                 );
-              } else if (title == "Group Pay") {
+              } else if (title == "Get Group") {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const GroupPaymentPage()),
                 );
-              } else if (title == "Regular Pay") {
+              } else if (title == "Get Regular") {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const CreateLinkPage()),

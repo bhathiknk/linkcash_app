@@ -4,11 +4,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../WidgetsCom/bottom_navigation_bar.dart';
-import '../WidgetsCom/dark_mode_handler.dart';
-import '../WidgetsCom/gradient_button_fb4.dart';
-import 'group_payment_history_page.dart'; // Import the history page
-import '../config.dart';
+import '../../WidgetsCom/bottom_navigation_bar.dart';
+import '../../WidgetsCom/dark_mode_handler.dart';
+import '../../WidgetsCom/gradient_button_fb4.dart';
+import '../../config.dart';
+import 'group_payment_history_page.dart';
 
 /// Model for a group member.
 class GroupMember {

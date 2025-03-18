@@ -4,12 +4,12 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // Import your existing pages:
 import '../MainScreens/Home_Screen.dart';
 import '../MainScreens/ProfileComponents/Profile_Screen.dart';
-import '../MainScreens/TransactionHistory_Screen.dart';
-import '../MainScreens/QRPayReceivePage.dart';
-import '../MainScreens/QRPaySendPage.dart';
+import '../MainScreens/QRpaymentPages/QRPaySendPage.dart';
+import '../MainScreens/TransactionAnalysisPage/TransactionHistory_Screen.dart';
+import '../MainScreens/QRpaymentPages/QRPayReceivePage.dart';
 
 // Import your new ShopPage:
-import '../MainScreens/ShopPage.dart';
+import '../MainScreens/ShopComponent/ShopPage.dart';
 
 class BottomNavigationBarWithFab extends StatefulWidget {
   final int currentIndex;

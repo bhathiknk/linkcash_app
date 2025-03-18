@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../config.dart';
+import '../../config.dart';
 
 /// Model for basic group payment history items (from /api/group-payments/history/{userId})
 class GroupPaymentHistoryItem {

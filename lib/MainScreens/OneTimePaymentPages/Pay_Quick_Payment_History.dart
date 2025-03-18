@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
+import '../../config.dart';
 import 'Pay_Quick_Page.dart';
-import '../config.dart';
 
 // New model to parse full payment details response from backend.
 class PaymentLinkFullDetails {
