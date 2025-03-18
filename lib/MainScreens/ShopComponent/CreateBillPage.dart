@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../config.dart';
 import 'BillLogPage.dart';
 
@@ -14,18 +15,9 @@ class CreateBillPage extends StatefulWidget {
 
 class _CreateBillPageState extends State<CreateBillPage> {
   bool _isLoading = false;
-
-  // The final list of items we add to the bill
-  // Each item: { itemId, itemName, quantity, price }
   List<Map<String, dynamic>> billItems = [];
-
-  // All products from /api/items
   List<dynamic> allProducts = [];
-
-  // For the Bill's customer name
   String customerName = "";
-
-  // For the new item being added:
   int? tempItemId;
   String tempItemName = "";
   double tempItemPrice = 0.0;
@@ -34,12 +26,20 @@ class _CreateBillPageState extends State<CreateBillPage> {
   @override
   void initState() {
     super.initState();
-    _fetchAllProducts();
+    _fetchProductsByShopId();
   }
 
-  Future<void> _fetchAllProducts() async {
+  Future<void> _fetchProductsByShopId() async {
+    final FlutterSecureStorage storage = const FlutterSecureStorage();
+    String? shopId = await storage.read(key: 'SHOP_ID');
+
+    if (shopId == null) {
+      _showError("Shop ID not found in secure storage.");
+      return;
+    }
+
     try {
-      final response = await http.get(Uri.parse('$baseUrl/api/items'));
+      final response = await http.get(Uri.parse('$baseUrl/api/items/shop/$shopId'));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as List;
         setState(() {
@@ -57,7 +57,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  // Add a new item to the bill
   void _addItemToBill() {
     if (tempItemId == null) {
       _showError("Please select a product.");
@@ -75,7 +74,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
         "price": tempItemPrice,
         "quantity": tempQuantity,
       });
-      // Reset
       tempItemId = null;
       tempItemName = "";
       tempItemPrice = 0.0;
@@ -83,14 +81,12 @@ class _CreateBillPageState extends State<CreateBillPage> {
     });
   }
 
-  // Remove item from list
   void _removeItem(int index) {
     setState(() {
       billItems.removeAt(index);
     });
   }
 
-  // Show bottom sheet to pick a product
   Future<void> _selectProduct() async {
     final selected = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
@@ -106,7 +102,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
     }
   }
 
-  // Calculate total
   double get totalAmount {
     double sum = 0.0;
     for (var item in billItems) {
@@ -115,10 +110,9 @@ class _CreateBillPageState extends State<CreateBillPage> {
     return sum;
   }
 
-  // Create the bill
   Future<void> _createBill() async {
     if (billItems.isEmpty) {
-      _showError("Please add at least one item before creating the bill.");
+      _showError("Please add at least one item.");
       return;
     }
     setState(() => _isLoading = true);
@@ -128,8 +122,8 @@ class _CreateBillPageState extends State<CreateBillPage> {
       "customerName": customerName,
       "items": billItems.map((item) {
         return {
-          "itemId": item["itemId"] ?? 0,
-          "quantity": item["quantity"] ?? 1,
+          "itemId": item["itemId"],
+          "quantity": item["quantity"],
         };
       }).toList(),
     };
@@ -143,7 +137,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Bill created! Bill ID: ${data['billId']}")),
+          SnackBar(content: Text("Bill created! PIN: ${data['pin']}")),
         );
         Navigator.pushReplacement(
           context,
@@ -175,7 +169,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
         children: [
-          // Top container for user name, product selection, quantity, add item
           Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
@@ -185,7 +178,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
             ),
             child: Column(
               children: [
-                // Customer Name
                 TextField(
                   decoration: InputDecoration(
                     labelText: "Customer Name",
@@ -200,8 +192,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
                   onChanged: (value) => customerName = value,
                 ),
                 const SizedBox(height: 16),
-
-                // Add item section
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.blue.shade50,
@@ -234,7 +224,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
                         ),
                       ),
                       const SizedBox(height: 10),
-
                       TextField(
                         decoration: const InputDecoration(labelText: "Quantity"),
                         keyboardType: TextInputType.number,
@@ -248,8 +237,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
                         alignment: Alignment.centerRight,
                         child: ElevatedButton.icon(
                           onPressed: _addItemToBill,
-                          icon: const Icon(Icons.add,color: Colors.white),
-
+                          icon: const Icon(Icons.add, color: Colors.white),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: brightBlueColor,
                             foregroundColor: Colors.white,
@@ -263,8 +251,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
               ],
             ),
           ),
-
-          // Middle expanded container for item list
           Expanded(
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -276,8 +262,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
               child: _buildAddedItems(),
             ),
           ),
-
-          // Bottom container with total & create bill button
           Container(
             color: const Color(0xFFE3F2FD),
             padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 40),
@@ -310,7 +294,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
     );
   }
 
-  // Build the list of added items
   Widget _buildAddedItems() {
     if (billItems.isEmpty) {
       return const Center(
@@ -333,7 +316,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Item info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,7 +329,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
                   ],
                 ),
               ),
-              // Remove button
               IconButton(
                 onPressed: () => _removeItem(index),
                 icon: const Icon(Icons.remove_circle, color: Colors.red),
@@ -360,7 +341,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
   }
 }
 
-// The product search bottom sheet
 class ProductSearchBottomSheet extends StatefulWidget {
   final List products;
   const ProductSearchBottomSheet({Key? key, required this.products}) : super(key: key);
@@ -386,7 +366,6 @@ class _ProductSearchBottomSheetState extends State<ProductSearchBottomSheet> {
       ),
       child: Column(
         children: [
-          // SEARCH
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
@@ -400,7 +379,6 @@ class _ProductSearchBottomSheetState extends State<ProductSearchBottomSheet> {
               },
             ),
           ),
-          // RESULTS
           Expanded(
             child: filtered.isEmpty
                 ? const Center(child: Text("No products found."))
