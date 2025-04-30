@@ -870,7 +870,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
         Card(
-          color: const Color(0xFF83B6B9),
+          color: const Color(0xFF80AFFF),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

@@ -217,13 +217,14 @@ class _ShopPageState extends State<ShopPage> {
             // Shop QR code
             if (qrCodeData != null && qrCodeData.isNotEmpty)
               QrImageView(
-                data: qrCodeData,
+                data: "https://www.linkcash.com/bill/payment/$qrCodeData",
                 version: QrVersions.auto,
                 size: 200,
                 backgroundColor: Colors.white,
               )
             else
               const Text("No QR Code available."),
+
 
             const SizedBox(height: 20),
 
@@ -293,10 +294,14 @@ class _ShopPageState extends State<ShopPage> {
 
             const SizedBox(height: 20),
 
+            Divider(color: brightBlueColor.withOpacity(0.3), thickness: 1.2),
+
             // Action buttons
             _buildActionButtons(),
 
             const SizedBox(height: 20),
+
+
           ],
         ),
       ),
@@ -356,8 +361,7 @@ class _ShopPageState extends State<ShopPage> {
         title: Text(
           "Shop Page",
           style: TextStyle(
-            color: brightBlueColor,
-            fontWeight: FontWeight.bold,
+            color: Colors.black,
           ),
         ),
       ),

@@ -18,6 +18,11 @@ class TransactionHistoryPage extends StatefulWidget {
 }
 
 class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
+  // Color palette
+  final Color mainColor = const Color(0xFF0054FF);
+  final Color secondaryColor = const Color(0xFF83B6B9);
+  final Color bgColor = const Color(0xFFE3F2FD);
+
   final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
   bool _isLoading = false;
@@ -33,7 +38,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   double _totalSpent = 0.0;
   int _totalCount = 0;
   List<Map<String, dynamic>> _chartData = [];
-  List<Map<String, dynamic>> _transactions = []; // original filteredTransactions from server
+  List<Map<String, dynamic>> _transactions = [];
 
   // Controls filter visibility and search
   bool _showFilters = false;
@@ -51,7 +56,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       _errorMessage = '';
     });
 
-    // Retrieve user ID from secure storage.
     String? storedUserId = await secureStorage.read(key: 'User_ID');
     if (storedUserId == null) {
       setState(() {
@@ -93,16 +97,12 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         setState(() {
           _totalSpent = double.tryParse(data['totalSpent'].toString()) ?? 0.0;
           _totalCount = data['totalCount'] as int? ?? 0;
-
-          // Chart data mapping
           _chartData = (data['chartData'] as List<dynamic>? ?? []).map((item) {
             return {
               "label": item['label'] ?? '',
               "value": double.tryParse(item['value'].toString()) ?? 0.0,
             };
           }).toList();
-
-          // Mapping filtered transactions including title, memberName, and transactionType.
           _transactions = (data['filteredTransactions'] as List<dynamic>? ?? [])
               .map((tx) => {
             "transactionType": tx['transactionType'],
@@ -128,7 +128,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     }
   }
 
-  /// Helper to format DateTime strings.
   String _formatDateTime(String? raw) {
     if (raw == null || raw.isEmpty) return "N/A";
     try {
@@ -139,7 +138,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     }
   }
 
-  /// Returns the list of transactions filtered by the search query.
   List<Map<String, dynamic>> get _filteredTransactions {
     if (_searchController.text.isEmpty) {
       return _transactions;
@@ -161,7 +159,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         foregroundColor: Colors.black,
         elevation: 0,
       ),
-      backgroundColor: const Color(0xFFE3F2FD),
+      backgroundColor: bgColor,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage.isNotEmpty
@@ -175,7 +173,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Top row with filter toggle and download button.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -187,18 +184,14 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             transitionBuilder: (child, animation) {
-              return SizeTransition(
-                sizeFactor: animation,
-                axisAlignment: -1.0,
-                child: child,
-              );
+              return SizeTransition(sizeFactor: animation, axisAlignment: -1.0, child: child);
             },
             child: _showFilters ? _buildFilterSection() : const SizedBox.shrink(),
           ),
           const SizedBox(height: 16),
           _buildAnalyticsSummary(),
           const SizedBox(height: 16),
-          _buildChartSection(),
+          _buildChartSection(),  // Updated chart section
           const SizedBox(height: 16),
           _buildTransactionList(),
         ],
@@ -206,11 +199,10 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     );
   }
 
-  /// Button to toggle filter section visibility.
   Widget _buildFilterToggleButton() {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: mainColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -226,19 +218,16 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       onPressed: () {
         setState(() {
           _showFilters = !_showFilters;
-          if (!_showFilters) {
-            _searchController.clear();
-          }
+          if (!_showFilters) _searchController.clear();
         });
       },
     );
   }
 
-  /// Button to download PDF.
   Widget _buildDownloadButton() {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: mainColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -247,40 +236,38 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       label: const Text(
         "Download PDF",
         style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-      ), onPressed: () {  },
+      ),
+      onPressed: () {},
     );
   }
 
-  /// Redesigned compact Filter Section.
   Widget _buildFilterSection() {
     return Card(
       color: Colors.white,
-      elevation: 3,
+      elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Column(
           children: [
-            const Text(
-              "Filter",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
-            ),
+            const Text("Filter", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             const SizedBox(height: 8),
-            // Dates Row
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildDateFilter("Start", _startDate, (picked) {
-                  if (picked != null) setState(() => _startDate = picked);
-                }),
+                Expanded(
+                  child: _buildDateFilter("Start", _startDate, (picked) {
+                    if (picked != null) setState(() => _startDate = picked);
+                  }),
+                ),
                 const SizedBox(width: 8),
-                _buildDateFilter("End", _endDate, (picked) {
-                  if (picked != null) setState(() => _endDate = picked);
-                }),
+                Expanded(
+                  child: _buildDateFilter("End", _endDate, (picked) {
+                    if (picked != null) setState(() => _endDate = picked);
+                  }),
+                ),
               ],
             ),
             const SizedBox(height: 8),
-            // Dropdowns Row
             Row(
               children: [
                 Expanded(
@@ -305,7 +292,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
             const SizedBox(height: 8),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
+                backgroundColor: mainColor,
                 padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 elevation: 0,
@@ -322,41 +309,34 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     );
   }
 
-  /// Helper widget for date filter (compact design).
   Widget _buildDateFilter(String label, DateTime? date, Function(DateTime?) onDatePicked) {
-    return Expanded(
-      child: Row(
-        children: [
-          Text(
-            "$label:",
-            style: const TextStyle(fontSize: 12, color: Colors.black87),
+    return Row(
+      children: [
+        Text("$label:", style: const TextStyle(fontSize: 12)),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            date != null ? DateFormat("yyyy-MM-dd").format(date) : "None",
+            style: const TextStyle(fontSize: 12, color: Colors.black54),
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Text(
-              date != null ? DateFormat("yyyy-MM-dd").format(date) : "None",
-              style: const TextStyle(fontSize: 12, color: Colors.black54),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.calendar_today, size: 16, color: Colors.blueAccent),
-            onPressed: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: date ?? DateTime.now(),
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2100),
-              );
-              onDatePicked(picked);
-            },
-          ),
-        ],
-      ),
+        ),
+        IconButton(
+          icon: Icon(Icons.calendar_today, size: 16, color: mainColor),
+          onPressed: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: date ?? DateTime.now(),
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2100),
+            );
+            onDatePicked(picked);
+          },
+        ),
+      ],
     );
   }
 
-  /// Helper widget for dropdown filters.
   Widget _buildDropdown({
     required String label,
     required String value,
@@ -371,22 +351,20 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFFE3F2FD),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: mainColor),
           ),
           child: DropdownButton<String>(
             value: value,
             isExpanded: true,
             underline: const SizedBox(),
-            icon: const Icon(Icons.arrow_drop_down, size: 16, color: Colors.blueAccent),
+            icon: Icon(Icons.arrow_drop_down, size: 16, color: mainColor),
             style: const TextStyle(fontSize: 12, color: Colors.black87),
             onChanged: (val) => onChanged(val!),
-            items: items.map((item) {
-              return DropdownMenuItem<String>(
-                value: item,
-                child: Text(item),
-              );
-            }).toList(),
+            items: items
+                .map((item) => DropdownMenuItem<String>(value: item, child: Text(item)))
+                .toList(),
           ),
         ),
       ],
@@ -396,25 +374,26 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   Widget _buildAnalyticsSummary() {
     return Card(
       color: Colors.white,
-      elevation: 0,
+      elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            const Text("Analytics Summary", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text("Analytics Summary",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: mainColor)),
             const SizedBox(height: 8),
             Row(
               children: [
-                const Text("Total Spent: ", style: TextStyle(fontWeight: FontWeight.w600)),
-                Text("£$_totalSpent", style: const TextStyle(color: Colors.blueAccent)),
+                const Text("Total Income: ", style: TextStyle(fontWeight: FontWeight.w600)),
+                Text("£$_totalSpent", style: TextStyle(color: mainColor, fontWeight: FontWeight.w600)),
               ],
             ),
             const SizedBox(height: 4),
             Row(
               children: [
                 const Text("Total Count: ", style: TextStyle(fontWeight: FontWeight.w600)),
-                Text("$_totalCount", style: const TextStyle(color: Colors.blueAccent)),
+                Text("$_totalCount", style: TextStyle(color: mainColor, fontWeight: FontWeight.w600)),
               ],
             ),
           ],
@@ -423,78 +402,78 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     );
   }
 
+  // ─── UPDATED CHART SECTION ────────────────────────────────────────────────
   Widget _buildChartSection() {
+    final total = _chartData.fold<double>(0.0, (sum, item) => sum + item['value']);
+    const colorList = [
+      Color(0xFF8FBBFD),
+      Color(0xFFB4FFA7),
+      Color(0xFFF3D782),
+    ];
+
     return Card(
       color: Colors.white,
-      elevation: 0,
+      elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Transaction Breakdown", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text("Transaction Breakdown",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: mainColor)),
             const SizedBox(height: 16),
-            Stack(
-              children: [
-                SizedBox(
-                  height: 200,
-                  child: PieChart(
-                    PieChartData(
-                      sections: _buildPieChartSections(),
-                      sectionsSpace: 2,
-                      centerSpaceRadius: 40,
-                    ),
-                  ),
+            SizedBox(
+              height: 200,
+              child: PieChart(
+                PieChartData(
+                  sections: List.generate(_chartData.length, (i) {
+                    final item = _chartData[i];
+                    final value = item['value'] as double;
+                    final percent = total > 0 ? (value / total * 100).toStringAsFixed(1) + '%' : '0%';
+                    return PieChartSectionData(
+                      color: colorList[i % colorList.length],
+                      value: value,
+                      title: percent,
+                      titleStyle: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                      radius: 60,
+                    );
+                  }),
+                  sectionsSpace: 2,
+                  centerSpaceRadius: 40,
                 ),
-                Positioned.fill(
-                  child: Center(
-                    child: Text(
-                      "£$_totalSpent",
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
+            const SizedBox(height: 16),
+            // Legend with amount, type, and color swatch
+            ...List.generate(_chartData.length, (i) {
+              final item = _chartData[i];
+              final value = item['value'] as double;
+              final label = item['label'] as String;
+              final color = colorList[i % colorList.length];
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text("$label: £${value.toStringAsFixed(2)}", style: const TextStyle(fontSize: 14))),
+                  ],
+                ),
+              );
+            }),
           ],
         ),
       ),
     );
   }
-
-  List<PieChartSectionData> _buildPieChartSections() {
-    final colors = [
-      Colors.blueAccent,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.red,
-    ];
-
-    List<PieChartSectionData> sections = [];
-    for (int i = 0; i < _chartData.length; i++) {
-      final item = _chartData[i];
-      final double value = item['value'];
-      final String label = item['label'];
-
-      sections.add(
-        PieChartSectionData(
-          color: colors[i % colors.length],
-          value: value,
-          // Show both label and total amount in pounds within each section.
-          title: "$label\n£${value.toStringAsFixed(2)}",
-          titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
-          radius: 60,
-        ),
-      );
-    }
-    return sections;
-  }
+  // ───────────────────────────────────────────────────────────────────────────
 
   Widget _buildTransactionList() {
     return Card(
       color: Colors.white,
-      elevation: 0,
+      elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -509,13 +488,11 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.search, color: Colors.blueAccent),
+                  icon: Icon(Icons.search, color: mainColor),
                   onPressed: () {
                     setState(() {
                       _showFilters = !_showFilters;
-                      if (!_showFilters) {
-                        _searchController.clear();
-                      }
+                      if (!_showFilters) _searchController.clear();
                     });
                   },
                 ),
@@ -524,41 +501,39 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               transitionBuilder: (child, animation) {
-                return SizeTransition(
-                  sizeFactor: animation,
-                  axisAlignment: -1.0,
-                  child: child,
-                );
+                return SizeTransition(sizeFactor: animation, axisAlignment: -1.0, child: child);
               },
               child: _showFilters
                   ? Padding(
                 key: const ValueKey(1),
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Container(
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.blueAccent, width: 1),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: "Search by Txn ID...",
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      border: InputBorder.none,
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.blueAccent, size: 16),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {});
-                        },
-                      ),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: "Search by Txn ID...",
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    onChanged: (val) {
-                      setState(() {});
-                    },
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: mainColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: secondaryColor),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.clear, color: mainColor, size: 16),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {});
+                      },
+                    ),
                   ),
+                  onChanged: (val) => setState(() {}),
                 ),
               )
                   : const SizedBox.shrink(),
@@ -571,15 +546,20 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                 final type = tx["transactionType"] ?? '';
                 final stripeId = tx["stripeTransactionId"] ?? '';
                 final amount = tx["amount"].toString();
-                final createdAt = tx["createdAt"] ?? '';
+                final createdAt = _formatDateTime(tx["createdAt"]);
                 final title = tx["title"] ?? '';
                 final memberName = tx["memberName"] ?? '';
 
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 6),
-                  color: const Color(0xFFE3F2FD),
+                  elevation: 2,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  child: Padding(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border(left: BorderSide(width: 4, color: mainColor)),
+                    ),
                     padding: const EdgeInsets.all(8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -593,7 +573,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.copy, color: Colors.blueAccent),
+                              icon: Icon(Icons.copy, color: mainColor),
                               onPressed: () {
                                 Clipboard.setData(ClipboardData(text: stripeId));
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -610,7 +590,8 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                         if (type.toLowerCase() == "group" && memberName.isNotEmpty)
                           Text("Paid member: $memberName", style: const TextStyle(fontWeight: FontWeight.w600)),
                         const SizedBox(height: 4),
-                        Text("Amount: £$amount | Date: $createdAt", style: const TextStyle(color: Colors.black87)),
+                        Text("Amount: £$amount | Date: $createdAt",
+                            style: const TextStyle(color: Colors.black87)),
                       ],
                     ),
                   ),
@@ -619,31 +600,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           ],
         ),
       ),
-    );
-  }
-
-  /// Reusable row with an icon, label, and value.
-  Widget _buildLabeledRow({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 18, color: Colors.blueAccent),
-        const SizedBox(width: 8),
-        Text(
-          "$label: ",
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.black87),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(fontSize: 14, color: Colors.black87),
-          ),
-        ),
-      ],
     );
   }
 }

@@ -166,7 +166,7 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "Cannot assign \$${parsedAmount.toStringAsFixed(2)}, as it exceeds the total amount left.",
+            "Cannot assign \£${parsedAmount.toStringAsFixed(2)}, as it exceeds the total amount left.",
           ),
         ),
       );
@@ -241,7 +241,7 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "The sum of assigned amounts (\$${sumAssigned.toStringAsFixed(2)}) must equal the total amount (\$${totalAmount.toStringAsFixed(2)}).",
+            "The sum of assigned amounts (\£${sumAssigned.toStringAsFixed(2)}) must equal the total amount (\£${totalAmount.toStringAsFixed(2)}).",
           ),
         ),
       );
@@ -424,7 +424,7 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
                       children: [
                         Expanded(
                           child: Text(
-                            "${member.memberName} - \$${member.assignedAmount.toStringAsFixed(2)}",
+                            "${member.memberName} - \£${member.assignedAmount.toStringAsFixed(2)}",
                             style: const TextStyle(fontSize: 16),
                           ),
                         ),
@@ -448,7 +448,7 @@ class _GroupPaymentPageState extends State<GroupPaymentPage> {
             const SizedBox(height: 10),
             // Summary.
             Text(
-              "Total Assigned: \$${sumAssigned.toStringAsFixed(2)} / Total Amount: \$${totalAmount.toStringAsFixed(2)}",
+              "Total Assigned: \£${sumAssigned.toStringAsFixed(2)} / Total Amount: \£${totalAmount.toStringAsFixed(2)}",
               style: TextStyle(
                 color: assignmentMatches ? Colors.green : Colors.red,
                 fontWeight: FontWeight.bold,

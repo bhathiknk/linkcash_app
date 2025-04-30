@@ -1,22 +1,22 @@
-import 'dart:core';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../ConnectionCheck/No_Internet_Ui.dart';
 import '../../ConnectionCheck/connectivity_service.dart';
 import '../../WidgetsCom/bottom_navigation_bar.dart';
 import '../../WidgetsCom/dark_mode_handler.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:url_launcher/url_launcher.dart';
 import '../../config.dart';
 import 'settings_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
-
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
@@ -24,19 +24,25 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
   bool isDarkMode = DarkModeHandler.isDarkMode;
   final ConnectivityService _connectivityService = ConnectivityService();
-  ConnectivityResult? _initialConnectivityResult;
-  bool _isInitialCheckComplete = false;
+  bool _initialComplete = false;
 
   String? userId;
   String? stripeAccountId;
   String? verificationStatus = "Fetching...";
+  String? _email = "Loading...";
+  String? _givenNameProfile = "Loading...";
+  String? _profileImageUrl;
+  XFile? _pickedImage;
+  final ImagePicker _picker = ImagePicker();
+
+  static const Color _primaryBlue = Color(0xFF0054FF);
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _checkInitialConnectivity();
-    _retrieveUserId();
+    _checkConnectivity();
+    _retrieveUser();
   }
 
   @override
@@ -45,405 +51,321 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  /// App lifecycle
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _retrieveUserId();
-    }
+    if (state == AppLifecycleState.resumed) _retrieveUser();
   }
 
-  /// Check connectivity
-  Future<void> _checkInitialConnectivity() async {
-    var initialConnectivityResults =
-        await _connectivityService.checkInitialConnectivity();
-    setState(() {
-      _initialConnectivityResult =
-          initialConnectivityResults.contains(ConnectivityResult.none)
-              ? ConnectivityResult.none
-              : ConnectivityResult.wifi;
-      _isInitialCheckComplete = true;
-    });
+  Future<void> _checkConnectivity() async {
+    await _connectivityService.checkInitialConnectivity();
+    setState(() => _initialComplete = true);
   }
 
-  /// Retrieve user ID
-  Future<void> _retrieveUserId() async {
-    final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
-    String? retrievedUserId = await secureStorage.read(key: 'User_ID');
-    setState(() {
-      userId = retrievedUserId;
-    });
+  Future<void> _retrieveUser() async {
+    final store = const FlutterSecureStorage();
+    final id = await store.read(key: 'User_ID');
+    setState(() => userId = id);
     if (userId != null) {
-      _fetchStripeAccountId();
+      await _loadUserProfile(id!);
+      await _loadStripeAccount(id!);
+      await _loadProfileImageUrl();
     }
   }
 
-  /// Fetch the Stripe account ID for the logged-in user
-  Future<void> _fetchStripeAccountId() async {
-    final String apiUrl =
-        "$baseUrl/api/users/$userId/stripe-account";
-    try {
-      final response = await http.get(Uri.parse(apiUrl));
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        setState(() {
-          stripeAccountId = responseData['stripeAccountId'];
-        });
-        _fetchVerificationStatus();
-      } else {
-        Fluttertoast.showToast(
-          msg: "Failed to fetch Stripe Account ID: ${response.body}",
-          backgroundColor: Colors.red,
-        );
-      }
-    } catch (e) {
-      Fluttertoast.showToast(
-        msg: "Error fetching Stripe Account ID: $e",
-        backgroundColor: Colors.red,
-      );
+  Future<void> _loadUserProfile(String id) async {
+    final resp = await http.get(Uri.parse("$baseUrl/api/users/$id/profile"));
+    if (resp.statusCode == 200) {
+      final data = jsonDecode(resp.body);
+      setState(() {
+        _email = data['email'];
+        _givenNameProfile = data['givenName'];
+      });
     }
   }
 
-  /// Fetch verification status
-  Future<void> _fetchVerificationStatus() async {
+  Future<void> _loadStripeAccount(String id) async {
+    final resp = await http.get(Uri.parse("$baseUrl/api/users/$id/stripe-account"));
+    if (resp.statusCode == 200) {
+      final d = jsonDecode(resp.body);
+      setState(() => stripeAccountId = d['stripeAccountId']);
+      _loadVerification();
+    }
+  }
+
+  Future<void> _loadVerification() async {
     if (stripeAccountId == null) return;
-    final String apiUrl =
-        "$baseUrl/api/stripe/$stripeAccountId/verification-status";
-    try {
-      final response = await http.get(Uri.parse(apiUrl));
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        setState(() {
-          verificationStatus = responseData['verificationStatus'];
-        });
-      } else {
-        Fluttertoast.showToast(
-          msg: "Failed to fetch verification status: ${response.body}",
-          backgroundColor: Colors.red,
-        );
-      }
-    } catch (e) {
-      Fluttertoast.showToast(
-        msg: "Error fetching verification status: $e",
-        backgroundColor: Colors.red,
-      );
+    final resp = await http.get(Uri.parse("$baseUrl/api/stripe/$stripeAccountId/verification-status"));
+    if (resp.statusCode == 200) {
+      final d = jsonDecode(resp.body);
+      setState(() => verificationStatus = d['verificationStatus']);
     }
   }
 
-  /// Start the Stripe onboarding process
-  Future<void> _startStripeOnboarding() async {
-    if (stripeAccountId == null) {
-      await _fetchStripeAccountId();
+  Future<void> _loadProfileImageUrl() async {
+    if (userId == null) return;
+    final resp = await http.get(Uri.parse("$baseUrl/api/users/$userId/profile-image"));
+    if (resp.statusCode == 200) {
+      final fn = jsonDecode(resp.body)['fileName'];
+      setState(() {
+        _profileImageUrl = "$baseUrl/profile-images/$fn";
+      });
     }
-    final String apiUrl = "https://api.stripe.com/v1/account_links";
-    try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Authorization': 'Bearer ${dotenv.env['STRIPE_API_KEY']}',
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: {
-          'account': stripeAccountId!,
-          'refresh_url': 'https://your-app.com/refresh',
-          'return_url': 'https://your-app.com/return',
-          'type': 'account_onboarding',
-        },
-      );
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        final onboardingUrl = responseData['url'];
-        if (await canLaunch(onboardingUrl)) {
-          await launch(onboardingUrl);
-        } else {
-          throw 'Could not launch $onboardingUrl';
-        }
-      } else {
-        Fluttertoast.showToast(
-          msg: "Failed to create Stripe onboarding link: ${response.body}",
-          backgroundColor: Colors.red,
-        );
-      }
-    } catch (e) {
-      Fluttertoast.showToast(
-        msg: "Error starting Stripe onboarding: $e",
-        backgroundColor: Colors.red,
-      );
+  }
+
+  Future<void> _pickImage() async {
+    final img = await _picker.pickImage(source: ImageSource.gallery, maxWidth: 600, maxHeight: 600);
+    if (img != null) setState(() => _pickedImage = img);
+  }
+
+  Future<void> _uploadProfileImage() async {
+    if (_pickedImage == null || userId == null) return;
+    final uri = Uri.parse("$baseUrl/api/users/$userId/profile-image");
+    final req = http.MultipartRequest('POST', uri)
+      ..files.add(await http.MultipartFile.fromPath('file', _pickedImage!.path));
+    final res = await req.send();
+    if (res.statusCode == 200) {
+      Fluttertoast.showToast(msg: "Image uploaded!", backgroundColor: Colors.green);
+      setState(() => _pickedImage = null);
+      _loadProfileImageUrl();
+    } else {
+      Fluttertoast.showToast(msg: "Upload failed", backgroundColor: Colors.red);
+    }
+  }
+
+  Future<void> _startOnboarding() async {
+    if (stripeAccountId == null) return;
+    final resp = await http.post(
+      Uri.parse("https://api.stripe.com/v1/account_links"),
+      headers: {
+        'Authorization': 'Bearer ${dotenv.env['STRIPE_API_KEY']}',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: {
+        'account': stripeAccountId!,
+        'refresh_url': 'https://your-app.com/refresh',
+        'return_url': 'https://your-app.com/return',
+        'type': 'account_onboarding',
+      },
+    );
+    if (resp.statusCode == 200) {
+      final url = jsonDecode(resp.body)['url'];
+      if (await canLaunch(url)) await launch(url);
+    } else {
+      Fluttertoast.showToast(msg: "Onboarding failed", backgroundColor: Colors.red);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Ensure the Scaffold background matches the page background
-      backgroundColor: DarkModeHandler.getBackgroundColor(),
-
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: DarkModeHandler.getAppBarColor(),
-        title: const Text(
-          'Profile',
-          style: TextStyle(color: Colors.black),
-        ),
-        centerTitle: true,
-      ),
-
-      body: StreamBuilder<List<ConnectivityResult>>(
+      backgroundColor: const Color(0xFFE3F2FD),
+      body: !_initialComplete
+          ? const Center(child: CircularProgressIndicator())
+          : StreamBuilder<List<ConnectivityResult>>(
         stream: _connectivityService.connectivityStream,
-        builder: (context, snapshot) {
-          if (!_isInitialCheckComplete) {
-            return const Center(child: CircularProgressIndicator());
-          } else {
-            final results = snapshot.data ?? [];
-            final result = results.contains(ConnectivityResult.none)
-                ? ConnectivityResult.none
-                : ConnectivityResult.wifi;
-            if (result == ConnectivityResult.none) {
-              return NoInternetUI();
-            } else {
-              // Use SingleChildScrollView directly
-              return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildProfileHeader(),
-                    const SizedBox(height: 20),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20.0, vertical: 10.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildProfileDetail(
-                            icon: Icons.email,
-                            text: 'bhathika@gmail.com',
-                            iconColor: Colors.grey,
-                          ),
-                          const SizedBox(height: 10),
-                          _buildProfileDetail(
-                            icon: Icons.verified,
-                            text: 'Verification Status: $verificationStatus',
-                            iconColor: verificationStatus == "Verified"
-                                ? Colors.green
-                                : Colors.red,
-                          ),
-                        ],
+        builder: (ctx, snap) {
+          if ((snap.data ?? []).contains(ConnectivityResult.none)) {
+            return NoInternetUI();
+          }
+          return CustomScrollView(
+            slivers: [
+              _buildSliverAppBar(),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    const SizedBox(height: 30),
+                    _buildDetailSection(),
+                    const SizedBox(height: 30),
+                    _buildActionCard(
+                      icon: Icons.verified_user,
+                      title: "Verify Stripe Account",
+                      enabled: verificationStatus != "Verified",
+                      onTap: _startOnboarding,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildActionCard(
+                      icon: Icons.settings,
+                      title: "Settings",
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SettingsPage(stripeAccountId: stripeAccountId),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 20),
-
-                    // 1) Stripe Onboarding item
-                    _buildProfileItem(
-                      icon: Icons.verified_user,
-                      title: 'Verify Stripe Account',
-                      onTap: _startStripeOnboarding,
-                      showArrow: true,
-                      isEnabled: verificationStatus != "Verified",
-                    ),
-
-                    // 2) Master "Settings" item
-                    _buildProfileItem(
-                      icon: Icons.settings,
-                      title: 'Settings',
-                      showArrow: true,
-                      onTap: () {
-                        // Navigate to new SettingsPage
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SettingsPage(
-                              stripeAccountId: stripeAccountId,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-
-                    // Remove or reduce extra bottom space
-                    // const SizedBox(height: 30), // <— removed
-                  ],
-                ),
-              );
-            }
-          }
-        },
-      ),
-      bottomNavigationBar: BottomNavigationBarWithFab(
-        currentIndex: 3,
-        onTap: (index) {
-          // handle nav if needed
-        },
-      ),
-    );
-  }
-
-  /// Profile header
-  Widget _buildProfileHeader() {
-    return Stack(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: DarkModeHandler.getTopContainerColor(),
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(20),
-              bottomRight: Radius.circular(20),
-            ),
-          ),
-          height: 230,
-        ),
-        const Positioned(
-          top: 10,
-          right: 10,
-          child: Icon(Icons.edit, size: 25, color: Colors.grey),
-        ),
-        Positioned(
-          top: 30,
-          left: MediaQuery.of(context).size.width / 2 - 70,
-          child: Column(
-            children: [
-              SizedBox(
-                width: 130,
-                height: 130,
-                child: ClipOval(
-                  child: Image.asset(
-                    'lib/images/coverimage.jpg',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Bhathika Nilesh',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                    const SizedBox(height: 80),
+                  ]),
                 ),
               ),
             ],
-          ),
-        ),
-        Positioned(
-          top: 5,
-          left: 5,
-          child: GestureDetector(
-            onTap: () async {
-              await DarkModeHandler.toggleDarkMode();
-              setState(() {
-                isDarkMode = DarkModeHandler.isDarkMode;
-              });
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 600),
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: isDarkMode ? Colors.black : const Color(0xFF83B6B9),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    isDarkMode
-                        ? Icons.nightlight_round
-                        : Icons.wb_sunny_rounded,
-                    size: 25,
-                    color: Colors.yellow,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    isDarkMode ? 'Dark Mode' : 'Light Mode',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => setState(() => isDarkMode = DarkModeHandler.toggleDarkMode() as bool),
+        backgroundColor: isDarkMode ? Colors.grey[800] : Colors.yellow[700],
+        child: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
+      ),
+      bottomNavigationBar: BottomNavigationBarWithFab(
+        currentIndex: 3,
+        onTap: (_) {},
+      ),
     );
   }
 
-  /// Builds a profile detail row
-  Widget _buildProfileDetail({
-    required IconData icon,
-    required String text,
-    required Color iconColor,
-  }) {
+  SliverAppBar _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 300,
+      pinned: true,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      actions: [
+        if (_pickedImage != null)
+          IconButton(
+            icon: const Icon(Icons.save, color: Colors.white),
+            onPressed: _uploadProfileImage,
+          ),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        centerTitle: true,
+        title: Text(
+          _givenNameProfile ?? "",
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF0054FF), Color(0xFF83B6B9)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+              ),
+            ),
+            Positioned(
+              bottom: 100,
+              left: MediaQuery.of(context).size.width / 2 - 60,
+              child: GestureDetector(
+                onTap: _pickImage,
+                child: Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundColor: Colors.white,
+                      backgroundImage: _pickedImage != null
+                          ? FileImage(File(_pickedImage!.path))
+                      as ImageProvider
+                          : (_profileImageUrl != null
+                          ? NetworkImage(_profileImageUrl!)
+                          : const AssetImage('lib/images/default.png')
+                      as ImageProvider),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      padding: const EdgeInsets.all(6),
+                      child: const Icon(
+                        Icons.camera_alt,
+                        color: _primaryBlue,
+                        size: 20,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+      ),
+    );
+  }
+
+  Widget _buildDetailSection() {
+    return Card(
+      color: Colors.white,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        child: Column(
+          children: [
+            _buildDetailTile(Icons.email, "Email", _email ?? ""),
+            const SizedBox(height: 20),
+            _buildDetailTile(
+              Icons.verified,
+              "Verification Status",
+              verificationStatus ?? "",
+              trailingColor:
+              verificationStatus == "Verified" ? Colors.green : Colors.red,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailTile(IconData icon, String title, String value,
+      {Color? trailingColor}) {
     return Row(
       children: [
-        Icon(icon, size: 30, color: iconColor),
-        const SizedBox(width: 10),
-        Text(
-          text,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            color: Colors.black54,
+        Icon(icon, color: _primaryBlue),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 4),
+              Text(value, style: const TextStyle(fontSize: 16)),
+            ],
           ),
         ),
+        if (trailingColor != null)
+          Icon(Icons.circle, color: trailingColor, size: 14),
       ],
     );
   }
 
-  /// Builds a single profile item row
-  Widget _buildProfileItem({
+  Widget _buildActionCard({
     required IconData icon,
     required String title,
-    bool showArrow = false,
-    Function()? onTap,
-    bool isEnabled = true,
+    void Function()? onTap,
+    bool enabled = true,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5.0),
-      child: GestureDetector(
-        onTap: isEnabled ? onTap : null,
-        child: Center(
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.9,
-            height: 80,
-            decoration: BoxDecoration(
-              color: isEnabled
-                  ? DarkModeHandler.getMainContainersColor()
-                  : Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+    return Opacity(
+      opacity: enabled ? 1 : 0.5,
+      child: Card(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 2,
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                Icon(
-                  icon,
-                  size: 30,
-                  color: isEnabled
-                      ? DarkModeHandler.getProfilePageIconColor()
-                      : Colors.grey,
-                ),
-                const SizedBox(width: 16.0),
+                Icon(icon, size: 28, color: _primaryBlue),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: isEnabled
-                              ? DarkModeHandler.getMainContainersTextColor()
-                              : Colors.grey,
-                        ),
-                      ),
-                      if (showArrow)
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          color: isEnabled ? Colors.black : Colors.grey,
-                        ),
-                    ],
-                  ),
+                  child: Text(title,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
+                const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
               ],
             ),
           ),
