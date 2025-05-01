@@ -381,7 +381,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   Widget _buildAnalyticsSummary() {
     return Card(
       color: Colors.white,
-      elevation: 2,
+      elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -409,18 +409,18 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     );
   }
 
-  // ─── UPDATED CHART SECTION ────────────────────────────────────────────────
+  // ─── UPDATED CHART SECTION ───────────────────────────────────────────────
   Widget _buildChartSection() {
     final total = _chartData.fold<double>(0.0, (sum, item) => sum + item['value']);
     const colorList = [
-      Color(0xFF8FBBFD),
-      Color(0xFFB4FFA7),
-      Color(0xFFF3D782),
+      Color(0xFFFFD37E),//group
+      Color(0xFF80D1FF),//onetime
+      Color(0xFF94E4B8),//regular
     ];
 
     return Card(
       color: Colors.white,
-      elevation: 2,
+      elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(12),

@@ -313,12 +313,25 @@ class _ShopPageState extends State<ShopPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildActionButton('Add Items', Icons.add_shopping_cart, AddItemsPage()),
-        _buildActionButton('Show Bills', Icons.receipt_long, BillLogPage()),
-        _buildActionButton('Bill History', Icons.history, BillHistoryPage()),
+        _buildActionButton(
+          'Add Items',
+          Icons.add_shopping_cart,
+          AddItemsPage(),
+        ),
+        _buildActionButton(
+          'Show Bills',
+          Icons.receipt_long,
+          BillLogPage(),
+        ),
+        _buildActionButton(
+          'Bill History',
+          Icons.history,
+          BillHistoryPage(userId: _shopData!['ownerUserId']),
+        ),
       ],
     );
   }
+
 
   Widget _buildActionButton(String title, IconData icon, Widget page) {
     return Column(

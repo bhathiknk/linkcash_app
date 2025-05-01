@@ -882,7 +882,7 @@ class _MyHomePageState extends State<MyHomePage> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.event_available, color: Colors.black),
+                    const Icon(Icons.event_available, color: Color(0xFFEFF6FF)),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
@@ -903,7 +903,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    const Icon(Icons.credit_card, color: Colors.black),
+                    const Icon(Icons.credit_card, color: Color(0xFFEFF6FF)),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
@@ -924,7 +924,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    const Icon(Icons.people, color: Colors.black),
+                    const Icon(Icons.people, color: Color(0xFFEFF6FF)),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
@@ -961,9 +961,9 @@ class _MyHomePageState extends State<MyHomePage> {
           child: PieChart(
             dataMap: dataMap,
             colorList: const [
-              Color(0xFFB4FFA7), // One-Time
-              Color(0xFF8FBBFD), // Regular
-              Color(0xFFF3D782), // Group
+              Color(0xFF80D1FF), // One-Time
+              Color(0xFF94E4B8), // Regular
+              Color(0xFFFFD37E),  // Group
             ],
             chartType: ChartType.disc,
             legendOptions: const LegendOptions(

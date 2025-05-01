@@ -145,7 +145,7 @@ class _BottomNavBarState extends State<BottomNavigationBarWithFab> {
                     ),
                     shape: BoxShape.circle,
                     boxShadow: [
-                      BoxShadow(color: Colors.black, blurRadius: 5, offset: Offset(0, 3))
+                      BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(0, 6))
                     ],
                   ),
                   child: const Icon(Icons.link, color: Colors.white, size: 28),
