@@ -129,12 +129,24 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
   }
 
   Future<void> _uploadProfileImage() async {
-    if (_pickedImage == null || userId == null) return;
+    if (_pickedImage == null || userId == null) {
+      Fluttertoast.showToast(msg: "No image selected", backgroundColor: Colors.orange);
+      return;
+    }
 
-    final uri   = Uri.parse("$baseUrl/api/users/$userId/profile-image");
+    final file = File(_pickedImage!.path);
+
+    // ADD: Check file existence and size before uploading
+    if (!file.existsSync() || file.lengthSync() == 0) {
+      Fluttertoast.showToast(msg: "Invalid image file", backgroundColor: Colors.red);
+      return;
+    }
+
+    final uri = Uri.parse("$baseUrl/api/users/$userId/profile-image");
     final token = await secureStorage.read(key: 'auth_token');
-    final req   = http.MultipartRequest('POST', uri)
-      ..files.add(await http.MultipartFile.fromPath('file', _pickedImage!.path));
+
+    final req = http.MultipartRequest('POST', uri)
+      ..files.add(await http.MultipartFile.fromPath('file', file.path));
 
     if (token != null) {
       req.headers['Authorization'] = 'Bearer $token';
@@ -142,7 +154,7 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
 
     try {
       final streamed = await req.send();
-      final resp     = await http.Response.fromStream(streamed);
+      final resp = await http.Response.fromStream(streamed);
 
       if (streamed.statusCode >= 200 && streamed.statusCode < 300) {
         Fluttertoast.showToast(msg: "Profile updated", backgroundColor: Colors.green);
@@ -150,14 +162,15 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
         await _loadProfileImageUrl(userId!);
       } else {
         Fluttertoast.showToast(
-            msg: "Upload failed: ${streamed.statusCode}\n${resp.body}",
-            backgroundColor: Colors.red
+          msg: "Upload failed: ${streamed.statusCode}\n${resp.body}",
+          backgroundColor: Colors.red,
         );
       }
     } catch (e) {
       Fluttertoast.showToast(msg: "Upload error: $e", backgroundColor: Colors.red);
     }
   }
+
 
   Future<void> _startOnboarding() async {
     if (stripeAccountId == null) return;
