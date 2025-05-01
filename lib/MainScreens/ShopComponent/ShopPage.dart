@@ -10,6 +10,7 @@ import 'AddItemsPage.dart';
 import 'BillHistoryPage.dart';
 import 'BillLogPage.dart';
 import 'CreateBillPage.dart';
+import 'ShopTransactionAnalysisPage.dart';
 
 class ShopPage extends StatefulWidget {
   const ShopPage({Key? key}) : super(key: key);
@@ -322,6 +323,11 @@ class _ShopPageState extends State<ShopPage> {
           'Show Bills',
           Icons.receipt_long,
           BillLogPage(),
+        ),
+        _buildActionButton(
+          'Shop Statistic',
+          Icons.bar_chart_rounded,
+          ShopTransactionAnalysisPage(userId: _shopData!['ownerUserId']),
         ),
         _buildActionButton(
           'Bill History',

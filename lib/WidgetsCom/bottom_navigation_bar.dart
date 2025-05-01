@@ -138,14 +138,10 @@ class _BottomNavBarState extends State<BottomNavigationBarWithFab> {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF83B6B9), Color(0xFF83B6B9)],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
+                    color: const Color(0xFF0054FF),
                     shape: BoxShape.circle,
                     boxShadow: [
-                      BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(0, 6))
+                      BoxShadow(color: Color(0xFF010202), blurRadius: 9, offset: Offset(0, 4))
                     ],
                   ),
                   child: const Icon(Icons.link, color: Colors.white, size: 28),
