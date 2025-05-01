@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import '../../WidgetsCom/bottom_navigation_bar.dart';
 import '../../config.dart';
 import 'AddItemsPage.dart';
 import 'BillHistoryPage.dart';
@@ -370,6 +371,11 @@ class _ShopPageState extends State<ShopPage> {
           : _hasShop
           ? _buildShopDashboard()
           : const Center(child: Text("No shop found. Please register.")),
+
+      bottomNavigationBar: BottomNavigationBarWithFab(
+        currentIndex: 1,
+        onTap: (_) {},
+      ),
     );
   }
 }

@@ -8,6 +8,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import '../../WidgetsCom/bottom_navigation_bar.dart';
 import '../../config.dart';
 
 class TransactionHistoryPage extends StatefulWidget {
@@ -165,6 +166,12 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           : _errorMessage.isNotEmpty
           ? Center(child: Text(_errorMessage, style: const TextStyle(color: Colors.red)))
           : _buildMainContent(),
+
+
+      bottomNavigationBar: BottomNavigationBarWithFab(
+        currentIndex: 4,
+        onTap: (_) {},
+      ),
     );
   }
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';                // for SystemChrome
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -24,9 +25,9 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
-  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
-  final ConnectivityService _connectivityService = ConnectivityService();
-  final ImagePicker _picker = ImagePicker();
+  final _storage = const FlutterSecureStorage();
+  final _connectivityService = ConnectivityService();
+  final _picker = ImagePicker();
 
   bool isDarkMode = DarkModeHandler.isDarkMode;
   bool _initialComplete = false;
@@ -34,15 +35,19 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
   String? userId;
   String? stripeAccountId;
   String? verificationStatus = "Fetching...";
-  String? _email       = "Loading…";
-  String? _givenName   = "Loading…";
+  String? _email     = "Loading…";
+  String? _givenName = "Loading…";
   String? _profileImageUrl;
   XFile?  _pickedImage;
+
+  static const _primaryBlue = Color(0xFF0054FF);
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Optional: allow edge-to-edge drawing
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _initialize();
   }
 
@@ -53,7 +58,7 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
   }
 
   Future<void> _retrieveUser() async {
-    final id = await secureStorage.read(key: 'User_ID');
+    final id = await _storage.read(key: 'User_ID');
     if (id == null) return;
     userId = id;
     await Future.wait([
@@ -80,7 +85,7 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
       final d = jsonDecode(resp.body);
       setState(() => stripeAccountId = d['stripeAccountId']);
       final v = await http.get(
-          Uri.parse("$baseUrl/api/stripe/${stripeAccountId!}/verification-status")
+          Uri.parse("$baseUrl/api/stripe/$stripeAccountId/verification-status")
       );
       if (v.statusCode == 200) {
         setState(() => verificationStatus = jsonDecode(v.body)['verificationStatus']);
@@ -133,28 +138,20 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
       Fluttertoast.showToast(msg: "No image selected", backgroundColor: Colors.orange);
       return;
     }
-
     final file = File(_pickedImage!.path);
-
-    // ADD: Check file existence and size before uploading
     if (!file.existsSync() || file.lengthSync() == 0) {
       Fluttertoast.showToast(msg: "Invalid image file", backgroundColor: Colors.red);
       return;
     }
-
-    final uri = Uri.parse("$baseUrl/api/users/$userId/profile-image");
-    final token = await secureStorage.read(key: 'auth_token');
-
-    final req = http.MultipartRequest('POST', uri)
+    final uri   = Uri.parse("$baseUrl/api/users/$userId/profile-image");
+    final token = await _storage.read(key: 'auth_token');
+    final req   = http.MultipartRequest('POST', uri)
       ..files.add(await http.MultipartFile.fromPath('file', file.path));
-
-    if (token != null) {
-      req.headers['Authorization'] = 'Bearer $token';
-    }
+    if (token != null) req.headers['Authorization'] = 'Bearer $token';
 
     try {
       final streamed = await req.send();
-      final resp = await http.Response.fromStream(streamed);
+      final resp     = await http.Response.fromStream(streamed);
 
       if (streamed.statusCode >= 200 && streamed.statusCode < 300) {
         Fluttertoast.showToast(msg: "Profile updated", backgroundColor: Colors.green);
@@ -170,7 +167,6 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
       Fluttertoast.showToast(msg: "Upload error: $e", backgroundColor: Colors.red);
     }
   }
-
 
   Future<void> _startOnboarding() async {
     if (stripeAccountId == null) return;
@@ -198,6 +194,7 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,  // ← paint behind system nav
       backgroundColor: const Color(0xFFE3F2FD),
       body: !_initialComplete
           ? const Center(child: CircularProgressIndicator())
@@ -230,13 +227,10 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => SettingsPage(
-                              stripeAccountId: stripeAccountId
-                          ),
+                          builder: (_) => SettingsPage(stripeAccountId: stripeAccountId),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 80),
                   ]),
                 ),
               ),
@@ -309,7 +303,7 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
                       padding: const EdgeInsets.all(6),
                       child: const Icon(
                         Icons.camera_alt,
-                        color: Color(0xFF0054FF),
+                        color: _primaryBlue,
                         size: 20,
                       ),
                     ),
@@ -341,8 +335,7 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
               Icons.verified,
               "Verification Status",
               verificationStatus!,
-              trailingColor:
-              verificationStatus == "Verified" ? Colors.green : Colors.red,
+              trailingColor: verificationStatus == "Verified" ? Colors.green : Colors.red,
             ),
           ],
         ),
@@ -351,11 +344,8 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
   }
 
   Widget _buildDetailTile(
-      IconData icon,
-      String title,
-      String value, {
-        Color? trailingColor,
-      }) {
+      IconData icon, String title, String value,
+      {Color? trailingColor}) {
     return Row(
       children: [
         Icon(icon, color: const Color(0xFF0054FF)),

@@ -1,347 +1,196 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-// Import your existing pages:
+// ──────────────────────────────────────────────────────────────────────────────
+// PAGES
 import '../MainScreens/Home_Screen.dart';
-import '../MainScreens/ProfileComponents/Profile_Screen.dart';
-import '../MainScreens/QRpaymentPages/QRPaySendPage.dart';
-import '../MainScreens/TransactionAnalysisPage/TransactionHistory_Screen.dart';
-import '../MainScreens/QRpaymentPages/QRPayReceivePage.dart';
-
-// Import your new ShopPage:
 import '../MainScreens/ShopComponent/ShopPage.dart';
+import '../MainScreens/QRpaymentPages/QRPayReceivePage.dart';
+import '../MainScreens/QRpaymentPages/QRPaySendPage.dart';
+import '../MainScreens/ProfileComponents/Profile_Screen.dart';
+import '../MainScreens/TransactionAnalysisPage/TransactionHistory_Screen.dart';
+// ──────────────────────────────────────────────────────────────────────────────
+
+const Color kBlue       = Color(0xFF0054FF);
+const Color kBarBg      = Colors.white;
+const double kBarHeight = 60.0;
 
 class BottomNavigationBarWithFab extends StatefulWidget {
   final int currentIndex;
   final Function(int) onTap;
-
   const BottomNavigationBarWithFab({
     required this.currentIndex,
     required this.onTap,
     super.key,
   });
-
   @override
-  _BottomNavBarState createState() => _BottomNavBarState();
+  State<BottomNavigationBarWithFab> createState() => _BottomNavBarState();
 }
 
 class _BottomNavBarState extends State<BottomNavigationBarWithFab> {
-  final primaryColor = const Color(0xFF83B6B9);
-  final backgroundColor = const Color(0xffffffff);
-  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
-
+  final _storage = const FlutterSecureStorage();
   String? userId;
 
   @override
   void initState() {
     super.initState();
-    _retrieveUserId();
+    _loadUserId();
   }
 
-  Future<void> _retrieveUserId() async {
-    String? retrievedUserId = await secureStorage.read(key: 'User_ID');
-    if (retrievedUserId != null && mounted) {
-      setState(() {
-        userId = retrievedUserId;
-      });
-    }
+  Future<void> _loadUserId() async {
+    final id = await _storage.read(key: 'User_ID');
+    if (id != null && mounted) setState(() => userId = id);
   }
 
-  void _navigateToPage(int index) {
-    switch (index) {
+  void _go(int idx) {
+    widget.onTap(idx);
+    switch (idx) {
       case 0:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MyHomePage(givenName: '')),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (_) => MyHomePage(givenName: '')));
         break;
       case 1:
-      // Navigate to ShopPage
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ShopPage()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const ShopPage()));
         break;
       case 2:
-      // Show modal bottom sheet for QR actions
-        _showQrOptions();
+        _showQrSheet();
         break;
       case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => ProfilePage()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePage()));
         break;
       case 4:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => TransactionHistoryPage()),
-        );
-        break;
-      default:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => TransactionHistoryPage()));
         break;
     }
   }
 
-  void _showQrOptions() {
-    if (userId == null) {
-      debugPrint("User ID not found! Cannot show QR options.");
-      return;
-    }
-
+  void _showQrSheet() {
+    if (userId == null) return;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext ctx) {
-        return Container(
-          margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE3F2FD),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "Choose an action",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _QrOptionTile(
-                    icon: Icons.download_rounded,
-                    label: "Receive",
-                    onTap: () {
-                      Navigator.pop(ctx); // dismiss bottom sheet
-                      _navigateToReceivePage();
-                    },
-                  ),
-                  _QrOptionTile(
-                    icon: Icons.send_rounded,
-                    label: "Send",
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      _navigateToSendPage();
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _navigateToReceivePage() {
-    if (userId == null) {
-      debugPrint("User ID not found! Cannot navigate to Receive.");
-      return;
-    }
-    debugPrint("✅ Navigating to QRReceivePage with User ID: $userId");
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => QRReceivePage(userId: int.parse(userId!)),
-      ),
-    );
-  }
-
-  void _navigateToSendPage() {
-    if (userId == null) {
-      debugPrint("User ID not found! Cannot navigate to Send.");
-      return;
-    }
-    debugPrint("✅ Navigating to QRSendPayPage with User ID: $userId");
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => QRSendPayPage(userId: int.parse(userId!)),
+      builder: (ctx) => Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE3F2FD),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Text("Choose an action",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+            _QrOption(icon: Icons.download_rounded, label: "Receive", onTap: () {
+              Navigator.pop(ctx);
+              Navigator.push(context, MaterialPageRoute(
+                builder: (_) => QRReceivePage(userId: int.parse(userId!)),
+              ));
+            }),
+            _QrOption(icon: Icons.send_rounded, label: "Send", onTap: () {
+              Navigator.pop(ctx);
+              Navigator.push(context, MaterialPageRoute(
+                builder: (_) => QRSendPayPage(userId: int.parse(userId!)),
+              ));
+            }),
+          ]),
+        ]),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: SizedBox(
-        height: 75,
-        child: BottomAppBar(
-          color: backgroundColor,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+    return SizedBox(
+      height: kBarHeight,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          // Bar background
+          Container(
+            height: kBarHeight,
+            decoration: const BoxDecoration(
+              color: kBarBg,
+              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+            ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                IconBottomBar(
-                  icon: Icons.home_rounded,
-                  selected: widget.currentIndex == 0,
-                  onPressed: () {
-                    widget.onTap(0);
-                    _navigateToPage(0);
-                  },
-                ),
-                IconBottomBar(
-                  icon: Icons.receipt_long,
-                  selected: widget.currentIndex == 4,
-                  onPressed: () {
-                    widget.onTap(4);
-                    _navigateToPage(4);
-                  },
-                ),
-                IconBottomBar2(
-                  icon: Icons.link_rounded,
-                  selected: widget.currentIndex == 2,
-                  onPressed: () {
-                    widget.onTap(2);
-                    _navigateToPage(2);
-                  },
-                ),
-                IconBottomBar(
-                  // Changed from Icons.notifications_rounded to Icons.store_rounded
-                  icon: Icons.store_rounded,
-                  selected: widget.currentIndex == 1,
-                  onPressed: () {
-                    widget.onTap(1);
-                    _navigateToPage(1);
-                  },
-                ),
-                IconBottomBar(
-                  icon: Icons.account_circle_rounded,
-                  selected: widget.currentIndex == 3,
-                  onPressed: () {
-                    widget.onTap(3);
-                    _navigateToPage(3);
-                  },
-                ),
+                _BarIcon(Icons.home,    0),
+                _BarIcon(Icons.receipt, 4),
+                const SizedBox(width: 56), // space for fab
+                _BarIcon(Icons.store,   1),
+                _BarIcon(Icons.person,  3),
               ],
             ),
           ),
-        ),
+          // Floating FAB stays at bar bottom
+          Positioned(
+            bottom: 0,
+            child: Transform.translate(
+              offset: const Offset(0, -28),
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _go(2);
+                },
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF83B6B9), Color(0xFF83B6B9)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(color: Colors.black, blurRadius: 5, offset: Offset(0, 3))
+                    ],
+                  ),
+                  child: const Icon(Icons.link, color: Colors.white, size: 28),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _BarIcon(IconData icon, int idx) {
+    final bool selected = widget.currentIndex == idx;
+    // lift icon up by 6px
+    return Transform.translate(
+      offset: const Offset(0, -6),
+      child: IconButton(
+        splashRadius: 24,
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          _go(idx);
+        },
+        icon: Icon(icon, size: 26, color: selected ? kBlue : Colors.black45),
       ),
     );
   }
 }
 
-class _QrOptionTile extends StatelessWidget {
+class _QrOption extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-
-  const _QrOptionTile({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    super.key,
-  });
+  const _QrOption({required this.icon, required this.label, required this.onTap, super.key});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircleAvatar(
-              backgroundColor: const Color(0xFF0054FF),
-              radius: 28,
-              child: Icon(
-                icon,
-                size: 30,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class IconBottomBar extends StatelessWidget {
-  final IconData icon;
-  final bool selected;
-  final Function() onPressed;
-
-  const IconBottomBar({
-    super.key,
-    required this.icon,
-    required this.selected,
-    required this.onPressed,
-  });
-
-  final primaryColor = const Color(0xFF0054FF);
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: IconButton(
-          onPressed: onPressed,
-          icon: Icon(
-            icon,
-            size: 23,
-            color: selected ? primaryColor : Colors.black54,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class IconBottomBar2 extends StatelessWidget {
-  final IconData icon;
-  final bool selected;
-  final Function() onPressed;
-
-  const IconBottomBar2({
-    super.key,
-    required this.icon,
-    required this.selected,
-    required this.onPressed,
-  });
-
-  final primaryColor = const Color(0xFF0054FF);
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: CircleAvatar(
-          backgroundColor: primaryColor,
-          child: IconButton(
-            onPressed: onPressed,
-            icon: Icon(
-              icon,
-              size: 23,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ),
+      onTap: onTap,
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        CircleAvatar(backgroundColor: kBlue, radius: 28, child: Icon(icon, color: Colors.white)),
+        const SizedBox(height: 6),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+      ]),
     );
   }
 }
