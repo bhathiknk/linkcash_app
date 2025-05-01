@@ -1,13 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:image_picker/image_picker.dart';
+
 import '../../ConnectionCheck/No_Internet_Ui.dart';
 import '../../ConnectionCheck/connectivity_service.dart';
 import '../../WidgetsCom/bottom_navigation_bar.dart';
@@ -22,54 +24,43 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
-  bool isDarkMode = DarkModeHandler.isDarkMode;
+  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
   final ConnectivityService _connectivityService = ConnectivityService();
+  final ImagePicker _picker = ImagePicker();
+
+  bool isDarkMode = DarkModeHandler.isDarkMode;
   bool _initialComplete = false;
 
   String? userId;
   String? stripeAccountId;
   String? verificationStatus = "Fetching...";
-  String? _email = "Loading...";
-  String? _givenNameProfile = "Loading...";
+  String? _email       = "Loading…";
+  String? _givenName   = "Loading…";
   String? _profileImageUrl;
-  XFile? _pickedImage;
-  final ImagePicker _picker = ImagePicker();
-
-  static const Color _primaryBlue = Color(0xFF0054FF);
+  XFile?  _pickedImage;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _checkConnectivity();
-    _retrieveUser();
+    _initialize();
   }
 
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _retrieveUser();
-  }
-
-  Future<void> _checkConnectivity() async {
+  Future<void> _initialize() async {
     await _connectivityService.checkInitialConnectivity();
+    await _retrieveUser();
     setState(() => _initialComplete = true);
   }
 
   Future<void> _retrieveUser() async {
-    final store = const FlutterSecureStorage();
-    final id = await store.read(key: 'User_ID');
-    setState(() => userId = id);
-    if (userId != null) {
-      await _loadUserProfile(id!);
-      await _loadStripeAccount(id!);
-      await _loadProfileImageUrl();
-    }
+    final id = await secureStorage.read(key: 'User_ID');
+    if (id == null) return;
+    userId = id;
+    await Future.wait([
+      _loadUserProfile(id),
+      _loadStripeAccount(id),
+      _loadProfileImageUrl(id),
+    ]);
   }
 
   Future<void> _loadUserProfile(String id) async {
@@ -77,8 +68,8 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
     if (resp.statusCode == 200) {
       final data = jsonDecode(resp.body);
       setState(() {
-        _email = data['email'];
-        _givenNameProfile = data['givenName'];
+        _email     = data['email'];
+        _givenName = data['givenName'];
       });
     }
   }
@@ -88,47 +79,83 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
     if (resp.statusCode == 200) {
       final d = jsonDecode(resp.body);
       setState(() => stripeAccountId = d['stripeAccountId']);
-      _loadVerification();
+      final v = await http.get(
+          Uri.parse("$baseUrl/api/stripe/${stripeAccountId!}/verification-status")
+      );
+      if (v.statusCode == 200) {
+        setState(() => verificationStatus = jsonDecode(v.body)['verificationStatus']);
+      }
     }
   }
 
-  Future<void> _loadVerification() async {
-    if (stripeAccountId == null) return;
-    final resp = await http.get(Uri.parse("$baseUrl/api/stripe/$stripeAccountId/verification-status"));
-    if (resp.statusCode == 200) {
-      final d = jsonDecode(resp.body);
-      setState(() => verificationStatus = d['verificationStatus']);
-    }
-  }
-
-  Future<void> _loadProfileImageUrl() async {
-    if (userId == null) return;
-    final resp = await http.get(Uri.parse("$baseUrl/api/users/$userId/profile-image"));
+  Future<void> _loadProfileImageUrl(String id) async {
+    final resp = await http.get(Uri.parse("$baseUrl/api/users/$id/profile-image"));
     if (resp.statusCode == 200) {
       final fn = jsonDecode(resp.body)['fileName'];
-      setState(() {
-        _profileImageUrl = "$baseUrl/profile-images/$fn";
-      });
+      setState(() => _profileImageUrl = "$baseUrl/profile-images/$fn");
     }
   }
 
-  Future<void> _pickImage() async {
-    final img = await _picker.pickImage(source: ImageSource.gallery, maxWidth: 600, maxHeight: 600);
-    if (img != null) setState(() => _pickedImage = img);
+  Future<void> _pickAndConfirmImage() async {
+    final picked = await _picker.pickImage(
+        source: ImageSource.gallery, maxWidth: 600, maxHeight: 600
+    );
+    if (picked == null) return;
+    setState(() => _pickedImage = picked);
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Update Profile Picture"),
+        content: Image.file(File(picked.path), height: 150),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() => _pickedImage = null);
+              Navigator.pop(ctx);
+            },
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _uploadProfileImage();
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _uploadProfileImage() async {
     if (_pickedImage == null || userId == null) return;
-    final uri = Uri.parse("$baseUrl/api/users/$userId/profile-image");
-    final req = http.MultipartRequest('POST', uri)
+
+    final uri   = Uri.parse("$baseUrl/api/users/$userId/profile-image");
+    final token = await secureStorage.read(key: 'auth_token');
+    final req   = http.MultipartRequest('POST', uri)
       ..files.add(await http.MultipartFile.fromPath('file', _pickedImage!.path));
-    final res = await req.send();
-    if (res.statusCode == 200) {
-      Fluttertoast.showToast(msg: "Image uploaded!", backgroundColor: Colors.green);
-      setState(() => _pickedImage = null);
-      _loadProfileImageUrl();
-    } else {
-      Fluttertoast.showToast(msg: "Upload failed", backgroundColor: Colors.red);
+
+    if (token != null) {
+      req.headers['Authorization'] = 'Bearer $token';
+    }
+
+    try {
+      final streamed = await req.send();
+      final resp     = await http.Response.fromStream(streamed);
+
+      if (streamed.statusCode >= 200 && streamed.statusCode < 300) {
+        Fluttertoast.showToast(msg: "Profile updated", backgroundColor: Colors.green);
+        setState(() => _pickedImage = null);
+        await _loadProfileImageUrl(userId!);
+      } else {
+        Fluttertoast.showToast(
+            msg: "Upload failed: ${streamed.statusCode}\n${resp.body}",
+            backgroundColor: Colors.red
+        );
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: "Upload error: $e", backgroundColor: Colors.red);
     }
   }
 
@@ -171,7 +198,7 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
             slivers: [
               _buildSliverAppBar(),
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.all(16),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     const SizedBox(height: 30),
@@ -190,7 +217,9 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => SettingsPage(stripeAccountId: stripeAccountId),
+                          builder: (_) => SettingsPage(
+                              stripeAccountId: stripeAccountId
+                          ),
                         ),
                       ),
                     ),
@@ -203,7 +232,9 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => setState(() => isDarkMode = DarkModeHandler.toggleDarkMode() as bool),
+        onPressed: () => setState(
+                () => isDarkMode = DarkModeHandler.toggleDarkMode() as bool
+        ),
         backgroundColor: isDarkMode ? Colors.grey[800] : Colors.yellow[700],
         child: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
       ),
@@ -220,17 +251,10 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
       pinned: true,
       backgroundColor: Colors.transparent,
       elevation: 0,
-      actions: [
-        if (_pickedImage != null)
-          IconButton(
-            icon: const Icon(Icons.save, color: Colors.white),
-            onPressed: _uploadProfileImage,
-          ),
-      ],
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: true,
         title: Text(
-          _givenNameProfile ?? "",
+          _givenName!,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         background: Stack(
@@ -250,7 +274,7 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
               bottom: 100,
               left: MediaQuery.of(context).size.width / 2 - 60,
               child: GestureDetector(
-                onTap: _pickImage,
+                onTap: _pickAndConfirmImage,
                 child: Stack(
                   alignment: Alignment.bottomRight,
                   children: [
@@ -259,10 +283,9 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
                       backgroundColor: Colors.white,
                       backgroundImage: _pickedImage != null
                           ? FileImage(File(_pickedImage!.path))
-                      as ImageProvider
                           : (_profileImageUrl != null
                           ? NetworkImage(_profileImageUrl!)
-                          : const AssetImage('lib/images/default.png')
+                          : const AssetImage('assets/default_avatar.png')
                       as ImageProvider),
                     ),
                     Container(
@@ -273,7 +296,7 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
                       padding: const EdgeInsets.all(6),
                       child: const Icon(
                         Icons.camera_alt,
-                        color: _primaryBlue,
+                        color: Color(0xFF0054FF),
                         size: 20,
                       ),
                     ),
@@ -293,19 +316,18 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
   Widget _buildDetailSection() {
     return Card(
       color: Colors.white,
-      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 0,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
         child: Column(
           children: [
-            _buildDetailTile(Icons.email, "Email", _email ?? ""),
+            _buildDetailTile(Icons.email, "Email", _email!),
             const SizedBox(height: 20),
             _buildDetailTile(
               Icons.verified,
               "Verification Status",
-              verificationStatus ?? "",
+              verificationStatus!,
               trailingColor:
               verificationStatus == "Verified" ? Colors.green : Colors.red,
             ),
@@ -315,19 +337,22 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildDetailTile(IconData icon, String title, String value,
-      {Color? trailingColor}) {
+  Widget _buildDetailTile(
+      IconData icon,
+      String title,
+      String value, {
+        Color? trailingColor,
+      }) {
     return Row(
       children: [
-        Icon(icon, color: _primaryBlue),
+        Icon(icon, color: const Color(0xFF0054FF)),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(title,
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600)),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
               const SizedBox(height: 4),
               Text(value, style: const TextStyle(fontSize: 16)),
             ],
@@ -342,7 +367,7 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
   Widget _buildActionCard({
     required IconData icon,
     required String title,
-    void Function()? onTap,
+    required void Function()? onTap,
     bool enabled = true,
   }) {
     return Opacity(
@@ -358,12 +383,11 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                Icon(icon, size: 28, color: _primaryBlue),
+                Icon(icon, size: 28, color: const Color(0xFF0054FF)),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(title,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
                 const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
               ],
