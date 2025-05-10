@@ -170,24 +170,28 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
 
   Future<void> _startOnboarding() async {
     if (stripeAccountId == null) return;
+
+    // 🚀 Call your own backend, which uses your SECRET key to create the link
     final resp = await http.post(
-      Uri.parse("https://api.stripe.com/v1/account_links"),
-      headers: {
-        'Authorization': 'Bearer ${dotenv.env['STRIPE_API_KEY']}',
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: {
-        'account': stripeAccountId!,
-        'refresh_url': 'https://your-app.com/refresh',
-        'return_url': 'https://your-app.com/return',
-        'type': 'account_onboarding',
-      },
+      Uri.parse("$baseUrl/api/stripe/$stripeAccountId/account-link"),
     );
+
     if (resp.statusCode == 200) {
-      final url = jsonDecode(resp.body)['url'];
-      if (await canLaunch(url)) await launch(url);
+      final url = jsonDecode(resp.body)['url'] as String;
+      if (await canLaunch(url)) {
+        await launch(url);
+      } else {
+        Fluttertoast.showToast(
+          msg: "Could not open onboarding URL",
+          backgroundColor: Colors.red,
+        );
+      }
     } else {
-      Fluttertoast.showToast(msg: "Onboarding failed", backgroundColor: Colors.red);
+      final err = jsonDecode(resp.body)['error'] ?? 'Unknown error';
+      Fluttertoast.showToast(
+        msg: "Onboarding failed: $err",
+        backgroundColor: Colors.red,
+      );
     }
   }
 
