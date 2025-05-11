@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../LogScreen/asgardio_login.dart'; // Import your Asgardeo login file
+
+import '../LogScreen/Asgardio_Login.dart';
+
 
 class WelcomeScreen extends StatelessWidget {
   static const String routeName = '/welcome';
