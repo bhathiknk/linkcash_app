@@ -5,11 +5,13 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // ──────────────────────────────────────────────────────────────────────────────
 // PAGES
 import '../MainScreens/Home_Screen.dart';
+import '../MainScreens/QRpaymentPages/QRHistoryPage.dart';
 import '../MainScreens/ShopComponent/ShopPage.dart';
 import '../MainScreens/QRpaymentPages/QRPayReceivePage.dart';
 import '../MainScreens/QRpaymentPages/QRPaySendPage.dart';
 import '../MainScreens/ProfileComponents/Profile_Screen.dart';
 import '../MainScreens/TransactionAnalysisPage/TransactionHistory_Screen.dart';
+
 // ──────────────────────────────────────────────────────────────────────────────
 
 const Color kBlue       = Color(0xFF0054FF);
@@ -77,27 +79,45 @@ class _BottomNavBarState extends State<BottomNavigationBarWithFab> {
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text("Choose an action",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text("Choose an action", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-            _QrOption(icon: Icons.download_rounded, label: "Receive", onTap: () {
-              Navigator.pop(ctx);
-              Navigator.push(context, MaterialPageRoute(
-                builder: (_) => QRReceivePage(userId: int.parse(userId!)),
-              ));
-            }),
-            _QrOption(icon: Icons.send_rounded, label: "Send", onTap: () {
-              Navigator.pop(ctx);
-              Navigator.push(context, MaterialPageRoute(
-                builder: (_) => QRSendPayPage(userId: int.parse(userId!)),
-              ));
-            }),
+            _QrOption(
+              icon: Icons.download_rounded,
+              label: "Receive",
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => QRReceivePage(userId: int.parse(userId!)),
+                ));
+              },
+            ),
+            _QrOption(
+              icon: Icons.send_rounded,
+              label: "Send",
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => QRSendPayPage(userId: int.parse(userId!)),
+                ));
+              },
+            ),
+            _QrOption(
+              icon: Icons.history,
+              label: "History",
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => QRHistoryPage(userId: int.parse(userId!)),
+                ));
+              },
+            ),
           ]),
         ]),
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
